@@ -110,7 +110,7 @@ add_action('add_meta_boxes', 'dearcharts_register_meta_box');
 function dearcharts_render_tabbed_meta_box($post)
 {
     // Retrieve existing values
-    $manual_values = get_post_meta($post->ID, '_dearcharts_manual_values', true);
+    $manual_data = get_post_meta($post->ID, '_dearcharts_manual_data', true);
     $csv_url = get_post_meta($post->ID, '_dearcharts_csv_url', true);
 
     // Nonce field for security
@@ -159,6 +159,38 @@ function dearcharts_render_tabbed_meta_box($post)
             width: 100%;
             max-width: 400px;
         }
+
+        /* Repeater Table Styles */
+        .dearcharts-table {
+            width: 100%;
+            max-width: 600px;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .dearcharts-table th,
+        .dearcharts-table td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .dearcharts-table th {
+            background-color: #f9f9f9;
+            font-weight: 600;
+        }
+
+        .dearcharts-remove-row {
+            color: #a00;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .dearcharts-remove-row:hover {
+            color: #d00;
+        }
     </style>
 
     <div class="dearcharts-tabs">
@@ -167,11 +199,42 @@ function dearcharts_render_tabbed_meta_box($post)
     </div>
 
     <div id="tab-manual" class="dearcharts-tab-content active">
-        <div class="dearcharts-input-group">
-            <label for="dearcharts_manual_values">Enter comma-separated numbers:</label>
-            <input type="text" id="dearcharts_manual_values" name="dearcharts_manual_values"
-                value="<?php echo esc_attr($manual_values); ?>" placeholder="e.g. 10, 20, 30">
-        </div>
+        <table class="dearcharts-table" id="dearcharts-repeater-table">
+            <thead>
+                <tr>
+                    <th>Label</th>
+                    <th>Value</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php
+                if (!empty($manual_data) && is_array($manual_data)) {
+                    foreach ($manual_data as $row) {
+                        ?>
+                        <tr>
+                            <td><input type="text" name="dearcharts_manual_data[][label]"
+                                    value="<?php echo esc_attr($row['label']); ?>" placeholder="Label" /></td>
+                            <td><input type="number" name="dearcharts_manual_data[][value]"
+                                    value="<?php echo esc_attr($row['value']); ?>" placeholder="Value" step="any" /></td>
+                            <td><span class="dearcharts-remove-row">X</span></td>
+                        </tr>
+                        <?php
+                    }
+                } else {
+                    // Default empty row
+                    ?>
+                    <tr>
+                        <td><input type="text" name="dearcharts_manual_data[][label]" placeholder="Label" /></td>
+                        <td><input type="number" name="dearcharts_manual_data[][value]" placeholder="Value" step="any" /></td>
+                        <td><span class="dearcharts-remove-row">X</span></td>
+                    </tr>
+                    <?php
+                }
+                ?>
+            </tbody>
+        </table>
+        <button type="button" class="button" id="dearcharts-add-row">Add Row</button>
     </div>
 
     <div id="tab-csv" class="dearcharts-tab-content">
@@ -185,40 +248,49 @@ function dearcharts_render_tabbed_meta_box($post)
 
     <script>
         function openDearChartsTab(evt, tabName) {
-            // Hide all tab content
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("dearcharts-tab-content");
             for (i = 0; i < tabcontent.length; i++) {
                 tabcontent[i].classList.remove("active");
             }
-
-            // Remove active class from all tab links
             tablinks = document.getElementsByClassName("dearcharts-tab-link");
             for (i = 0; i < tablinks.length; i++) {
                 tablinks[i].classList.remove("active");
             }
-
-            // Show the current tab and add active class to the button
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
         }
 
         jQuery(document).ready(function ($) {
+            // Media Uploader
             $('#dearcharts_upload_csv_btn').click(function (e) {
                 e.preventDefault();
                 var image = wp.media({
                     title: 'Upload CSV',
-                    // mutiple: true if you want to upload multiple files at once
                     multiple: false
                 }).open()
                     .on('select', function (e) {
-                        // This will return the selected image from the Media Uploader, the result is an object
                         var uploaded_image = image.state().get('selection').first();
-                        // We convert that object to JSON
                         var image_url = uploaded_image.toJSON().url;
-                        // Assign the url to the input
                         $('#dearcharts_csv_url').val(image_url);
                     });
+            });
+
+            // Repeater Table: Add Row
+            $('#dearcharts-add-row').on('click', function (e) {
+                e.preventDefault();
+                var row = '<tr>' +
+                    '<td><input type="text" name="dearcharts_manual_data[][label]" placeholder="Label" /></td>' +
+                    '<td><input type="number" name="dearcharts_manual_data[][value]" placeholder="Value" step="any" /></td>' +
+                    '<td><span class="dearcharts-remove-row">X</span></td>' +
+                    '</tr>';
+                $('#dearcharts-repeater-table tbody').append(row);
+            });
+
+            // Repeater Table: Remove Row
+            $('#dearcharts-repeater-table').on('click', '.dearcharts-remove-row', function (e) {
+                e.preventDefault();
+                $(this).closest('tr').remove();
             });
         });
     </script>
@@ -245,10 +317,20 @@ function dearcharts_save_meta_box_data($post_id)
         return;
     }
 
-    // Save Manual Data
-    if (isset($_POST['dearcharts_manual_values'])) {
-        $manual_data = sanitize_text_field($_POST['dearcharts_manual_values']);
-        update_post_meta($post_id, '_dearcharts_manual_values', $manual_data);
+    // Save Manual Data (Repeater)
+    if (isset($_POST['dearcharts_manual_data']) && is_array($_POST['dearcharts_manual_data'])) {
+        $manual_data = array();
+        foreach ($_POST['dearcharts_manual_data'] as $item) {
+            if (!empty($item['label']) || isset($item['value'])) { // Allow 0 as value
+                $manual_data[] = array(
+                    'label' => sanitize_text_field($item['label']),
+                    'value' => floatval($item['value']) // Sanitize as float/number
+                );
+            }
+        }
+        update_post_meta($post_id, '_dearcharts_manual_data', $manual_data);
+    } else {
+        delete_post_meta($post_id, '_dearcharts_manual_data');
     }
 
     // Save CSV URL
