@@ -35,9 +35,9 @@ function dearcharts_register_cpt()
 add_action('init', 'dearcharts_register_cpt');
 
 /**
- * Shortcode to display DearChart Title (Placeholder for full chart display)
+ * Render DearChart Shortcode
  */
-function dearcharts_shortcode_title($atts)
+function dearcharts_render_shortcode($atts)
 {
     $atts = shortcode_atts(array(
         'id' => '',
@@ -47,14 +47,170 @@ function dearcharts_shortcode_title($atts)
     $post = get_post($post_id);
 
     if (!$post || $post->post_type !== 'dearcharts') {
-        return 'Chart title not found';
+        return '';
     }
 
-    $title = get_the_title($post_id);
+    // Enqueue assets just in case (though we should use wp_enqueue_scripts)
+    wp_enqueue_script('chartjs');
 
-    return '<h2 class="dearcharts-title">' . esc_html($title) . '</h2>';
+    // Retrieve Data
+    $manual_data = get_post_meta($post_id, '_dearcharts_manual_data', true);
+    $csv_url = get_post_meta($post_id, '_dearcharts_csv_url', true);
+    $is_donut = get_post_meta($post_id, '_dearcharts_is_donut', true);
+    $legend_pos = get_post_meta($post_id, '_dearcharts_legend_pos', true);
+    $palette = get_post_meta($post_id, '_dearcharts_palette', true);
+
+    if (empty($palette))
+        $palette = 'default';
+    if (empty($legend_pos))
+        $legend_pos = 'top';
+
+    // Prioritize CSV if available (same logic as Admin persistence)
+    $active_source = (!empty($csv_url)) ? 'csv' : 'manual';
+
+    $unique_id = 'dearchart-' . $post_id . '-' . uniqid();
+
+    // Prepare Config for JS
+    $config = array(
+        'id' => $unique_id,
+        'type' => ($is_donut === '1') ? 'doughnut' : 'pie',
+        'legendPos' => $legend_pos,
+        'palette' => $palette,
+        'source' => $active_source,
+        'csvUrl' => $csv_url,
+        'manualData' => $manual_data
+    );
+
+    // Output Container
+    $output = '<div class="dearchart-container" style="position: relative; width: 100%; max-width: 600px; height: 400px; margin: 0 auto;">';
+    $output .= '<canvas id="' . esc_attr($unique_id) . '"></canvas>';
+    $output .= '</div>';
+
+    // Output Inline Script to Init this specific chart
+    // We rely on the footer script for the 'initDearChart' function
+    $output .= '<script>';
+    $output .= 'jQuery(document).ready(function($) {';
+    $output .= '  if(typeof initDearChart === "function") {';
+    $output .= '    initDearChart(' . json_encode($config) . ');';
+    $output .= '  }';
+    $output .= '});';
+    $output .= '</script>';
+
+    return $output;
 }
-add_shortcode('dearchart', 'dearcharts_shortcode_title');
+add_shortcode('dearchart', 'dearcharts_render_shortcode');
+
+/**
+ * Enqueue Frontend Assets
+ */
+function dearcharts_frontend_assets()
+{
+    // Only enqueue if strictly needed? For now, globably to ensure it works on archives etc.
+    // Or check for shortcode presence? 
+    // Global is safer for shortcodes unless we inspect content.
+    wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
+    // jQuery is needed
+    wp_enqueue_script('jquery');
+}
+add_action('wp_enqueue_scripts', 'dearcharts_frontend_assets');
+
+/**
+ * Frontend Shared JS Logic
+ */
+function dearcharts_footer_js()
+{
+    ?>
+    <script>
+        (function ($) {
+            var palettes = {
+                'default': ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED'],
+                'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa', '#f0e68c'],
+                'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#e0f2f1', '#004d40'],
+                'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50', '#cd5c5c'],
+                'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff', '#ff1493'],
+                'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F', '#66CDAA']
+            };
+
+            function generateColors(basePalette, count) {
+                var colors = [].concat(basePalette);
+                if (count <= colors.length) return colors.slice(0, count);
+
+                var needed = count - colors.length;
+                for (var i = 0; i < needed; i++) {
+                    var hue = (i * 137.5 + 200) % 360;
+                    var color = 'hsl(' + hue + ', 65%, 60%)';
+                    colors.push(color);
+                }
+                return colors;
+            }
+
+            window.initDearChart = function (config) {
+                var ctx = document.getElementById(config.id);
+                if (!ctx) return;
+
+                // Prepare Data Callback
+                var onDataReady = function (labels, values) {
+                    var baseColors = palettes[config.palette] || palettes['default'];
+                    var finalColors = generateColors(baseColors, values.length);
+
+                    new Chart(ctx, {
+                        type: config.type,
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: values,
+                                backgroundColor: finalColors,
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: config.legendPos
+                                }
+                            }
+                        }
+                    });
+                };
+
+                if (config.source === 'csv' && config.csvUrl) {
+                    fetch(config.csvUrl)
+                        .then(res => res.text())
+                        .then(text => {
+                            var lines = text.split(/\r\n|\n/);
+                            var labels = [], data = [];
+                            lines.forEach(line => {
+                                var parts = line.split(',');
+                                if (parts.length >= 2) {
+                                    var val = parseFloat(parts[1]);
+                                    if (!isNaN(val)) {
+                                        labels.push(parts[0].trim());
+                                        data.push(val);
+                                    }
+                                }
+                            });
+                            onDataReady(labels, data);
+                        })
+                        .catch(err => console.error("DearCharts CSV Error", err));
+                } else if (config.manualData && config.manualData.length > 0) {
+                    var labels = [], data = [];
+                    config.manualData.forEach(row => {
+                        var val = parseFloat(row.value);
+                        if (!isNaN(val)) {
+                            labels.push(row.label);
+                            data.push(val);
+                        }
+                    });
+                    onDataReady(labels, data);
+                }
+            };
+        })(jQuery);
+    </script>
+    <?php
+}
+add_action('wp_footer', 'dearcharts_footer_js');
 
 /**
  * Add Custom Columns to Admin List
