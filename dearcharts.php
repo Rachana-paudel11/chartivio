@@ -105,11 +105,7 @@ add_shortcode('dearchart', 'dearcharts_render_shortcode');
  */
 function dearcharts_frontend_assets()
 {
-    // Only enqueue if strictly needed? For now, globably to ensure it works on archives etc.
-    // Or check for shortcode presence? 
-    // Global is safer for shortcodes unless we inspect content.
     wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
-    // jQuery is needed
     wp_enqueue_script('jquery');
 }
 add_action('wp_enqueue_scripts', 'dearcharts_frontend_assets');
