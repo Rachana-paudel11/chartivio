@@ -6,7 +6,10 @@
  * Author: Your Name
  */
 
-// Exit if accessed directly
+// PSEUDO CODE:
+// IF ABSPATH is not defined THEN
+//     EXIT script to prevent direct access
+// END IF
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -16,6 +19,9 @@ if (!defined('ABSPATH')) {
  */
 function dearcharts_register_cpt()
 {
+    // PSEUDO CODE:
+    // DEFINE labels for the custom post type (Name: DearCharts, Singular: DearChart)
+    // DEFINE arguments: public, show UI, show in menu, icon, supports title
     $args = array(
         'labels' => array(
             'name' => 'DearCharts',
@@ -28,10 +34,14 @@ function dearcharts_register_cpt()
         'supports' => array('title'),
     );
 
+    // IF register_post_type function exists THEN
+    //     REGISTER 'dearcharts' post type with arguments
+    // END IF
     if (function_exists('register_post_type')) {
         register_post_type('dearcharts', $args);
     }
 }
+// HOOK dearcharts_register_cpt to 'init' action
 add_action('init', 'dearcharts_register_cpt');
 
 /**
@@ -39,38 +49,55 @@ add_action('init', 'dearcharts_register_cpt');
  */
 function dearcharts_render_shortcode($atts)
 {
+    // PSEUDO CODE:
+    // EXTRACT 'id' from shortcode attributes, default to empty string
     $atts = shortcode_atts(array(
         'id' => '',
     ), $atts, 'dearchart');
 
+    // GET post object by ID
     $post_id = intval($atts['id']);
     $post = get_post($post_id);
 
+    // IF post does not exist OR post type is not 'dearcharts' THEN
+    //     RETURN empty string (do nothing)
+    // END IF
     if (!$post || $post->post_type !== 'dearcharts') {
         return '';
     }
 
-    // Enqueue assets just in case (though we should use wp_enqueue_scripts)
+    // ENQUEUE Chart.js library (ensures it is loaded)
     wp_enqueue_script('chartjs');
 
-    // Retrieve Data
+    // PSEUDO CODE:
+    // RETRIEVE saved meta data for this chart:
+    // - Manual Data (Repeater rows)
+    // - CSV URL
+    // - Donut Mode (true/false)
+    // - Legend Position (top/bottom/left/right)
+    // - Color Palette (key like 'ocean', 'sunset')
     $manual_data = get_post_meta($post_id, '_dearcharts_manual_data', true);
     $csv_url = get_post_meta($post_id, '_dearcharts_csv_url', true);
     $is_donut = get_post_meta($post_id, '_dearcharts_is_donut', true);
     $legend_pos = get_post_meta($post_id, '_dearcharts_legend_pos', true);
     $palette = get_post_meta($post_id, '_dearcharts_palette', true);
 
+    // SET default palette to 'default' if empty
     if (empty($palette))
         $palette = 'default';
+    // SET default legend position to 'top' if empty
     if (empty($legend_pos))
         $legend_pos = 'top';
 
-    // Prioritize CSV if available (same logic as Admin persistence)
+    // DETERMINE active data source:
+    // IF CSV URL is not empty THEN use 'csv'
+    // ELSE use 'manual'
     $active_source = (!empty($csv_url)) ? 'csv' : 'manual';
 
+    // GENERATE unique ID for the canvas element
     $unique_id = 'dearchart-' . $post_id . '-' . uniqid();
 
-    // Prepare Config for JS
+    // PREPARE configuration object for JavaScript
     $config = array(
         'id' => $unique_id,
         'type' => ($is_donut === '1') ? 'doughnut' : 'pie',
@@ -81,13 +108,15 @@ function dearcharts_render_shortcode($atts)
         'manualData' => $manual_data
     );
 
-    // Output Container
+    // CONSTRUCT HTML output:
+    // - Wrapper div
+    // - Canvas element with unique ID
     $output = '<div class="dearchart-container" style="position: relative; width: 100%; max-width: 600px; height: 400px; margin: 0 auto;">';
     $output .= '<canvas id="' . esc_attr($unique_id) . '"></canvas>';
     $output .= '</div>';
 
-    // Output Inline Script to Init this specific chart
-    // We rely on the footer script for the 'initDearChart' function
+    // ADD inline JavaScript to initialize this specific chart
+    // CALL initDearChart(config) when document is ready
     $output .= '<script>';
     $output .= 'jQuery(document).ready(function($) {';
     $output .= '  if(typeof initDearChart === "function") {';
@@ -96,8 +125,10 @@ function dearcharts_render_shortcode($atts)
     $output .= '});';
     $output .= '</script>';
 
+    // RETURN the HTML output
     return $output;
 }
+// REGISTER shortcode 'dearchart'
 add_shortcode('dearchart', 'dearcharts_render_shortcode');
 
 /**
@@ -105,9 +136,13 @@ add_shortcode('dearchart', 'dearcharts_render_shortcode');
  */
 function dearcharts_frontend_assets()
 {
+    // PSEUDO CODE:
+    // ENQUEUE Chart.js from CDN
+    // ENQUEUE jQuery
     wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
     wp_enqueue_script('jquery');
 }
+// HOOK to 'wp_enqueue_scripts'
 add_action('wp_enqueue_scripts', 'dearcharts_frontend_assets');
 
 /**
@@ -118,6 +153,8 @@ function dearcharts_footer_js()
     ?>
     <script>
         (function ($) {
+            // PSEUDO CODE:
+            // DEFINE color palettes (default, pastel, ocean, etc.)
             var palettes = {
                 'default': ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED'],
                 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa', '#f0e68c'],
@@ -127,6 +164,9 @@ function dearcharts_footer_js()
                 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F', '#66CDAA']
             };
 
+            // FUNCTION generateColors(basePalette, count)
+            // IF count <= basePalette length THEN return basePalette slice
+            // ELSE generate extra colors using HSL rotation
             function generateColors(basePalette, count) {
                 var colors = [].concat(basePalette);
                 if (count <= colors.length) return colors.slice(0, count);
@@ -140,11 +180,15 @@ function dearcharts_footer_js()
                 return colors;
             }
 
+            // FUNCTION initDearChart(config) exposed globally
             window.initDearChart = function (config) {
                 var ctx = document.getElementById(config.id);
                 if (!ctx) return;
 
-                // Prepare Data Callback
+                // CALLBACK onDataReady(labels, values)
+                // 1. GET base colors from config.palette
+                // 2. GENERATE final colors based on value count
+                // 3. CREATE new Chart instance with data and options
                 var onDataReady = function (labels, values) {
                     var baseColors = palettes[config.palette] || palettes['default'];
                     var finalColors = generateColors(baseColors, values.length);
@@ -171,6 +215,13 @@ function dearcharts_footer_js()
                     });
                 };
 
+                // IF source is 'csv' AND csvUrl is present THEN
+                //     FETCH CSV text
+                //     PARSE CSV (split by line, then comma)
+                //     CALL onDataReady
+                // ELSE IF manualData exists THEN
+                //     PARSE manualData array
+                //     CALL onDataReady
                 if (config.source === 'csv' && config.csvUrl) {
                     fetch(config.csvUrl)
                         .then(res => res.text())
@@ -206,6 +257,7 @@ function dearcharts_footer_js()
     </script>
     <?php
 }
+// HOOK to 'wp_footer'
 add_action('wp_footer', 'dearcharts_footer_js');
 
 /**
@@ -213,6 +265,8 @@ add_action('wp_footer', 'dearcharts_footer_js');
  */
 function dearcharts_add_id_column($columns)
 {
+    // PSEUDO CODE:
+    // ADD 'ID' and 'Shortcode' columns to post list
     $columns['id'] = 'ID';
     $columns['shortcode'] = 'Shortcode';
     return $columns;
@@ -221,6 +275,10 @@ add_filter('manage_dearcharts_posts_columns', 'dearcharts_add_id_column');
 
 function dearcharts_custom_column_content($column, $post_id)
 {
+    // PSEUDO CODE:
+    // SWITCH column name
+    // CASE 'id': ECHO post ID
+    // CASE 'shortcode': ECHO copyable shortcode string
     switch ($column) {
         case 'id':
             echo $post_id;
@@ -237,6 +295,8 @@ add_action('manage_dearcharts_posts_custom_column', 'dearcharts_custom_column_co
  */
 function dearcharts_register_meta_box()
 {
+    // PSEUDO CODE:
+    // ADD meta box for Chart Data (Tabbed Interface)
     add_meta_box(
         'dearcharts_data_meta_box',
         'Chart Data',
@@ -246,6 +306,7 @@ function dearcharts_register_meta_box()
         'high'
     );
 
+    // ADD meta box for Shortcode Display (Sidebar)
     add_meta_box(
         'dearcharts_shortcode_meta_box',
         'Chart Shortcode',
@@ -259,13 +320,15 @@ add_action('add_meta_boxes', 'dearcharts_register_meta_box');
 
 function dearcharts_render_shortcode_meta_box($post)
 {
+    // DISPLAY read-only shortcode for user convenience
     echo '<p>Use this shortcode to display the chart:</p>';
     echo '<code>[dearchart id="' . $post->ID . '"]</code>';
 }
 
 function dearcharts_render_tabbed_meta_box($post)
 {
-    // Retrieve existing values
+    // PSEUDO CODE:
+    // RETRIEVE saved meta values (Manual Data, CSV URL, Settings)
     $manual_data = get_post_meta($post->ID, '_dearcharts_manual_data', true);
     $csv_url = get_post_meta($post->ID, '_dearcharts_csv_url', true);
     $is_donut = get_post_meta($post->ID, '_dearcharts_is_donut', true);
@@ -276,10 +339,11 @@ function dearcharts_render_tabbed_meta_box($post)
         $palette = 'default';
     }
 
-    // Nonce field for security
+    // ADD Nonce field for security
     wp_nonce_field('dearcharts_save_meta_box_data', 'dearcharts_nonce');
     ?>
     <style>
+        /* CSS Definitions for Tabbed Layout and Chart Preview */
         .dearcharts-wrapper {
             display: flex;
             flex-wrap: wrap;
@@ -332,7 +396,6 @@ function dearcharts_render_tabbed_meta_box($post)
             display: none;
             padding: 10px;
             border: 1px solid #ccc;
-            /* Optional border for content area */
             border-top: none;
         }
 
@@ -373,7 +436,6 @@ function dearcharts_render_tabbed_meta_box($post)
             font-weight: 600;
         }
 
-        /* Chart Container */
         #dearchartsCanvasContainer {
             position: relative;
             height: 300px;
@@ -396,11 +458,13 @@ function dearcharts_render_tabbed_meta_box($post)
         <!-- Right Column: Settings Tabs -->
         <div class="dearcharts-settings">
             <div class="dearcharts-tabs">
+                <!-- Tab Links -->
                 <span class="dearcharts-tab-link active" onclick="openDearChartsTab(event, 'tab-manual')">Manual Data</span>
                 <span class="dearcharts-tab-link" onclick="openDearChartsTab(event, 'tab-csv')">Import CSV</span>
                 <span class="dearcharts-tab-link" onclick="openDearChartsTab(event, 'tab-pie')">Pie Settings</span>
             </div>
 
+            <!-- Tab Content: Manual Data -->
             <div id="tab-manual" class="dearcharts-tab-content active">
                 <table class="dearcharts-table" id="dearcharts-repeater-table">
                     <thead>
@@ -412,6 +476,7 @@ function dearcharts_render_tabbed_meta_box($post)
                     </thead>
                     <tbody>
                         <?php
+                        // LOOP through existing manual data and render rows
                         if (!empty($manual_data) && is_array($manual_data)) {
                             foreach ($manual_data as $row) {
                                 ?>
@@ -425,7 +490,7 @@ function dearcharts_render_tabbed_meta_box($post)
                                 <?php
                             }
                         } else {
-                            // Default empty row
+                            // RENDER default empty row if no data
                             ?>
                             <tr>
                                 <td><input type="text" class="dearcharts-live-input" name="dearcharts_manual_label[]"
@@ -442,6 +507,7 @@ function dearcharts_render_tabbed_meta_box($post)
                 <button type="button" class="button" id="dearcharts-add-row" style="margin-top: 10px;">+ Add Row</button>
             </div>
 
+            <!-- Tab Content: Import CSV -->
             <div id="tab-csv" class="dearcharts-tab-content">
                 <div class="dearcharts-input-group">
                     <label for="dearcharts_csv_url">CSV File URL:</label>
@@ -453,6 +519,7 @@ function dearcharts_render_tabbed_meta_box($post)
                 </div>
             </div>
 
+            <!-- Tab Content: Pie Settings -->
             <div id="tab-pie" class="dearcharts-tab-content">
                 <div class="dearcharts-input-group">
                     <label for="dearcharts_is_donut">
@@ -486,6 +553,11 @@ function dearcharts_render_tabbed_meta_box($post)
     </div>
 
     <script>
+        // FUNCTION openDearChartsTab(evt, tabName)
+        // HIDE all tab content
+        // REMOVE active class from all links
+        // SHOW target tab ID
+        // ADD active class to clicked link
         function openDearChartsTab(evt, tabName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("dearcharts-tab-content");
@@ -525,6 +597,7 @@ function dearcharts_render_tabbed_meta_box($post)
             }
             var ctx = document.getElementById('dearchartsCanvas').getContext('2d');
 
+            // DEFINE palettes (Javascript side)
             var palettes = {
                 'default': ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#E7E9ED'],
                 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa', '#f0e68c'],
@@ -543,7 +616,6 @@ function dearcharts_render_tabbed_meta_box($post)
 
                 var needed = count - colors.length;
                 for (var i = 0; i < needed; i++) {
-                    // Use shifted HSL values to create distinct but harmonious colors
                     var hue = (i * 137.5 + 200) % 360;
                     var color = 'hsl(' + hue + ', 65%, 60%)';
                     colors.push(color);
@@ -551,6 +623,10 @@ function dearcharts_render_tabbed_meta_box($post)
                 return colors;
             }
 
+            // FUNCTION getManualData()
+            // ITERATE through repeater table rows
+            // EXTRACT label and value inputs
+            // RETURN objects {labels, data}
             function getManualData() {
                 var labels = [];
                 var data = [];
@@ -566,6 +642,11 @@ function dearcharts_render_tabbed_meta_box($post)
                 return { labels: labels, data: data };
             }
 
+            // FUNCTION getChartSettings(dataCount)
+            // READ checkbox for Donut Mode
+            // READ legend position dropdown
+            // READ color palette dropdown
+            // CALCULATE final colors using generateColors
             function getChartSettings(dataCount) {
                 var isDonut = $('#dearcharts_is_donut').is(':checked');
                 var legendPos = $('#dearcharts_legend_pos').val();
@@ -581,6 +662,10 @@ function dearcharts_render_tabbed_meta_box($post)
                 };
             }
 
+            // FUNCTION loadCSV(url)
+            // FETCH content from URL
+            // CALL parseCSV on content
+            // TRIGGER updateChart
             function loadCSV(url) {
                 if (!url) {
                     csvParsedData = { labels: [], data: [] };
@@ -603,6 +688,10 @@ function dearcharts_render_tabbed_meta_box($post)
                     });
             }
 
+            // FUNCTION parseCSV(text)
+            // SPLIT text by line
+            // SPLIT each line by comma
+            // STORE in csvParsedData {labels, data}
             function parseCSV(text) {
                 var lines = text.split(/\r\n|\n/);
                 var labels = [];
@@ -625,6 +714,11 @@ function dearcharts_render_tabbed_meta_box($post)
                 csvParsedData = { labels: labels, data: data };
             }
 
+            // FUNCTION updateChart()
+            // DETERMINE active data source (Manual vs CSV)
+            // GET settings (colors, type)
+            // DESTROY existing chart if configuration changed
+            // CREATE or UPDATE Chart.js instance with new data
             function updateChart() {
                 var chartData;
                 if (activeDataSource === 'csv') {
@@ -705,7 +799,11 @@ function dearcharts_render_tabbed_meta_box($post)
                 });
             }
 
-            // Initial Load Logic
+            // INITIAL LOAD:
+            // IF CSV URL exists in hidden input THEN
+            //    activeDataSource = 'csv'
+            //    Load CSV
+            // ELSE default to Manual Data and updateChart
             var initialCSV = $('#dearcharts_csv_url').val();
             // If CSV is saved, prioritize it and switch tab
             if (initialCSV && initialCSV.trim() !== '') {
@@ -717,7 +815,8 @@ function dearcharts_render_tabbed_meta_box($post)
                 updateChart();
             }
 
-            // Listeners
+            // LISTENERS:
+            // 1. Tab Click: Switch activeDataSource logic and update preview
             $('.dearcharts-tab-link').click(function () {
                 var tabId = $(this).attr('onclick').match(/'([^']+)'/)[1];
                 if (tabId === 'tab-manual') {
@@ -729,6 +828,7 @@ function dearcharts_render_tabbed_meta_box($post)
                 }
             });
 
+            // 2. Input/Change on inputs: Trigger live update
             $(document).on('input change', '.dearcharts-live-input', function () {
                 updateChart();
             });
@@ -739,6 +839,7 @@ function dearcharts_render_tabbed_meta_box($post)
                 }
             });
 
+            // 3. Debounce for CSV URL input
             var apiTimeout = null;
             $('#dearcharts_csv_url').on('input change', function () {
                 var url = $(this).val();
@@ -749,6 +850,7 @@ function dearcharts_render_tabbed_meta_box($post)
                 }, 500);
             });
 
+            // 4. Media Uploader Logic
             $('#dearcharts_upload_csv_btn').click(function (e) {
                 e.preventDefault();
                 var image = wp.media({
@@ -762,6 +864,7 @@ function dearcharts_render_tabbed_meta_box($post)
                     });
             });
 
+            // 5. Add/Remove Rows
             $('#dearcharts-add-row').on('click', function (e) {
                 e.preventDefault();
                 var row = '<tr>' +
@@ -789,6 +892,11 @@ function dearcharts_render_tabbed_meta_box($post)
  */
 function dearcharts_save_meta_box_data($post_id)
 {
+    // PSEUDO CODE:
+    // VERIFY nonce for security
+    // CHECK if doing autosave (skip)
+    // CHECK user permissions
+
     // Check nonce
     if (!isset($_POST['dearcharts_nonce']) || !wp_verify_nonce($_POST['dearcharts_nonce'], 'dearcharts_save_meta_box_data')) {
         return;
@@ -804,6 +912,9 @@ function dearcharts_save_meta_box_data($post_id)
         return;
     }
 
+    // SAVE MANUAL DATA
+    // ZIP label and value arrays into associative array
+    // UPDATE post meta '_dearcharts_manual_data'
     // Save Manual Data (Repeater)
     // Using separated arrays for label and value to avoid serialization issues
     if (isset($_POST['dearcharts_manual_label']) && isset($_POST['dearcharts_manual_value'])) {
@@ -829,13 +940,13 @@ function dearcharts_save_meta_box_data($post_id)
         delete_post_meta($post_id, '_dearcharts_manual_data');
     }
 
-    // Save CSV URL
+    // SAVE CSV URL
     if (isset($_POST['dearcharts_csv_url'])) {
         $csv_url = esc_url_raw($_POST['dearcharts_csv_url']);
         update_post_meta($post_id, '_dearcharts_csv_url', $csv_url);
     }
 
-    // Save Pie Settings
+    // SAVE SETTINGS
     // Donut Mode (Checkbox)
     $is_donut = isset($_POST['dearcharts_is_donut']) ? '1' : '';
     update_post_meta($post_id, '_dearcharts_is_donut', $is_donut);
@@ -860,6 +971,11 @@ add_action('save_post', 'dearcharts_save_meta_box_data');
 function dearcharts_admin_scripts($hook)
 {
     global $post;
+    // PSEUDO CODE:
+    // CHECK if current page is post-new.php or post.php
+    // CHECK if post type is 'dearcharts'
+    // ENQUEUE Chart.js
+    // ENQUEUE WordPress media scripts (for CSV upload)
     if ($hook == 'post-new.php' || $hook == 'post.php') {
         if ('dearcharts' === $post->post_type) {
             // Enqueue Chart.js from CDN
