@@ -38,6 +38,7 @@ add_action('init', 'dearcharts_register_cpt');
  * Load Plugin Modules
  */
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 function dearcharts_render_shortcode($atts)
 {
     $atts = shortcode_atts(array(
@@ -870,6 +871,14 @@ function dearcharts_admin_scripts($hook)
     }
 }
 add_action('admin_enqueue_scripts', 'dearcharts_admin_scripts');
+=======
+// PSEUDO CODE:
+// REQUIRE admin settings module (meta boxes, admin UI, data persistence)
+require_once plugin_dir_path(__FILE__) . 'includes/admin-settings.php';
+
+// REQUIRE shortcodes module (frontend shortcode and chart rendering)
+require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
+>>>>>>> Stashed changes
 =======
 // PSEUDO CODE:
 // REQUIRE admin settings module (meta boxes, admin UI, data persistence)
