@@ -177,30 +177,97 @@ function dearcharts_render_tabbed_meta_box($post)
             padding: 20px;
         }
 
+        .dearcharts-table-scroll-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #f1f5f9;
+        }
+
+        /* Premium Scrollbar Styling */
+        .dearcharts-table-scroll-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .dearcharts-table-scroll-wrapper::-webkit-scrollbar-track {
+            background: #f8fafc;
+            border-radius: 4px;
+        }
+
+        .dearcharts-table-scroll-wrapper::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+            border: 2px solid #f8fafc;
+        }
+
+        .dearcharts-table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #2271b1;
+        }
+
         .dearcharts-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 15px;
+            table-layout: fixed;
+            min-width: 600px;
+            /* Ensures it doesn't squash too much */
         }
 
         .dearcharts-table th,
         .dearcharts-table td {
-            padding: 10px;
+            padding: 12px 10px;
             border-bottom: 1px solid #f1f5f9;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        .dearcharts-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 600;
+            font-size: 13px;
         }
 
         .dearcharts-table input {
             width: 100%;
             border: 1px solid #cbd5e1;
             border-radius: 4px;
-            padding: 6px 10px;
+            padding: 8px 10px;
+            box-sizing: border-box;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+
+        .dearcharts-table input:focus {
+            border-color: #2271b1;
+            outline: none;
+            box-shadow: 0 0 0 1px #2271b1;
         }
 
         .dearcharts-remove-row {
-            color: #ef4444;
+            color: #94a3b8;
             cursor: pointer;
             font-weight: bold;
-            font-size: 16px;
+            font-size: 18px;
+            transition: color 0.2s;
+            display: inline-block;
+            line-height: 1;
+        }
+
+        .dearcharts-remove-row:hover {
+            color: #ef4444;
+        }
+
+        .dearcharts-remove-column {
+            color: #94a3b8;
+            cursor: pointer;
+            font-size: 14px;
+            transition: color 0.2s;
+            margin-left: 5px;
+        }
+
+        .dearcharts-remove-column:hover {
+            color: #ef4444;
         }
 
         /* Toggle */
@@ -325,24 +392,26 @@ function dearcharts_render_tabbed_meta_box($post)
                         <table class="dearcharts-table" id="dearcharts-repeater-table">
                             <thead>
                                 <tr>
-                                    <th>Labels</th>
+                                    <th style="width: 150px;">Labels</th>
                                     <?php
                                     $headers = ['Label', 'Series 1'];
                                     if (!empty($manual_data) && is_array($manual_data))
                                         $headers = $manual_data[0];
                                     for ($i = 1; $i < count($headers); $i++) {
                                         ?>
-                                        <th style="position: relative;">
-                                            <input type="text" class="dearcharts-series-label dearcharts-live-input"
-                                                name="dearcharts_manual_data[0][]" value="<?php echo esc_attr($headers[$i]); ?>"
-                                                style="font-weight: 600; border: none; background: transparent; padding: 0;">
-                                            <span class="dearcharts-remove-column"
-                                                style="position: absolute; right: 0; top: 50%; transform: translateY(-50%); color: red; cursor: pointer;">×</span>
+                                        <th>
+                                            <div style="display: flex; align-items: center;">
+                                                <input type="text" class="dearcharts-series-label dearcharts-live-input"
+                                                    name="dearcharts_manual_data[0][]"
+                                                    value="<?php echo esc_attr($headers[$i]); ?>"
+                                                    style="font-weight: 600; border: none; background: transparent; padding: 0; margin: 0; flex: 1;">
+                                                <span class="dearcharts-remove-column" title="Remove Column">×</span>
+                                            </div>
                                         </th>
                                         <?php
                                     }
                                     ?>
-                                    <th style="width: 40px;"></th>
+                                    <th style="width: 50px; text-align: center;"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -364,9 +433,10 @@ function dearcharts_render_tabbed_meta_box($post)
                                 <?php } ?>
                             </tbody>
                         </table>
-                        <div style="display: flex; gap:10px;">
-                            <button type="button" class="button" id="dearcharts-add-column">Add Column</button>
-                            <button type="button" class="button button-primary" id="dearcharts-add-row" style="flex:1;">Add
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button type="button" class="button" id="dearcharts-add-column" style="min-width: 150px;">Add
+                                Column</button>
+                            <button type="button" class="button button-primary" id="dearcharts-add-row" style="flex: 1;">Add
                                 Row</button>
                         </div>
                     </div>
@@ -523,7 +593,12 @@ function dearcharts_render_tabbed_meta_box($post)
 
             $('#dearcharts-add-column').click(function () {
                 var ci = $('#dearcharts-repeater-table thead th').length - 1;
-                var th = '<th style="position:relative;"><input type="text" class="dearcharts-series-label dearcharts-live-input" name="dearcharts_manual_data[0][]" value="Series ' + ci + '" style="font-weight:600; border:none; background:transparent; padding:0;"><span class="dearcharts-remove-column" style="position:absolute; right:0; top:50%; transform:translateY(-50%); color:red; cursor:pointer;">×</span></th>';
+                var th = '<th>' +
+                    '<div style="display: flex; align-items: center;">' +
+                    '<input type="text" class="dearcharts-series-label dearcharts-live-input" name="dearcharts_manual_data[0][]" value="Series ' + ci + '" style="font-weight: 600; border: none; background: transparent; padding: 0; margin: 0; flex: 1;">' +
+                    '<span class="dearcharts-remove-column" title="Remove Column">×</span>' +
+                    '</div>' +
+                    '</th>';
                 $(th).insertBefore('#dearcharts-repeater-table thead th:last');
                 $('#dearcharts-repeater-table tbody tr').each(function (i) {
                     var ri = i + 1;
