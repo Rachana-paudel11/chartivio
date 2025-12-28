@@ -81,7 +81,6 @@ function dearcharts_render_shortcode_meta_box($post)
 
 function dearcharts_render_tabbed_meta_box($post)
 {
-    // PSEUDO CODE:
     // RETRIEVE saved meta values (Manual Data, CSV URL, Settings)
     $manual_data = get_post_meta($post->ID, '_dearcharts_manual_data', true);
     $csv_url = get_post_meta($post->ID, '_dearcharts_csv_url', true);
@@ -221,78 +220,162 @@ function dearcharts_render_tabbed_meta_box($post)
         <div class="dearcharts-settings">
             <div class="dearcharts-tabs">
                 <!-- Tab Links -->
-                <span class="dearcharts-tab-link active" onclick="openDearChartsTab(event, 'tab-manual')">Manual Data</span>
-                <span class="dearcharts-tab-link" onclick="openDearChartsTab(event, 'tab-csv')">Import CSV</span>
+                <span class="dearcharts-tab-link active" onclick="openDearChartsTab(event, 'tab-create-chart')">Create
+                    Chart</span>
                 <span class="dearcharts-tab-link" onclick="openDearChartsTab(event, 'tab-settings')">Chart Settings</span>
             </div>
 
-            <!-- Tab Content: Manual Data -->
-            <div id="tab-manual" class="dearcharts-tab-content active">
-                <table class="dearcharts-table" id="dearcharts-repeater-table">
-                    <thead>
-                        <tr>
-                            <th>Label</th>
-                            <th>Value</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        // LOOP through existing manual data and render rows
-                        if (!empty($manual_data) && is_array($manual_data)) {
-                            foreach ($manual_data as $row) {
-                                ?>
-                                <tr>
-                                    <td><input type="text" class="dearcharts-live-input" name="dearcharts_manual_label[]"
-                                            value="<?php echo esc_attr($row['label']); ?>" placeholder="Label" /></td>
-                                    <td><input type="number" class="dearcharts-live-input" name="dearcharts_manual_value[]"
-                                            value="<?php echo esc_attr($row['value']); ?>" placeholder="Value" step="any" /></td>
-                                    <td><span class="dearcharts-remove-row">X</span></td>
-                                </tr>
-                                <?php
-                            }
-                        } else {
-                            // RENDER default empty row if no data
-                            ?>
-                            <tr>
-                                <td><input type="text" class="dearcharts-live-input" name="dearcharts_manual_label[]"
-                                        placeholder="Label" /></td>
-                                <td><input type="number" class="dearcharts-live-input" name="dearcharts_manual_value[]"
-                                        placeholder="Value" step="any" /></td>
-                                <td><span class="dearcharts-remove-row">X</span></td>
-                            </tr>
-                            <?php
-                        }
-                        ?>
-                    </tbody>
-                </table>
-                <button type="button" class="button" id="dearcharts-add-row" style="margin-top: 10px;">+ Add Row</button>
-            </div>
 
-            <!-- Tab Content: Import CSV -->
-            <div id="tab-csv" class="dearcharts-tab-content">
-                <div class="dearcharts-input-group">
-                    <label for="dearcharts_csv_url">CSV File URL:</label>
-                    <input type="text" id="dearcharts_csv_url" name="dearcharts_csv_url" class="large-text"
-                        value="<?php echo esc_attr($csv_url); ?>" placeholder="https://...">
-                    <button type="button" class="button" id="dearcharts_upload_csv_btn">Upload/Select</button>
-                    <span class="description" style="display:block; margin-top:5px;">Live preview active (Label,
-                        Value)</span>
-                </div>
-            </div>
+            <!-- Tab Content: Create Chart (Simplified Design) -->
+            <div id="tab-create-chart" class="dearcharts-tab-content active">
 
-            <!-- Tab Content: Chart Settings -->
-            <div id="tab-settings" class="dearcharts-tab-content">
-                <div class="dearcharts-input-group">
-                    <label for="dearcharts_type">Chart Type:</label>
-                    <select id="dearcharts_type" class="dearcharts-live-input" name="dearcharts_type">
+                <!-- Repositioned Chart Type -->
+                <div class="dearcharts-input-group"
+                    style="padding: 10px 0; border-bottom: 1px solid #eee; margin-bottom: 20px; display: flex; align-items: center; gap: 15px;">
+                    <label for="dearcharts_type" style="font-weight: 600; min-width: 100px;">Chart Type:</label>
+                    <select id="dearcharts_type" class="large-text dearcharts-live-input" name="dearcharts_type"
+                        style="margin: 0; max-width: 250px;">
                         <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
                         <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
                         <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar (Vertical)</option>
                         <option value="horizontalBar" <?php selected($chart_type, 'horizontalBar'); ?>>Bar (Horizontal)
                         </option>
                     </select>
+                    <span class="description" style="font-size: 12px; color: #666;">Apply to data sources below</span>
                 </div>
+
+                <h3 style="margin: 0 0 15px 0; color: #333; font-size: 15px;">Data Source</h3>
+                <p style="margin: 0 0 20px 0; color: #666; font-size: 13px;">Choose one or both data sources. CSV takes
+                    priority if both are provided.</p>
+
+
+                <!-- Accordion Container -->
+                <div class="dearcharts-accordion-container"
+                    style="margin-top: 20px; display: flex; flex-direction: column; gap: 15px;">
+
+                    <!-- Accordion Panel 1: CSV Import -->
+                    <div class="dearcharts-accordion-item"
+                        style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <div class="dearcharts-accordion-header" onclick="window.dearchartsToggleAccordion('csv')"
+                            style="background: #f8f9fa; padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; align-items: center;">
+                                <strong style="color: #2271b1; font-size: 14px;">Import from CSV</strong>
+                            </div>
+                            <span class="dearcharts-acc-icon-csv" style="color: #666;">▼</span>
+                        </div>
+                        <div class="dearcharts-accordion-content" id="dearcharts-acc-csv"
+                            style="display: block; padding: 20px;">
+                            <div class="dearcharts-input-group" style="margin-bottom: 0;">
+                                <label for="dearcharts_csv_url" style="font-weight: 600; color: #333;">CSV File URL:</label>
+                                <input type="text" id="dearcharts_csv_url" name="dearcharts_csv_url" class="large-text"
+                                    value="<?php echo esc_attr($csv_url); ?>" placeholder="https://example.com/data.csv"
+                                    style="margin-bottom: 10px;">
+                                <button type="button" class="button button-primary" id="dearcharts_upload_csv_btn"
+                                    style="width: 100%;">
+                                    Select File from Media Library
+                                </button>
+                                <span class="description"
+                                    style="display:block; margin-top:10px; font-size: 12px; color: #666;">
+                                    <strong>Format:</strong> Label, Value (one per line)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion Panel 2: Manual Data Entry -->
+                    <div class="dearcharts-accordion-item"
+                        style="border: 1px solid #ddd; border-radius: 4px; overflow: hidden; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                        <div class="dearcharts-accordion-header" onclick="window.dearchartsToggleAccordion('manual')"
+                            style="background: #f8f9fa; padding: 12px 20px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee;">
+                            <div style="display: flex; align-items: center;">
+                                <strong style="color: #2271b1; font-size: 14px;">Manual Data Entry</strong>
+                            </div>
+                            <span class="dearcharts-acc-icon-manual" style="color: #666;">▼</span>
+                        </div>
+                        <div class="dearcharts-accordion-content" id="dearcharts-acc-manual"
+                            style="display: none; padding: 20px;">
+                            <table class="dearcharts-table" id="dearcharts-repeater-table" style="margin-bottom: 10px;">
+                                <thead>
+                                    <tr>
+                                        <th style="font-weight: 600;">Label</th>
+                                        <th style="font-weight: 600;">Value</th>
+                                        <th style="width: 50px;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php
+                                    if (!empty($manual_data) && is_array($manual_data)) {
+                                        foreach ($manual_data as $row) {
+                                            ?>
+                                            <tr>
+                                                <td><input type="text" class="dearcharts-live-input"
+                                                        name="dearcharts_manual_label[]"
+                                                        value="<?php echo esc_attr($row['label']); ?>" placeholder="Label" /></td>
+                                                <td><input type="number" class="dearcharts-live-input"
+                                                        name="dearcharts_manual_value[]"
+                                                        value="<?php echo esc_attr($row['value']); ?>" placeholder="Value"
+                                                        step="any" /></td>
+                                                <td><span class="dearcharts-remove-row">X</span></td>
+                                            </tr>
+                                            <?php
+                                        }
+                                    } else {
+                                        ?>
+                                        <tr>
+                                            <td><input type="text" class="dearcharts-live-input"
+                                                    name="dearcharts_manual_label[]" placeholder="Label" /></td>
+                                            <td><input type="number" class="dearcharts-live-input"
+                                                    name="dearcharts_manual_value[]" placeholder="Value" step="any" /></td>
+                                            <td><span class="dearcharts-remove-row">X</span></td>
+                                        </tr>
+                                        <?php
+                                    }
+                                    ?>
+                                </tbody>
+                            </table>
+                            <button type="button" class="button button-primary" id="dearcharts-add-row"
+                                style="width: 100%;">
+                                Add Row
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <script>
+                    window.dearchartsToggleAccordion = function (type) {
+                        var csvContent = document.getElementById('dearcharts-acc-csv');
+                        var manualContent = document.getElementById('dearcharts-acc-manual');
+                        var csvIcon = document.querySelector('.dearcharts-acc-icon-csv');
+                        var manualIcon = document.querySelector('.dearcharts-acc-icon-manual');
+
+                        if (type === 'csv') {
+                            csvContent.style.display = 'block';
+                            manualContent.style.display = 'none';
+                            csvIcon.innerText = '▼';
+                            manualIcon.innerText = '▶';
+                        } else {
+                            csvContent.style.display = 'none';
+                            manualContent.style.display = 'block';
+                            csvIcon.innerText = '▶';
+                            manualIcon.innerText = '▼';
+                        }
+                    };
+                    // Set initial state
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var csvUrl = document.getElementById('dearcharts_csv_url').value;
+                        if (csvUrl && csvUrl.trim() !== '') {
+                            dearchartsToggleAccordion('csv');
+                        } else {
+                            dearchartsToggleAccordion('manual');
+                        }
+                    });
+                </script>
+            </div>
+
+
+            <!-- Tab Content: Chart Settings -->
+            <div id="tab-settings" class="dearcharts-tab-content">
                 <div class="dearcharts-input-group" id="donut-mode-group" style="display:none;">
                     <label for="dearcharts_is_donut">
                         <input type="checkbox" class="dearcharts-live-input" id="dearcharts_is_donut"
@@ -370,8 +453,16 @@ function dearcharts_render_tabbed_meta_box($post)
             // Chart title from post
             var chartTitle = <?php echo json_encode($chart_title); ?>;
 
-            // Track which data source was last active ('manual' or 'csv')
-            var activeDataSource = 'manual';
+            // Dataset label is now simplified to use Post Title
+            function getDatasetLabel() {
+                return chartTitle || 'Dataset';
+            }
+
+            // Data source priority: CSV first, then manual fallback
+            function getActiveDataSource() {
+                var csvUrl = $('#dearcharts_csv_url').val();
+                return (csvUrl && csvUrl.trim() !== '') ? 'csv' : 'manual';
+            }
 
             if (typeof Chart === 'undefined') {
                 console.error("Chart.js not loaded");
@@ -512,13 +603,15 @@ function dearcharts_render_tabbed_meta_box($post)
             }
 
             // FUNCTION updateChart()
-            // DETERMINE active data source (Manual vs CSV)
-            // GET settings (colors, type)
+            // DETERMINE active data source (CSV priority, Manual fallback)
+            // GET settings (colors, type, dataset label)
             // DESTROY existing chart if configuration changed
             // CREATE or UPDATE Chart.js instance with new data
             function updateChart() {
+                var activeSource = getActiveDataSource();
                 var chartData;
-                if (activeDataSource === 'csv') {
+
+                if (activeSource === 'csv') {
                     chartData = csvParsedData;
                 } else {
                     chartData = getManualData();
@@ -546,7 +639,7 @@ function dearcharts_render_tabbed_meta_box($post)
                     }
                     $('#dearchartsCanvas').hide();
                     $('#dearcharts-no-data').show();
-                    $('#dearcharts-no-data').text("Add data to see preview" + (activeDataSource === 'csv' ? " (CSV)" : ""));
+                    $('#dearcharts-no-data').text("Add data to see preview" + (activeSource === 'csv' ? " (CSV)" : ""));
                     return;
                 }
 
@@ -605,7 +698,7 @@ function dearcharts_render_tabbed_meta_box($post)
                     data: {
                         labels: chartData.labels,
                         datasets: [{
-                            label: chartTitle,
+                            label: getDatasetLabel(),
                             data: chartData.data,
                             backgroundColor: settings.colors,
                             hoverOffset: 4
@@ -616,50 +709,28 @@ function dearcharts_render_tabbed_meta_box($post)
             }
 
             // INITIAL LOAD:
-            // IF CSV URL exists in hidden input THEN
-            //    activeDataSource = 'csv'
-            //    Load CSV
-            // ELSE default to Manual Data and updateChart
+            // Load CSV if URL exists, otherwise show manual data
             var initialCSV = $('#dearcharts_csv_url').val();
-            // If CSV is saved, prioritize it and switch tab
             if (initialCSV && initialCSV.trim() !== '') {
-                activeDataSource = 'csv';
-                openDearChartsTab(null, 'tab-csv');
                 loadCSV(initialCSV);
             } else {
-                activeDataSource = 'manual';
                 updateChart();
             }
 
             // LISTENERS:
-            // 1. Tab Click: Switch activeDataSource logic and update preview
-            $('.dearcharts-tab-link').click(function () {
-                var tabId = $(this).attr('onclick').match(/'([^']+)'/)[1];
-                if (tabId === 'tab-manual') {
-                    activeDataSource = 'manual';
-                    updateChart();
-                } else if (tabId === 'tab-csv') {
-                    activeDataSource = 'csv';
-                    updateChart();
-                }
-            });
-
-            // 2. Input/Change on inputs: Trigger live update
+            // 1. Input/Change on all live inputs: Trigger update
             $(document).on('input change', '.dearcharts-live-input', function () {
                 updateChart();
             });
 
             $('#dearcharts-repeater-table').on('input', 'input', function () {
-                if (activeDataSource === 'manual') {
-                    updateChart();
-                }
+                updateChart();
             });
 
-            // 3. Debounce for CSV URL input
+            // 2. Debounce for CSV URL input
             var apiTimeout = null;
             $('#dearcharts_csv_url').on('input change', function () {
                 var url = $(this).val();
-                activeDataSource = 'csv';
                 if (apiTimeout) clearTimeout(apiTimeout);
                 apiTimeout = setTimeout(function () {
                     loadCSV(url);
@@ -694,7 +765,7 @@ function dearcharts_render_tabbed_meta_box($post)
             $('#dearcharts-repeater-table').on('click', '.dearcharts-remove-row', function (e) {
                 e.preventDefault();
                 $(this).closest('tr').remove();
-                if (activeDataSource === 'manual') {
+                if (getActiveDataSource() === 'manual') {
                     updateChart();
                 }
             });

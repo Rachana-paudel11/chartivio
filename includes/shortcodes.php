@@ -76,7 +76,7 @@ function dearcharts_render_shortcode($atts)
         'legendPos' => $legend_pos,
         'palette' => $palette,
         'customColors' => $custom_colors,
-        'chartTitle' => $post->post_title ? $post->post_title : 'Untitled Chart',
+        'chartTitle' => ($post->post_title ? $post->post_title : 'Dataset'),
         'source' => $active_source,
         'csvUrl' => $csv_url,
         'manualData' => $manual_data
