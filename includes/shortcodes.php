@@ -1,6 +1,8 @@
 <?php
 /**
- * Shortcode Rendering & Frontend Assets
+ * Shortcodes - Frontend Chart Rendering
+ * 
+ * Handles all frontend shortcode functionality and chart rendering logic.
  */
 
 if (!defined('ABSPATH')) {
@@ -9,11 +11,6 @@ if (!defined('ABSPATH')) {
 
 /**
  * Render DearChart Shortcode
- * PSEUDOCODE: 
- * 1. Extract post ID from shortcode attributes.
- * 2. Retrieve chart data source and aesthetic settings from database.
- * 3. Generate a unique ID for the chart container to allow multiple charts on one page.
- * 4. Pass configuration to the centralized frontend JS initializer.
  */
 function dearcharts_render_shortcode($atts)
 {
@@ -24,39 +21,54 @@ function dearcharts_render_shortcode($atts)
     $post_id = intval($atts['id']);
     $post = get_post($post_id);
 
-    if (!$post || $post->post_type !== 'dearcharts')
+    if (!$post || $post->post_type !== 'dearcharts') {
         return '';
+    }
 
-    // Retrieve Data
+    wp_enqueue_script('chartjs');
+
     $manual_data = get_post_meta($post_id, '_dearcharts_manual_data', true);
     $csv_url = get_post_meta($post_id, '_dearcharts_csv_url', true);
-    $active_source = get_post_meta($post_id, '_dearcharts_active_source', true) ?: ((!empty($csv_url)) ? 'csv' : 'manual');
+    $active_source = get_post_meta($post_id, '_dearcharts_active_source', true);
+    $chart_type = get_post_meta($post_id, '_dearcharts_type', true);
+    $legend_pos = get_post_meta($post_id, '_dearcharts_legend_pos', true);
+    $palette = get_post_meta($post_id, '_dearcharts_palette', true);
+    $custom_colors = get_post_meta($post_id, '_dearcharts_colors', true);
 
-    // Aesthetic Settings
-    $chart_type = get_post_meta($post_id, '_dearcharts_type', true) ?: (get_post_meta($post_id, '_dearcharts_is_donut', true) === '1' ? 'doughnut' : 'pie');
-    $legend_pos = get_post_meta($post_id, '_dearcharts_legend_pos', true) ?: 'top';
-    $palette_key = get_post_meta($post_id, '_dearcharts_palette', true) ?: 'default';
+    if (empty($active_source))
+        $active_source = 'manual';
+    if (empty($palette))
+        $palette = 'default';
+    if (empty($legend_pos))
+        $legend_pos = 'top';
+    if (empty($chart_type))
+        $chart_type = 'pie';
 
     $unique_id = 'dearchart-' . $post_id . '-' . uniqid();
 
-    // Prepare Config for JS
     $config = array(
         'id' => $unique_id,
         'type' => $chart_type,
         'legendPos' => $legend_pos,
-        'palette' => $palette_key,
+        'palette' => $palette,
+        'customColors' => $custom_colors,
+        'chartTitle' => ($post->post_title ? $post->post_title : 'Dataset'),
         'source' => $active_source,
         'csvUrl' => $csv_url,
         'manualData' => $manual_data
     );
 
-    // Output Container
-    $output = '<div class="dearchart-container" style="position: relative; width: 100%; max-width: 600px; height: 400px; margin: 0 auto;">';
+    $output = '<div class="dearchart-container" style="position: relative; width: 100%; max-width: 800px; height: 450px; margin: 0 auto;">';
     $output .= '<canvas id="' . esc_attr($unique_id) . '"></canvas>';
     $output .= '</div>';
 
-    // Inline Script to Init
-    $output .= '<script>jQuery(document).ready(function($) { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . json_encode($config) . '); } });</script>';
+    $output .= '<script>';
+    $output .= 'jQuery(document).ready(function($) {';
+    $output .= '  if(typeof initDearChart === "function") {';
+    $output .= '    initDearChart(' . json_encode($config) . ');';
+    $output .= '  }';
+    $output .= '});';
+    $output .= '</script>';
 
     return $output;
 }
@@ -79,105 +91,106 @@ function dearcharts_footer_js()
 {
     ?>
     <script>
-        var dc_palettes = {
-            'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
-            'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'],
-            'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'],
-            'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'],
-            'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'],
-            'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F']
-        };
-
-        /**
-         * PSEUDOCODE: dearcharts_init_frontend
-         * 1. Get the 2D drawing context of the target canvas.
-         * 2. Select the color palette based on user configuration.
-         * 3. Define a helper function 'drawChart' to abstract Chart.js instantiation.
-         * 4. If source is CSV: Fetch data via AJAX, parse CSV rows, and map columns to Chart.js datasets.
-         * 5. If source is Manual: Parse stored nested array/object and map to Chart.js datasets.
-         * 6. Finalize: Call Chart.js constructor with mapped labels and datasets.
-         */
-        function dearcharts_init_frontend(config) {
-            var canvas = document.getElementById(config.id);
-            if (!canvas) return;
-            var ctx = canvas.getContext('2d');
-            var palette = dc_palettes[config.palette] || dc_palettes['default'];
-
-            var drawChart = (l, ds) => {
-                // PSEUDOCODE: Assign colors from palette to each dataset or each data point.
-                ds.forEach((set, i) => {
-                    let colors = (ds.length > 1) ? palette[i % palette.length] : l.map((_, j) => palette[j % palette.length]);
-                    if (config.type === 'bar' || config.type === 'line') {
-                        set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : palette;
-                        set.borderColor = (ds.length > 1) ? palette[i % palette.length] : palette;
-                    } else {
-                        set.backgroundColor = colors;
-                        set.borderColor = colors;
-                    }
-                    set.borderWidth = (config.type === 'line') ? 2 : 1;
-                    set.fill = (config.type === 'line') ? false : true;
-                });
-
-                new Chart(ctx, {
-                    type: config.type,
-                    data: { labels: l, datasets: ds },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: (config.type === 'bar' || config.type === 'line') ? { y: { beginAtZero: true } } : {},
-                        plugins: { legend: { display: config.legendPos !== 'none', position: config.legendPos } }
-                    }
-                });
+        (function ($) {
+            var palettes = {
+                'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+                'pastel': ['#93c5fd', '#6ee7b7', '#fcd34d', '#fca5a5', '#c4b5fd', '#fbcfe8'],
+                'ocean': ['#1e40af', '#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd'],
+                'sunset': ['#991b1b', '#b91c1c', '#dc2626', '#ef4444', '#f87171', '#fca5a5'],
+                'neon': ['#f0abfc', '#818cf8', '#2dd4bf', '#a3e635', '#fde047', '#fb923c']
             };
 
-            if (config.source === 'csv' && config.csvUrl) {
-                // PSEUDOCODE: Fetch raw CSV text from the stored URL.
-                fetch(config.csvUrl).then(res => res.text()).then(text => {
-                    const lines = text.trim().split(/\r\n|\n/);
-                    let labels = [], datasets = [];
-                    const headParts = lines[0].split(',');
-                    // PSEUDOCODE: Identify multiple datasets (columns) based on the first row header.
-                    for (let i = 1; i < headParts.length; i++) datasets.push({ label: headParts[i].trim(), data: [] });
-                    // PSEUDOCODE: Map subsequent rows to labels (Col 1) and data points (Col 2+).
-                    for (let r = 1; r < lines.length; r++) {
-                        const rowParts = lines[r].split(',');
-                        labels.push(rowParts[0].trim());
-                        for (let c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(rowParts[c + 1]) || 0);
-                    }
-                    drawChart(labels, datasets);
-                });
-            } else {
-                let labels = [], datasets = [];
-                let raw = config.manualData;
-                if (raw) {
-                    // PSEUDOCODE: Convert storage format (array or object) into a sequential list of rows.
-                    let rows = Array.isArray(raw) ? raw : Object.keys(raw).sort((a, b) => a - b).map(k => raw[k]);
+            window.initDearChart = function (config) {
+                var ctx = document.getElementById(config.id);
+                if (!ctx) return;
 
-                    if (rows.length > 0) {
-                        // PSEUDOCODE: Check if data is in 'Legacy' (label/value) or 'Multi-Series' (columnar) format.
-                        if (rows[0] && rows[0].label !== undefined) {
-                            // Legacy Format Handling
-                            datasets.push({ label: 'Value', data: [] });
-                            rows.forEach((row) => {
-                                labels.push(row.label || '');
-                                datasets[0].data.push(parseFloat(row.value) || 0);
-                            });
+                var onDataReady = function (chartData) {
+                    if (!chartData.labels || chartData.labels.length === 0) return;
+
+                    var palette = palettes[config.palette] || palettes['default'];
+
+                    var datasets = chartData.datasets.map(function (ds, i) {
+                        var dsColor;
+                        if (chartData.datasets.length > 1) {
+                            dsColor = palette[i % palette.length];
                         } else {
-                            // Multi-Series Columnar Format Handling
-                            const headers = rows[0];
-                            // Extract series names from the header row.
-                            for (let i = 1; i < headers.length; i++) datasets.push({ label: headers[i], data: [] });
-                            // Extract labels and values from subsequent rows.
-                            for (let r = 1; r < rows.length; r++) {
-                                labels.push(rows[r][0]);
-                                for (let c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(rows[r][c + 1]) || 0);
+                            var colors = [];
+                            for (var j = 0; j < ds.data.length; j++) colors.push(palette[j % palette.length]);
+                            dsColor = colors;
+                        }
+
+                        return {
+                            label: ds.label,
+                            data: ds.data,
+                            backgroundColor: dsColor,
+                            borderColor: (config.type === 'bar' || config.type === 'horizontalBar') ? '#fff' : 'transparent',
+                            borderWidth: 2,
+                            hoverOffset: 4
+                        };
+                    });
+
+                    var chartConfig = {
+                        type: config.type === 'horizontalBar' ? 'bar' : config.type,
+                        data: {
+                            labels: chartData.labels,
+                            datasets: datasets
+                        },
+                        options: {
+                            indexAxis: config.type === 'horizontalBar' ? 'y' : 'x',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { position: config.legendPos }
                             }
                         }
+                    };
+
+                    new Chart(ctx, chartConfig);
+                };
+
+                if (config.source === 'csv' && config.csvUrl) {
+                    fetch(config.csvUrl)
+                        .then(res => res.text())
+                        .then(text => {
+                            var lines = text.split(/\r\n|\n/);
+                            var labels = [], data = [];
+                            lines.forEach(line => {
+                                var parts = line.split(',');
+                                if (parts.length >= 2) {
+                                    var val = parseFloat(parts[1]);
+                                    if (!isNaN(val)) {
+                                        labels.push(parts[0].trim());
+                                        data.push(val);
+                                    }
+                                }
+                            });
+                            onDataReady({
+                                labels: labels,
+                                datasets: [{ label: config.chartTitle, data: data }]
+                            });
+                        });
+                } else if (config.manualData && config.manualData.length > 0) {
+                    var labels = [];
+                    var datasets = [];
+                    var headers = config.manualData[0];
+
+                    for (var i = 1; i < headers.length; i++) {
+                        datasets.push({ label: headers[i] || 'Series ' + i, data: [] });
                     }
+
+                    for (var r = 1; r < config.manualData.length; r++) {
+                        var row = config.manualData[r];
+                        labels.push(row[0] || 'Unnamed');
+                        for (var c = 0; c < datasets.length; c++) {
+                            var val = parseFloat(row[c + 1]);
+                            datasets[c].data.push(isNaN(val) ? 0 : val);
+                        }
+                    }
+
+                    onDataReady({ labels: labels, datasets: datasets });
                 }
-                drawChart(labels, datasets);
-            }
-        }
+            };
+        })(jQuery);
     </script>
     <?php
 }
