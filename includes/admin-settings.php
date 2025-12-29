@@ -87,12 +87,13 @@ function dearcharts_render_main_box($post)
             --dc-border: #e2e8f0;
             --dc-bg: #f8fafc;
             --dc-text: #1e293b;
+            --dc-muted: #64748b;
         }
 
         .dc-admin-wrapper {
             margin: -12px;
             background: #fff;
-            border-radius: 8px;
+            border-radius: 6px;
             overflow: hidden;
             border: 1px solid var(--dc-border);
             box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
@@ -111,7 +112,7 @@ function dearcharts_render_main_box($post)
             margin: 0;
             font-size: 18px;
             font-weight: 700;
-            color: var(--dc-text);
+            color: var(--dc-muted);
             letter-spacing: -0.025em;
         }
 
@@ -340,6 +341,25 @@ function dearcharts_render_main_box($post)
             font-weight: bold;
         }
 
+        table.dc-table th {
+            position: relative;
+        }
+
+        .dc-delete-col {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: block;
+            line-height: 1;
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+
         .dc-setting-row {
             display: flex;
             align-items: center;
@@ -542,10 +562,44 @@ function dearcharts_render_main_box($post)
                 var cellHtml = '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview()"></td>';
                 jQuery(cellHtml).insertBefore(jQuery(this).find('td').last());
             });
+            // add delete controls for columns and update preview
+            dearcharts_add_delete_col_controls();
             dearcharts_update_live_preview();
             var $wrapper = jQuery('.dc-table-wrapper');
             $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 500);
         }
+
+        function dearcharts_add_delete_col_controls() {
+            var $ths = jQuery('#dc-manual-table thead th');
+            var lastIdx = $ths.length - 1;
+            $ths.each(function (i) {
+                if (i > 0 && i < lastIdx) {
+                    if (jQuery(this).find('.dc-delete-col').length === 0) {
+                        jQuery(this).append('<span class="dc-delete-col" onclick="dearcharts_delete_column(' + i + ')">×</span>');
+                    } else {
+                        jQuery(this).find('.dc-delete-col').attr('onclick', 'dearcharts_delete_column(' + i + ')');
+                    }
+                } else {
+                    jQuery(this).find('.dc-delete-col').remove();
+                }
+            });
+        }
+        function dearcharts_delete_column(idx) {
+            var $ths = jQuery('#dc-manual-table thead th');
+            var lastIdx = $ths.length - 1;
+            if (idx <= 0 || idx >= lastIdx) return; // don't delete label column or the add button
+            jQuery('#dc-manual-table thead th').eq(idx).remove();
+            jQuery('#dc-manual-table tbody tr').each(function () {
+                jQuery(this).find('td').eq(idx).remove();
+            });
+            // refresh controls and preview
+            dearcharts_add_delete_col_controls();
+            dearcharts_update_live_preview();
+        }
+        // ensure controls are present on DOM ready
+        jQuery(function(){ dearcharts_add_delete_col_controls(); });
+
+        /**
 
         /**
          * PSEUDOCODE: Update Live Preview
