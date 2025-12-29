@@ -63,12 +63,29 @@ function dearcharts_render_main_box($post)
             --dc-text: #1e293b;
         }
 
+        .dc-main-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 20px;
+            background: #fff;
+            border-bottom: 1px solid var(--dc-border);
+        }
+
+        .dc-main-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dc-text);
+        }
+
         .dc-split-container {
             display: flex;
-            min-height: 500px;
+            height: 480px;
             margin: -12px;
             background: #fff;
             border-radius: 0 0 8px 8px;
+            overflow: hidden;
         }
 
         .dc-preview-panel {
@@ -84,7 +101,7 @@ function dearcharts_render_main_box($post)
 
         .dc-preview-header {
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -123,12 +140,13 @@ function dearcharts_render_main_box($post)
 
         .dc-tabs {
             display: flex;
+            align-items: center;
             background: #fff;
             border-bottom: 1px solid var(--dc-border);
         }
 
         .dc-tab {
-            padding: 15px 25px;
+            padding: 15px 20px;
             cursor: pointer;
             font-weight: 500;
             color: #64748b;
@@ -142,10 +160,32 @@ function dearcharts_render_main_box($post)
             background: #eff6ff;
         }
 
+        .dc-type-selector-inline {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .dc-type-selector-inline select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--dc-border);
+            background: #f8fafc;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--dc-text);
+            cursor: pointer;
+        }
+
         .dc-tab-content {
             display: none;
-            padding: 25px;
+            padding: 15px 20px;
             flex: 1;
+            overflow-y: auto;
+            max-height: 100%;
         }
 
         .dc-tab-content.active {
@@ -155,8 +195,9 @@ function dearcharts_render_main_box($post)
         .dc-card {
             border: 1px solid var(--dc-border);
             border-radius: 8px;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             overflow: hidden;
+            background: #fff;
         }
 
         .dc-card-header {
@@ -175,21 +216,27 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-card-body {
-            padding: 15px;
+            padding: 12px;
         }
 
         .dc-table-wrapper {
             overflow-x: auto;
+            overflow-y: scroll;
             width: 100%;
+            max-height: 180px;
             margin-bottom: 15px;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
             padding-bottom: 5px;
+            display: block;
         }
 
         /* Custom Scrollbar "Slider" Styling */
         .dc-table-wrapper::-webkit-scrollbar {
+            width: 10px;
+            /* Vertical scrollbar width */
             height: 10px;
+            /* Horizontal scrollbar height */
         }
 
         .dc-table-wrapper::-webkit-scrollbar-track {
@@ -198,7 +245,8 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-table-wrapper::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: #94a3b8;
+            /* Darker thumb for better visibility */
             border-radius: 10px;
             border: 2px solid #f1f5f9;
         }
@@ -211,6 +259,13 @@ function dearcharts_render_main_box($post)
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
+            position: relative;
+        }
+
+        table.dc-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         table.dc-table th,
@@ -269,11 +324,24 @@ function dearcharts_render_main_box($post)
         }
     </style>
 
+    <div class="dc-main-header">
+        <h2>Chart Editor</h2>
+        <div class="dc-type-selector-inline">
+            <label for="dearcharts_type">Chart Type:</label>
+            <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
+                <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
+                <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
+                <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
+                <option value="line" <?php selected($chart_type, 'line'); ?>>Line</option>
+            </select>
+        </div>
+    </div>
+
     <div class="dc-split-container">
         <!-- Live Preview -->
         <div class="dc-preview-panel">
             <div class="dc-preview-header">
-                <h3>Live Chart View</h3>
+                <h3>Live Preview</h3>
                 <span id="dc-status"></span>
             </div>
             <div class="dc-chart-container">
@@ -284,27 +352,13 @@ function dearcharts_render_main_box($post)
         <!-- Settings Tabs -->
         <div class="dc-settings-panel">
             <div class="dc-tabs">
-                <div class="dc-tab active" onclick="dcTab(this, 'dc-data')">Create Chart</div>
-                <div class="dc-tab" onclick="dcTab(this, 'dc-style')">Chart Settings</div>
+                <div class="dc-tab active" onclick="dcTab(this, 'dc-data')">Data Source</div>
+                <div class="dc-tab" onclick="dcTab(this, 'dc-style')">Appearance</div>
             </div>
 
             <div id="dc-data" class="dc-tab-content active">
                 <input type="hidden" name="dearcharts_active_source" id="dearcharts_active_source"
                     value="<?php echo esc_attr($active_source); ?>">
-
-                <!-- Chart Type Card -->
-                <div class="dc-card">
-                    <div class="dc-card-header"><span>Select Chart Type</span></div>
-                    <div class="dc-card-body">
-                        <select name="dearcharts_type" id="dearcharts_type" class="dc-input-text" style="width:100%;"
-                            onchange="dearcharts_update_live_preview()">
-                            <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie Chart</option>
-                            <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut Chart</option>
-                            <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar Chart</option>
-                            <option value="line" <?php selected($chart_type, 'line'); ?>>Line Chart</option>
-                        </select>
-                    </div>
-                </div>
 
                 <div class="dc-card">
                     <div class="dc-card-header">
