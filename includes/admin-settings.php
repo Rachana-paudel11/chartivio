@@ -28,13 +28,33 @@ function dearcharts_add_custom_metaboxes()
 add_action('add_meta_boxes', 'dearcharts_add_custom_metaboxes');
 
 /**
+ * Enqueue Admin Assets
+ */
+function dearcharts_admin_assets($hook)
+{
+    global $post;
+    if ($hook == 'post-new.php' || $hook == 'post.php') {
+        if ($post && $post->post_type === 'dearcharts') {
+            wp_enqueue_media();
+            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
+        }
+    }
+}
+add_action('admin_enqueue_scripts', 'dearcharts_admin_assets');
+
+/**
  * Sidebar Meta Box: Shortcodes
  */
 function dearcharts_render_usage_box($post)
 {
     echo '<div style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">';
-    echo '<p style="margin-top:0; font-size:13px; color:#64748b;">Copy this shortcode to display the chart:</p>';
-    echo '<code style="display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">[dearchart id="' . $post->ID . '"]</code>';
+    if (isset($post->post_status) && $post->post_status === 'publish') {
+        echo '<p style="margin-top:0; font-size:13px; color:#64748b;">Copy this shortcode to display the chart:</p>';
+        echo '<code style="display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">[dearchart id="' . $post->ID . '"]</code>';
+    } else {
+        echo '<p style="margin-top:0; font-size:13px; color:#64748b;">Shortcode will be available after you publish this chart. You can preview it using the Preview button.</p>';
+        // Intentionally do not reveal the shortcode for unpublished charts to prevent confusion.
+    }
     echo '</div>';
 }
 
@@ -560,12 +580,17 @@ function dearcharts_render_main_box($post)
                     for (var i = 1; i < heads.length; i++) datasets.push({ label: heads[i].trim(), data: [] });
                     for (var r = 1; r < lines.length; r++) {
                         const row = lines[r].split(',');
+                        if (row.length < 1) continue;
                         labels.push(row[0].trim());
-                        for (var c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(row[c + 1]) || 0);
+                        for (var c = 0; c < datasets.length; c++) {
+                            var val = parseFloat(row[c + 1]);
+                            datasets[c].data.push(isNaN(val) ? 0 : val);
+                        }
                     }
-                    jQuery('#dc-status').show().text('CSV Loaded').css('color', '#10b981');
+                    jQuery('#dc-status').show().text('CSV Loaded').css({ 'color': '#10b981', 'background': '#f0fdf4' });
                 } catch (e) {
-                    jQuery('#dc-status').show().text('CSV Error').css('color', '#ef4444');
+                    console.error('CSV Fetch Error:', e);
+                    jQuery('#dc-status').show().text('CSV Error').css({ 'color': '#ef4444', 'background': '#fef2f2' });
                 }
             } else {
                 jQuery('#dc-manual-table thead th').each(function (i) {
@@ -615,6 +640,30 @@ function dearcharts_render_main_box($post)
 }
 
 /**
+ * Sanitize manual data (recursive) to ensure stored values are safe.
+ */
+function dearcharts_sanitize_manual_data($data)
+{
+    if (!is_array($data)) return array();
+    $out = array();
+    foreach ($data as $k => $row) {
+        if (is_array($row)) {
+            $out[$k] = array();
+            foreach ($row as $v) {
+                if (is_array($v)) {
+                    $out[$k][] = array_map('sanitize_text_field', $v);
+                } else {
+                    $out[$k][] = sanitize_text_field($v);
+                }
+            }
+        } else {
+            $out[$k] = sanitize_text_field($row);
+        }
+    }
+    return $out;
+}
+
+/**
  * Save Meta Box Data
  * PSEUDOCODE:
  * 1. Security check: Verify the nonce.
@@ -630,9 +679,13 @@ function dearcharts_save_meta_box_data($post_id)
         return;
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
         return;
+    if (!current_user_can('edit_post', $post_id))
+        return;
 
-    if (isset($_POST['dearcharts_manual_data']))
-        update_post_meta($post_id, '_dearcharts_manual_data', $_POST['dearcharts_manual_data']);
+    if (isset($_POST['dearcharts_manual_data'])) {
+        $manual = dearcharts_sanitize_manual_data($_POST['dearcharts_manual_data']);
+        update_post_meta($post_id, '_dearcharts_manual_data', $manual);
+    }
     if (isset($_POST['dearcharts_csv_url']))
         update_post_meta($post_id, '_dearcharts_csv_url', esc_url_raw($_POST['dearcharts_csv_url']));
     if (isset($_POST['dearcharts_active_source']))

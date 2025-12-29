@@ -24,8 +24,15 @@ function dearcharts_render_shortcode($atts)
     $post_id = intval($atts['id']);
     $post = get_post($post_id);
 
-    if (!$post || $post->post_type !== 'dearcharts')
+    if (!$post || $post->post_type !== 'dearcharts') {
         return '';
+    }
+
+    // Only render for published charts. Allow rendering for previews when the current user can edit the post.
+    $can_preview = (function_exists('is_preview') && is_preview() && current_user_can('edit_post', $post_id));
+    if ($post->post_status !== 'publish' && !$can_preview) {
+        return '';
+    }
 
     // Retrieve Data
     $manual_data = get_post_meta($post_id, '_dearcharts_manual_data', true);
@@ -37,7 +44,10 @@ function dearcharts_render_shortcode($atts)
     $legend_pos = get_post_meta($post_id, '_dearcharts_legend_pos', true) ?: 'top';
     $palette_key = get_post_meta($post_id, '_dearcharts_palette', true) ?: 'default';
 
-    $unique_id = 'dearchart-' . $post_id . '-' . uniqid();
+    // Ensure a stable, unique ID per page render (avoids changing on each reload)
+    static $dearcharts_instance_counter = 0;
+    $dearcharts_instance_counter++;
+    $unique_id = 'dearchart-' . $post_id . '-' . $dearcharts_instance_counter;
 
     // Prepare Config for JS
     $config = array(
@@ -56,7 +66,7 @@ function dearcharts_render_shortcode($atts)
     $output .= '</div>';
 
     // Inline Script to Init
-    $output .= '<script>jQuery(document).ready(function($) { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . json_encode($config) . '); } });</script>';
+    $output .= '<script>jQuery(document).ready(function($) { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
 
     return $output;
 }
@@ -104,27 +114,36 @@ function dearcharts_footer_js()
             var palette = dc_palettes[config.palette] || dc_palettes['default'];
 
             var drawChart = (l, ds) => {
+                let realType = config.type;
+                let indexAxis = 'x';
+
+                if (realType === 'horizontalBar') {
+                    realType = 'bar';
+                    indexAxis = 'y';
+                }
+
                 // PSEUDOCODE: Assign colors from palette to each dataset or each data point.
                 ds.forEach((set, i) => {
                     let colors = (ds.length > 1) ? palette[i % palette.length] : l.map((_, j) => palette[j % palette.length]);
-                    if (config.type === 'bar' || config.type === 'line') {
+                    if (realType === 'bar' || realType === 'line') {
                         set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : palette;
                         set.borderColor = (ds.length > 1) ? palette[i % palette.length] : palette;
                     } else {
                         set.backgroundColor = colors;
                         set.borderColor = colors;
                     }
-                    set.borderWidth = (config.type === 'line') ? 2 : 1;
-                    set.fill = (config.type === 'line') ? false : true;
+                    set.borderWidth = (realType === 'line') ? 2 : 1;
+                    set.fill = (realType === 'line') ? false : true;
                 });
 
                 new Chart(ctx, {
-                    type: config.type,
+                    type: realType,
                     data: { labels: l, datasets: ds },
                     options: {
+                        indexAxis: indexAxis,
                         responsive: true,
                         maintainAspectRatio: false,
-                        scales: (config.type === 'bar' || config.type === 'line') ? { y: { beginAtZero: true } } : {},
+                        scales: (realType === 'bar' || realType === 'line') ? { y: { beginAtZero: true } } : {},
                         plugins: { legend: { display: config.legendPos !== 'none', position: config.legendPos } }
                     }
                 });
