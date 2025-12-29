@@ -1,9 +1,6 @@
 <?php
 /**
- * Admin Settings - Meta Boxes and Admin Functionality
- * 
- * Handles all admin-side functionality including meta boxes,
- * data persistence, and professional split-screen UI.
+ * Professional Split-Screen Admin UI for DearCharts
  */
 
 if (!defined('ABSPATH')) {
@@ -11,660 +8,641 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Add Custom Columns to Admin List
+ * Filter to allow CSV uploads in media library
  */
-function dearcharts_add_id_column($columns)
-{
-    $columns['id'] = 'ID';
-    $columns['shortcode'] = 'Shortcode';
-    return $columns;
-}
-add_filter('manage_dearcharts_posts_columns', 'dearcharts_add_id_column');
-
-function dearcharts_custom_column_content($column, $post_id)
-{
-    switch ($column) {
-        case 'id':
-            echo $post_id;
-            break;
-        case 'shortcode':
-            echo '<code>[dearchart id="' . $post_id . '"]</code>';
-            break;
+add_filter('upload_mimes', function ($mimes) {
+    if (!isset($mimes['csv'])) {
+        $mimes['csv'] = 'text/csv';
     }
-}
-add_action('manage_dearcharts_posts_custom_column', 'dearcharts_custom_column_content', 10, 2);
+    return $mimes;
+});
 
 /**
- * Add Meta Boxes
+ * Register Meta Boxes
  */
-function dearcharts_register_meta_box()
+function dearcharts_add_custom_metaboxes()
 {
-    add_meta_box(
-        'dearcharts_data_meta_box',
-        'Chart Configuration',
-        'dearcharts_render_tabbed_meta_box',
-        'dearcharts',
-        'normal',
-        'high'
-    );
+    add_meta_box('dearcharts_main_box', 'Chart Configuration', 'dearcharts_render_main_box', 'dearcharts', 'normal', 'high');
+    add_meta_box('dearcharts_usage_box', 'Chart Shortcodes', 'dearcharts_render_usage_box', 'dearcharts', 'side', 'low');
 }
-add_action('add_meta_boxes', 'dearcharts_register_meta_box');
+add_action('add_meta_boxes', 'dearcharts_add_custom_metaboxes');
 
-function dearcharts_render_tabbed_meta_box($post)
+/**
+ * Sidebar Meta Box: Shortcodes
+ */
+function dearcharts_render_usage_box($post)
 {
+    echo '<div style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">';
+    echo '<p style="margin-top:0; font-size:13px; color:#64748b;">Copy this shortcode to display the chart:</p>';
+    echo '<code style="display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">[dearchart id="' . $post->ID . '"]</code>';
+    echo '</div>';
+}
+
+/**
+ * Main Meta Box: Split-Screen Professional UI
+ * PSEUDOCODE:
+ * 1. Fetch current chart data and settings from post meta.
+ * 2. Define the 'Live Preview' panel (Left side).
+ * 3. Define the 'Settings' panel with Tabs (Right side).
+ * 4. Implement a unified 'Chart Editor' header with type selection.
+ * 5. Initialize the JavaScript Live Preview engine.
+ */
+function dearcharts_render_main_box($post)
+{
+    // Retrieve Meta Data
     $manual_data = get_post_meta($post->ID, '_dearcharts_manual_data', true);
     $csv_url = get_post_meta($post->ID, '_dearcharts_csv_url', true);
-    $active_source = get_post_meta($post->ID, '_dearcharts_active_source', true);
-    $chart_type = get_post_meta($post->ID, '_dearcharts_type', true);
-    $legend_pos = get_post_meta($post->ID, '_dearcharts_legend_pos', true);
-    $palette = get_post_meta($post->ID, '_dearcharts_palette', true);
-    $custom_colors = get_post_meta($post->ID, '_dearcharts_colors', true);
-    $is_donut = get_post_meta($post->ID, '_dearcharts_donut', true);
+    $active_source = get_post_meta($post->ID, '_dearcharts_active_source', true) ?: ((!empty($csv_url)) ? 'csv' : 'manual');
 
-    if (empty($active_source))
-        $active_source = 'manual';
-    if (empty($palette))
-        $palette = 'default';
-    if (empty($chart_type))
-        $chart_type = 'pie';
-    if (empty($legend_pos))
-        $legend_pos = 'top';
+    // Aesthetic Settings
+    $chart_type = get_post_meta($post->ID, '_dearcharts_type', true) ?: (get_post_meta($post->ID, '_dearcharts_is_donut', true) === '1' ? 'doughnut' : 'pie');
+    $legend_pos = get_post_meta($post->ID, '_dearcharts_legend_pos', true) ?: 'top';
+    $palette_key = get_post_meta($post->ID, '_dearcharts_palette', true) ?: 'default';
 
-    wp_nonce_field('dearcharts_save_meta_box_data', 'dearcharts_nonce');
+    wp_nonce_field('dearcharts_save_meta', 'dearcharts_nonce');
     ?>
     <style>
-        .dearcharts-wrapper {
-            display: flex;
-            width: 100%;
-            gap: 30px;
-            margin-top: 10px;
-            align-items: flex-start;
+        :root {
+            --dc-primary: #3b82f6;
+            --dc-border: #e2e8f0;
+            --dc-bg: #f8fafc;
+            --dc-text: #1e293b;
         }
 
-        .dearcharts-preview {
-            flex: 1;
-            position: sticky;
-            top: 40px;
+        .dc-admin-wrapper {
+            margin: -12px;
             background: #fff;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 25px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            text-align: center;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--dc-border);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
         }
 
-        .dearcharts-settings {
-            flex: 1 1 0;
-            min-width: 0;
-        }
-
-        .dearcharts-tabs {
+        .dc-main-header {
             display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: #fff;
             border-bottom: 2px solid #f1f5f9;
         }
 
-        .dearcharts-tab-link {
-            padding: 12px 20px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #64748b;
-            cursor: pointer;
-            transition: all 0.2s;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
+        .dc-main-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--dc-text);
+            letter-spacing: -0.025em;
         }
 
-        .dearcharts-tab-link:hover {
-            color: #2271b1;
+        .dc-split-container {
+            display: flex;
+            height: 480px;
+            background: #fff;
+            overflow: hidden;
         }
 
-        .dearcharts-tab-link.active {
-            color: #2271b1;
-            border-bottom-color: #2271b1;
+        .dc-preview-panel {
+            flex: 0 0 450px;
+            padding: 20px;
+            background: var(--dc-bg);
+            border-right: 1px solid var(--dc-border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
         }
 
-        .dearcharts-tab-content {
+        .dc-preview-header {
+            width: 100%;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .dc-preview-header h3 {
+            margin: 0;
+            font-size: 16px;
+            color: var(--dc-text);
+        }
+
+        #dc-status {
+            font-size: 12px;
+            padding: 4px 8px;
+            border-radius: 4px;
             display: none;
         }
 
-        .dearcharts-tab-content.active {
+        .dc-chart-container {
+            width: 100%;
+            max-width: 400px;
+            height: 400px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+
+        .dc-settings-panel {
+            flex: 1;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .dc-tabs {
+            display: flex;
+            align-items: center;
+            background: #fff;
+            border-bottom: 1px solid var(--dc-border);
+        }
+
+        .dc-tab {
+            padding: 15px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: #64748b;
+            border-bottom: 2px solid transparent;
+            transition: 0.2s;
+        }
+
+        .dc-tab.active {
+            color: var(--dc-primary);
+            border-bottom-color: var(--dc-primary);
+            background: #eff6ff;
+        }
+
+        .dc-type-selector-inline {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .dc-type-selector-inline select {
+            padding: 6px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--dc-border);
+            background: #f8fafc;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--dc-text);
+            cursor: pointer;
+        }
+
+        .dc-tab-content {
+            display: none;
+            padding: 15px 20px;
+            flex: 1;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+
+        .dc-tab-content.active {
             display: block;
         }
 
-        .dearcharts-card {
-            border: 1px solid #e2e8f0;
+        .dc-card {
+            border: 1px solid var(--dc-border);
             border-radius: 8px;
+            margin-bottom: 15px;
             overflow: hidden;
             background: #fff;
-            margin-bottom: 20px;
         }
 
-        .dearcharts-card-header {
-            background: #f8fafc;
-            padding: 12px 20px;
-            border-bottom: 1px solid #e2e8f0;
+        .dc-card-header {
+            background: #f1f5f9;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--dc-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .dearcharts-card-header strong {
-            color: #1e293b;
+        .dc-card-header span {
+            font-weight: 600;
+            color: #475569;
             font-size: 13px;
         }
 
-        .dearcharts-card-body {
-            padding: 20px;
+        .dc-card-body {
+            padding: 12px;
         }
 
-        .dc-manual-entry-panel {
+        .dc-table-wrapper {
+            overflow-x: auto;
+            overflow-y: scroll;
             width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
-        }
-
-        .dc-table-responsive-wrapper {
-            width: 100%;
-            display: block;
-            overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch;
+            max-height: 180px;
             margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 4px;
+            padding-bottom: 5px;
+            display: block;
+        }
+
+        /* Custom Scrollbar "Slider" Styling */
+        .dc-table-wrapper::-webkit-scrollbar {
+            width: 10px;
+            /* Vertical scrollbar width */
+            height: 10px;
+            /* Horizontal scrollbar height */
+        }
+
+        .dc-table-wrapper::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .dc-table-wrapper::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            /* Darker thumb for better visibility */
+            border-radius: 10px;
+            border: 2px solid #f1f5f9;
+        }
+
+        .dc-table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: var(--dc-primary);
+        }
+
+        table.dc-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
             position: relative;
         }
 
-        .dc-table-responsive-wrapper::-webkit-scrollbar {
-            height: 8px;
+        table.dc-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
-        .dc-table-responsive-wrapper::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-
-        .dc-table-responsive-wrapper::-webkit-scrollbar-thumb {
-            background: #2271b1;
-            border-radius: 4px;
-        }
-
-        .dc-table-responsive-wrapper::-webkit-scrollbar-thumb:hover {
-            background: #135e96;
-        }
-
-        .dearcharts-table {
-            min-width: 100%;
-            table-layout: auto;
-            border-collapse: collapse;
-        }
-
-        .dearcharts-table th,
-        .dearcharts-table td {
+        table.dc-table th,
+        table.dc-table td {
             padding: 10px;
             border-bottom: 1px solid #f1f5f9;
-            text-align: left;
-            min-width: 100px;
-        }
-
-        .dearcharts-table th:first-child,
-        .dearcharts-table td:first-child {
+            width: 150px;
             min-width: 150px;
         }
 
-        .dearcharts-table input {
+        table.dc-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        table.dc-table th:last-child,
+        table.dc-table td:last-child {
+            width: 40px;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        table.dc-table input {
             width: 100%;
             border: 1px solid #cbd5e1;
+            padding: 8px;
             border-radius: 4px;
-            padding: 6px 10px;
             font-size: 13px;
         }
 
-        .dearcharts-input-group {
-            margin-bottom: 20px;
+        .dc-delete-row {
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
         }
 
-        .dearcharts-input-group label {
-            display: block;
-            margin-bottom: 8px;
+        .dc-setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .dc-setting-row:last-child {
+            border-bottom: none;
+        }
+
+        .dc-setting-label {
             font-weight: 600;
             color: #475569;
         }
-
-        .dearcharts-source-toggle {
-            display: flex;
-            background: #f1f5f9;
-            padding: 4px;
-            border-radius: 8px;
-            gap: 4px;
-            margin-bottom: 20px;
-        }
-
-        .dearcharts-toggle-option {
-            flex: 1;
-        }
-
-        .dearcharts-toggle-option input {
-            display: none;
-        }
-
-        .dearcharts-toggle-option label {
-            display: block;
-            text-align: center;
-            padding: 8px;
-            cursor: pointer;
-            border-radius: 6px;
-            font-size: 13px;
-            color: #64748b;
-        }
-
-        .dearcharts-toggle-option input:checked+label {
-            background: #fff;
-            color: #2271b1;
-            font-weight: 600;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-        }
-
-        #dearchartsCanvasContainer {
-            height: 400px;
-            width: 100%;
-            position: relative;
-        }
     </style>
 
-    <div class="dearcharts-wrapper">
-        <!-- LEFT: PREVIEW -->
-        <div class="dearcharts-preview">
-            <h3 style="margin: 0 0 20px 0; font-size: 16px; color: #1e293b;">Live Chart Preview</h3>
-            <div id="dearchartsCanvasContainer">
-                <canvas id="dearchartsCanvas"></canvas>
-            </div>
-            <div id="dearcharts-no-data" style="display:none; padding-top: 150px; color: #94a3b8;">
-                Add data to see preview
+    <div class="dc-admin-wrapper">
+        <div class="dc-main-header">
+            <h2>Chart Editor</h2>
+            <div class="dc-type-selector-inline">
+                <label for="dearcharts_type">Chart Type:</label>
+                <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
+                    <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
+                    <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
+                    <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
+                    <option value="line" <?php selected($chart_type, 'line'); ?>>Line</option>
+                </select>
             </div>
         </div>
 
-        <!-- RIGHT: SETTINGS -->
-        <div class="dearcharts-settings">
-            <div class="dearcharts-tabs">
-                <span class="dearcharts-tab-link active" data-tab="tab-create">Create Chart</span>
-                <span class="dearcharts-tab-link" data-tab="tab-settings">Chart Settings</span>
+        <div class="dc-split-container">
+            <!-- Live Preview -->
+            <div class="dc-preview-panel">
+                <div class="dc-preview-header">
+                    <h3>Live Preview</h3>
+                    <span id="dc-status"></span>
+                </div>
+                <div class="dc-chart-container">
+                    <canvas id="dc-live-chart"></canvas>
+                </div>
             </div>
 
-            <!-- TAB: CREATE -->
-            <div id="tab-create" class="dearcharts-tab-content active">
-                <div class="dearcharts-input-group">
-                    <label>Chart Type</label>
-                    <select id="dearcharts_type" name="_dearcharts_type" class="dearcharts-live-input large-text">
-                        <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie Chart</option>
-                        <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut Chart</option>
-                        <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar Chart (Vertical)</option>
-                        <option value="horizontalBar" <?php selected($chart_type, 'horizontalBar'); ?>>Bar Chart
-                            (Horizontal)</option>
-                        <option value="line" <?php selected($chart_type, 'line'); ?>>Line Chart</option>
-                    </select>
-                </div>
+        <!-- Settings Tabs -->
+        <div class="dc-settings-panel">
+            <div class="dc-tabs">
+                <div class="dc-tab active" onclick="dcTab(this, 'dc-data')">Data Source</div>
+                <div class="dc-tab" onclick="dcTab(this, 'dc-style')">Appearance</div>
+            </div>
 
-                <div class="dearcharts-input-group">
-                    <label>Data Source</label>
-                    <div class="dearcharts-source-toggle">
-                        <div class="dearcharts-toggle-option">
-                            <input type="radio" id="src_csv" name="_dearcharts_active_source" value="csv" <?php checked($active_source, 'csv'); ?> class="dearcharts-live-input">
-                            <label for="src_csv">CSV File</label>
-                        </div>
-                        <div class="dearcharts-toggle-option">
-                            <input type="radio" id="src_manual" name="_dearcharts_active_source" value="manual" <?php checked($active_source, 'manual'); ?> class="dearcharts-live-input">
-                            <label for="src_manual">Manual Entry</label>
+            <div id="dc-data" class="dc-tab-content active">
+                <input type="hidden" name="dearcharts_active_source" id="dearcharts_active_source"
+                    value="<?php echo esc_attr($active_source); ?>">
+
+                <div class="dc-card">
+                    <div class="dc-card-header">
+                        <span>Import from CSV</span>
+                        <input type="radio" name="dc_source_selector" value="csv" <?php checked($active_source, 'csv'); ?>
+                            onclick="dcSetSource('csv')">
+                    </div>
+                    <div class="dc-card-body" id="dc-csv-body"
+                        style="<?php echo ($active_source === 'csv') ? '' : 'opacity:0.5; pointer-events:none;'; ?>">
+                        <div style="display:flex; gap:8px;">
+                            <input type="text" name="dearcharts_csv_url" id="dearcharts_csv_url" class="dc-input-text"
+                                style="flex:1;" value="<?php echo esc_url($csv_url); ?>"
+                                oninput="dearcharts_update_live_preview()">
+                            <button type="button" class="button" onclick="dcBrowseCSV()">Media</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- CARDS -->
-                <div id="panel-csv" class="dearcharts-card"
-                    style="display: <?php echo $active_source === 'csv' ? 'block' : 'none'; ?>;">
-                    <div class="dearcharts-card-header"><strong>Import from CSV</strong></div>
-                    <div class="dearcharts-card-body">
-                        <input type="text" id="dearcharts_csv_url" name="_dearcharts_csv_url" class="large-text"
-                            value="<?php echo esc_attr($csv_url); ?>" placeholder="CSV URL...">
-                        <button type="button" class="button dearcharts-upload-btn"
-                            style="margin-top: 10px; width: 100%;">Select from Media</button>
+                <div class="dc-card">
+                    <div class="dc-card-header">
+                        <span>Manual Data Entry</span>
+                        <input type="radio" name="dc_source_selector" value="manual" <?php checked($active_source, 'manual'); ?> onclick="dcSetSource('manual')">
                     </div>
-                </div>
-
-                <div id="panel-manual" class="dearcharts-card dc-manual-entry-panel"
-                    style="display: <?php echo $active_source === 'manual' ? 'block' : 'none'; ?>;">
-                    <div class="dearcharts-card-header"><strong>Manual Data Entry</strong></div>
-                    <div class="dearcharts-card-body">
-                        <div class="dc-table-responsive-wrapper">
-                            <table class="dearcharts-table" id="dearcharts-repeater-table">
+                    <div class="dc-card-body" id="dc-manual-body"
+                        style="<?php echo ($active_source === 'manual') ? '' : 'opacity:0.5; pointer-events:none;'; ?>">
+                        <div class="dc-table-wrapper">
+                            <table class="dc-table" id="dc-manual-table">
                                 <thead>
                                     <tr>
-                                        <th>Labels</th>
                                         <?php
-                                        $headers = ['Label', 'Series 1'];
-                                        if (!empty($manual_data))
-                                            $headers = $manual_data[0];
-                                        for ($i = 1; $i < count($headers); $i++): ?>
-                                            <th>
-                                                <div style="display:flex; align-items:center;">
-                                                    <input type="text" name="dearcharts_manual_data[0][]"
-                                                        value="<?php echo esc_attr($headers[$i]); ?>"
-                                                        class="dearcharts-live-input"
-                                                        style="border:none; background:transparent; font-weight:600; padding:0;">
-                                                    <span class="dearcharts-remove-col"
-                                                        style="cursor:pointer; margin-left:5px;">×</span>
-                                                </div>
-                                            </th>
-                                        <?php endfor; ?>
-                                        <th style="min-width:30px;"></th>
+                                        // Handle backward compatibility for old 2-column data
+                                        if (!empty($manual_data) && is_array($manual_data)) {
+                                            if (isset($manual_data[0]['label'])) {
+                                                // Convert old format to new format
+                                                echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Label" oninput="dearcharts_update_live_preview()"></th>';
+                                                echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Value" oninput="dearcharts_update_live_preview()"></th>';
+                                            } else {
+                                                foreach ($manual_data[0] as $h) {
+                                                    echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="' . esc_attr($h) . '" oninput="dearcharts_update_live_preview()"></th>';
+                                                }
+                                            }
+                                        } else {
+                                            echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Label" oninput="dearcharts_update_live_preview()"></th>';
+                                            echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series 1" oninput="dearcharts_update_live_preview()"></th>';
+                                        }
+                                        ?>
+                                        <th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php
-                                    $rows = (!empty($manual_data) && count($manual_data) > 1) ? array_slice($manual_data, 1) : [['', '']];
-                                    foreach ($rows as $ri => $row): ?>
-                                        <tr>
-                                            <td><input type="text" name="dearcharts_manual_data[<?php echo $ri + 1; ?>][]"
-                                                    value="<?php echo esc_attr($row[0]); ?>" class="dearcharts-live-input"></td>
-                                            <?php for ($ci = 1; $ci < count($headers); $ci++): ?>
-                                                <td><input type="number" step="any"
-                                                        name="dearcharts_manual_data[<?php echo $ri + 1; ?>][]"
-                                                        value="<?php echo esc_attr($row[$ci]); ?>" class="dearcharts-live-input">
-                                                </td>
-                                            <?php endfor; ?>
-                                            <td><span class="dearcharts-remove-row" style="cursor:pointer;">×</span></td>
-                                        </tr>
-                                    <?php endforeach; ?>
+                                    if (!empty($manual_data) && is_array($manual_data)) {
+                                        if (isset($manual_data[0]['label'])) {
+                                            foreach ($manual_data as $i => $row) {
+                                                echo '<tr>';
+                                                echo '<td><input type="text" name="dearcharts_manual_data[' . ($i + 1) . '][]" value="' . esc_attr($row['label']) . '" oninput="dearcharts_update_live_preview()"></td>';
+                                                echo '<td><input type="text" name="dearcharts_manual_data[' . ($i + 1) . '][]" value="' . esc_attr($row['value']) . '" oninput="dearcharts_update_live_preview()"></td>';
+                                                echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
+                                            }
+                                        } else {
+                                            for ($r = 1; $r < count($manual_data); $r++) {
+                                                echo '<tr>';
+                                                foreach ($manual_data[$r] as $cell) {
+                                                    echo '<td><input type="text" name="dearcharts_manual_data[' . $r . '][]" value="' . esc_attr($cell) . '" oninput="dearcharts_update_live_preview()"></td>';
+                                                }
+                                                echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
+                                            }
+                                        }
+                                    } else {
+                                        echo '<tr><td><input type="text" name="dearcharts_manual_data[1][]" value="Jan" oninput="dearcharts_update_live_preview()"></td><td><input type="text" name="dearcharts_manual_data[1][]" value="10" oninput="dearcharts_update_live_preview()"></td><td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
+                                    }
+                                    ?>
                                 </tbody>
                             </table>
                         </div>
                         <div style="display:flex; gap:10px;">
-                            <button type="button" class="button" id="dearcharts-add-col">Add Column</button>
-                            <button type="button" class="button button-primary" id="dearcharts-add-row" style="flex:1;">Add
-                                Row</button>
+                            <button type="button" class="button" onclick="dearcharts_add_row()">+ Add Row</button>
+                            <button type="button" class="button" onclick="dearcharts_add_column()">+ Add Column</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB: SETTINGS -->
-            <div id="tab-settings" class="dearcharts-tab-content">
-                <div class="dearcharts-input-group">
-                    <label>Legend Position</label>
-                    <select name="_dearcharts_legend_pos" class="dearcharts-live-input">
-                        <option value="top" <?php selected($legend_pos, 'top'); ?>>Top</option>
-                        <option value="bottom" <?php selected($legend_pos, 'bottom'); ?>>Bottom</option>
-                        <option value="left" <?php selected($legend_pos, 'left'); ?>>Left</option>
-                        <option value="right" <?php selected($legend_pos, 'right'); ?>>Right</option>
-                        <option value="none" <?php selected($legend_pos, 'none'); ?>>Hidden</option>
-                    </select>
-                </div>
-
-                <div class="dearcharts-input-group">
-                    <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
-                        <input type="checkbox" name="_dearcharts_donut" value="1" <?php checked($is_donut, '1'); ?>
-                            class="dearcharts-live-input">
-                        Donut Style (For Pie/Doughnut)
-                    </label>
-                </div>
-
-                <div class="dearcharts-input-group">
-                    <label>Color Palette</label>
-                    <select id="dearcharts_palette" name="_dearcharts_palette" class="dearcharts-live-input">
-                        <option value="default" <?php selected($palette, 'default'); ?>>Modern Blue</option>
-                        <option value="pastel" <?php selected($palette, 'pastel'); ?>>Soft Pastel</option>
-                        <option value="ocean" <?php selected($palette, 'ocean'); ?>>Deep Ocean</option>
-                        <option value="sunset" <?php selected($palette, 'sunset'); ?>>Warm Sunset</option>
-                    </select>
-                </div>
-
-                <div class="dearcharts-input-group">
-                    <label>Custom Hex Colors</label>
-                    <textarea name="_dearcharts_colors" rows="3" class="dearcharts-live-input large-text"
-                        placeholder="#FF0000, #00FF00..."><?php echo esc_attr($custom_colors); ?></textarea>
+            <div id="dc-style" class="dc-tab-content">
+                <div class="dc-card">
+                    <div class="dc-card-header"><span>Visual Settings</span></div>
+                    <div class="dc-card-body">
+                        <div class="dc-setting-row">
+                            <span class="dc-setting-label">Legend Position</span>
+                            <select name="dearcharts_legend_pos" id="dearcharts_legend_pos"
+                                onchange="dearcharts_update_live_preview()">
+                                <option value="top" <?php selected($legend_pos, 'top'); ?>>Top</option>
+                                <option value="bottom" <?php selected($legend_pos, 'bottom'); ?>>Bottom</option>
+                                <option value="left" <?php selected($legend_pos, 'left'); ?>>Left</option>
+                                <option value="right" <?php selected($legend_pos, 'right'); ?>>Right</option>
+                                <option value="none" <?php selected($legend_pos, 'none'); ?>>None</option>
+                            </select>
+                        </div>
+                        <div class="dc-setting-row">
+                            <span class="dc-setting-label">Color Palette</span>
+                            <select name="dearcharts_palette" id="dearcharts_palette"
+                                onchange="dearcharts_update_live_preview()">
+                                <option value="default" <?php selected($palette_key, 'default'); ?>>Standard</option>
+                                <option value="pastel" <?php selected($palette_key, 'pastel'); ?>>Pastel</option>
+                                <option value="ocean" <?php selected($palette_key, 'ocean'); ?>>Ocean</option>
+                                <option value="sunset" <?php selected($palette_key, 'sunset'); ?>>Sunset</option>
+                                <option value="neon" <?php selected($palette_key, 'neon'); ?>>Neon</option>
+                                <option value="forest" <?php selected($palette_key, 'forest'); ?>>Forest</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        jQuery(document).ready(function ($) {
-            var myChart = null;
-            var ctx = document.getElementById('dearchartsCanvas').getContext('2d');
-            var palettes = {
-                'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                'pastel': ['#93c5fd', '#6ee7b7', '#fcd34d', '#fca5a5', '#c4b5fd'],
-                'ocean': ['#1e40af', '#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa'],
-                'sunset': ['#991b1b', '#b91c1c', '#dc2626', '#ef4444', '#f87171']
-            };
-
-            // Tabs
-            $('.dearcharts-tab-link').click(function () {
-                $('.dearcharts-tab-link, .dearcharts-tab-content').removeClass('active');
-                $(this).addClass('active');
-                $('#' + $(this).data('tab')).addClass('active');
+    <script>     var dcLiveChart = null; var dc_palettes = { 'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
+        function dcTab(el, id) { jQuery('.dc-tab').removeClass('active'); jQuery('.dc-tab-content').removeClass('active'); jQuery(el).addClass('active'); jQuery('#' + id).addClass('active'); }
+        function dcSetSource(src) { jQuery('#dearcharts_active_source').val(src); jQuery('#dc-csv-body, #dc-manual-body').css({ 'opacity': 0.5, 'pointer-events': 'none' }); jQuery('#dc-' + src + '-body').css({ 'opacity': 1, 'pointer-events': 'auto' }); dearcharts_update_live_preview(); }
+        function dcBrowseCSV() { var media = wp.media({ title: 'Select CSV', multiple: false }).open().on('select', function () { var url = media.state().get('selection').first().toJSON().url; jQuery('#dearcharts_csv_url').val(url); dearcharts_update_live_preview(); }); }
+        function dearcharts_add_row() {
+            var colCount = jQuery('#dc-manual-table thead th').length - 1;
+            var rowKey = Date.now();
+            var html = '<tr>';
+            for (var i = 0; i < colCount; i++) {
+                html += '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview()"></td>';
+            }
+            html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
+            jQuery('#dc-manual-table tbody').append(html);
+        }
+        /**
+         * PSEUDOCODE: Add Column
+         * 1. Determine new column index.
+         * 2. Insert as a new header input (for the series label).
+         * 3. Iterate through all rows and append a new data input cell for that series.
+         * 4. Auto-scroll the table to the right to focus on the new column.
+         */
+        function dearcharts_add_column() {
+            var colIdx = jQuery('#dc-manual-table thead th').length - 1;
+            var headHtml = '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series ' + colIdx + '" oninput="dearcharts_update_live_preview()"></th>';
+            jQuery(headHtml).insertBefore(jQuery('#dc-manual-table thead th').last());
+            jQuery('#dc-manual-table tbody tr').each(function () {
+                var rowKeyMatch = jQuery(this).find('td:first input').attr('name').match(/\[(.*?)\]/);
+                var rowKey = rowKeyMatch ? rowKeyMatch[1] : Date.now();
+                var cellHtml = '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview()"></td>';
+                jQuery(cellHtml).insertBefore(jQuery(this).find('td').last());
             });
+            dearcharts_update_live_preview();
+            var $wrapper = jQuery('.dc-table-wrapper');
+            $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 500);
+        }
 
-            function getActiveSource() { return $('input[name="_dearcharts_active_source"]:checked').val(); }
+        /**
+         * PSEUDOCODE: Update Live Preview
+         * 1. Safely clear the previous chart instance.
+         * 2. Read the source (CSV vs Manual).
+         * 3. If CSV: Fetch URL, parse lines, and map to Chart.js datasets.
+         * 4. If Manual: Scrape table TBODY for data and THEAD for labels.
+         * 5. Apply selected color palette from the dc_palettes dictionary.
+         * 6. Re-draw the Chart using the Chart.js API.
+         */
+        async function dearcharts_update_live_preview() {
+            let chartType = jQuery('#dearcharts_type').val();
+            let legendPos = jQuery('#dearcharts_legend_pos').val();
+            let palette = dc_palettes[jQuery('#dearcharts_palette').val()] || dc_palettes['default'];
+            var canvas = document.getElementById('dc-live-chart');
+            if (!canvas) return;
+            var ctx = canvas.getContext('2d');
+            var source = jQuery('#dearcharts_active_source').val();
 
-            function parseCSV(text) {
-                var lines = text.trim().split(/\r\n|\n/);
-                if (lines.length < 1) return { labels: [], datasets: [] };
+            if (dcLiveChart) dcLiveChart.destroy();
 
-                // Auto-detect delimiter
-                var firstLine = lines[0];
-                var delimiter = ',';
-                if (firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') === -1) delimiter = ';';
-                if (firstLine.indexOf('\t') !== -1 && firstLine.indexOf(',') === -1) delimiter = '\t';
+            var labels = [], datasets = [];
 
-                var headers = firstLine.split(delimiter);
-                var labels = [];
-                var datasets = [];
-
-                // Create datasets for each column except the first
-                for (var i = 1; i < headers.length; i++) {
-                    datasets.push({ label: headers[i].trim() || 'Series ' + i, data: [] });
-                }
-
-                // If only one column, use it as labels and provide dummy data? 
-                // No, standard is Col1=Labels, Col2+=Series.
-                if (datasets.length === 0) {
-                    datasets.push({ label: 'Data', data: [] });
-                }
-
-                for (var r = 1; r < lines.length; r++) {
-                    var parts = lines[r].split(delimiter);
-                    if (parts.length === 0) continue;
-                    
-                    labels.push(parts[0].trim() || 'Row ' + r);
-                    
-                    for (var c = 0; c < datasets.length; c++) {
-                        var val = parseFloat(parts[c + 1]);
-                        datasets[c].data.push(isNaN(val) ? 0 : val);
+            if (source === 'csv') {
+                var url = jQuery('#dearcharts_csv_url').val();
+                if (!url) return;
+                try {
+                    const response = await fetch(url);
+                    const text = await response.text();
+                    const lines = text.trim().split(/\r\n|\n/);
+                    const heads = lines[0].split(',');
+                    for (var i = 1; i < heads.length; i++) datasets.push({ label: heads[i].trim(), data: [] });
+                    for (var r = 1; r < lines.length; r++) {
+                        const row = lines[r].split(',');
+                        labels.push(row[0].trim());
+                        for (var c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(row[c + 1]) || 0);
                     }
+                    jQuery('#dc-status').show().text('CSV Loaded').css('color', '#10b981');
+                } catch (e) {
+                    jQuery('#dc-status').show().text('CSV Error').css('color', '#ef4444');
                 }
-                return { labels: labels, datasets: datasets };
-            }
-
-            function getManualData() {
-                var labels = [];
-                var datasets = [];
-                var headers = $('#dearcharts-repeater-table thead input');
-                headers.each(function (i) { datasets.push({ label: $(this).val() || 'Series ' + (i + 1), data: [] }); });
-
-                $('#dearcharts-repeater-table tbody tr').each(function () {
-                    var inputs = $(this).find('input');
-                    labels.push(inputs.eq(0).val() || 'Item');
-                    for (var i = 0; i < datasets.length; i++) {
-                        var val = parseFloat(inputs.eq(i + 1).val());
-                        datasets[i].data.push(isNaN(val) ? 0 : val);
-                    }
+            } else {
+                jQuery('#dc-manual-table thead th').each(function (i) {
+                    var val = jQuery(this).find('input').val();
+                    if (i > 0 && val !== undefined) datasets.push({ label: val, data: [] });
                 });
-                return { labels: labels, datasets: datasets };
-            }
-
-            function updateChart() {
-                var source = getActiveSource();
-                $('#panel-csv').toggle(source === 'csv');
-                $('#panel-manual').toggle(source === 'manual');
-
-                var data = (source === 'manual') ? getManualData() : { labels: [], datasets: [] };
-
-                if (source === 'csv') {
-                    var url = $('#dearcharts_csv_url').val();
-                    if (!url) {
-                        $('#dearchartsCanvas').hide();
-                        $('#dearcharts-no-data').text('Enter CSV URL to see preview').show();
-                        return;
-                    }
-
-                    fetch(url)
-                        .then(response => {
-                            if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-                            return response.text();
-                        })
-                        .then(text => {
-                            var csvData = parseCSV(text);
-                            renderChart(csvData);
-                        })
-                        .catch(err => {
-                            console.error('CSV Fetch Error:', err);
-                            $('#dearchartsCanvas').hide();
-                            
-                            var msg = 'Error fetching CSV. ';
-                            if (err.message.includes('Failed to fetch')) {
-                                msg += 'This is likely a CORS restriction or Mixed Content (HTTPS/HTTP) issue.';
-                            } else {
-                                msg += err.message;
-                            }
-                            $('#dearcharts-no-data').text(msg).show();
-                        });
-                    return;
-                }
-
-                renderChart(data);
-            }
-
-            function renderChart(data) {
-                var palette = palettes[$('#dearcharts_palette').val()] || palettes.default;
-                var legendPos = $('select[name="_dearcharts_legend_pos"]').val();
-                var isDonut = $('input[name="_dearcharts_donut"]').is(':checked');
-
-                var datasets = data.datasets.map(function (ds, i) {
-                    var colors = (data.datasets.length > 1) ? palette[i % palette.length] : data.labels.map((_, j) => palette[j % palette.length]);
-                    return {
-                        label: ds.label,
-                        data: ds.data,
-                        backgroundColor: colors,
-                        borderColor: colors,
-                        borderWidth: 1,
-                        tension: 0.3,
-                        fill: type === 'line' ? false : true
-                    };
-                });
-
-                var finalType = type === 'horizontalBar' ? 'bar' : (type === 'doughnut' || isDonut ? 'doughnut' : type);
-
-                if (myChart) myChart.destroy();
-                myChart = new Chart(ctx, {
-                    type: finalType,
-                    data: { labels: data.labels, datasets: datasets },
-                    options: {
-                        indexAxis: type === 'horizontalBar' ? 'y' : 'x',
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: legendPos !== 'none', position: legendPos === 'none' ? 'top' : legendPos }
-                        },
-                        scales: (['bar', 'horizontalBar', 'line'].includes(type)) ? { y: { beginAtZero: true } } : {}
-                    }
+                jQuery('#dc-manual-table tbody tr').each(function () {
+                    var rowLabel = jQuery(this).find('td:first input').val();
+                    labels.push(rowLabel);
+                    jQuery(this).find('td').each(function (i) {
+                        if (i > 0 && i < datasets.length + 1) {
+                            datasets[i - 1].data.push(parseFloat(jQuery(this).find('input').val()) || 0);
+                        }
+                    });
                 });
             }
 
-            // Events
-            $(document).on('input change', '.dearcharts-live-input:not(#dearcharts_csv_url)', updateChart);
-
-            var csvTimeout;
-            $('#dearcharts_csv_url').on('input', function () {
-                clearTimeout(csvTimeout);
-                csvTimeout = setTimeout(updateChart, 500);
+            datasets.forEach((ds, i) => {
+                let colors = (datasets.length > 1) ? palette[i % palette.length] : labels.map((_, j) => palette[j % palette.length]);
+                if (chartType === 'bar' || chartType === 'line') {
+                    ds.backgroundColor = (datasets.length > 1) ? palette[i % palette.length] : palette;
+                    ds.borderColor = (datasets.length > 1) ? palette[i % palette.length] : palette;
+                } else {
+                    ds.backgroundColor = colors;
+                    ds.borderColor = colors;
+                }
+                ds.borderWidth = (chartType === 'line') ? 2 : 1;
+                ds.fill = (chartType === 'line') ? false : true;
             });
 
-            $('#dearcharts-add-row').click(function () {
-                var cols = $('#dearcharts-repeater-table thead th').length - 1;
-                var ri = $('#dearcharts-repeater-table tbody tr').length + 1;
-                var html = '<tr><td><input type="text" name="dearcharts_manual_data[' + ri + '][]" class="dearcharts-live-input"></td>';
-                for (var i = 1; i < cols; i++) html += '<td><input type="number" step="any" name="dearcharts_manual_data[' + ri + '][]" class="dearcharts-live-input"></td>';
-                html += '<td><span class="dearcharts-remove-row" style="cursor:pointer;">×</span></td></tr>';
-                $('#dearcharts-repeater-table tbody').append(html);
+            dcLiveChart = new Chart(ctx, {
+                type: chartType,
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: (chartType === 'bar' || chartType === 'line') ? { y: { beginAtZero: true } } : {},
+                    plugins: {
+                        legend: { display: legendPos !== 'none', position: legendPos }
+                    }
+                }
             });
-
-            $('#dearcharts-add-col').click(function () {
-                var ci = $('#dearcharts-repeater-table thead th').length - 1;
-                var th = '<th><div style="display:flex; align-items:center;"><input type="text" name="dearcharts_manual_data[0][]" value="Series ' + ci + '" class="dearcharts-live-input" style="border:none; background:transparent; font-weight:600; padding:0;"><span class="dearcharts-remove-col" style="cursor:pointer; margin-left:5px;">×</span></div></th>';
-                $(th).insertBefore('#dearcharts-repeater-table thead th:last');
-                $('#dearcharts-repeater-table tbody tr').each(function (i) {
-                    $('<td><input type="number" step="any" name="dearcharts_manual_data[' + (i + 1) + '][]" class="dearcharts-live-input"></td>').insertBefore($(this).find('td:last'));
-                });
-                updateChart();
-            });
-
-            $(document).on('click', '.dearcharts-remove-row', function () { $(this).closest('tr').remove(); updateChart(); });
-            $(document).on('click', '.dearcharts-remove-col', function () {
-                var idx = $(this).closest('th').index();
-                $('#dearcharts-repeater-table thead th').eq(idx).remove();
-                $('#dearcharts-repeater-table tbody tr').each(function () { $(this).find('td').eq(idx).remove(); });
-                updateChart();
-            });
-
-            $('.dearcharts-upload-btn').click(function () {
-                var frame = wp.media({ title: 'Select CSV', multiple: false });
-                frame.on('select', function () {
-                    var url = frame.state().get('selection').first().toJSON().url;
-                    $('#dearcharts_csv_url').val(url).trigger('input');
-                }).open();
-            });
-
-            updateChart();
-        });
+        }
+        jQuery(document).ready(function () { dearcharts_update_live_preview(); });
     </script>
     <?php
 }
 
+/**
+ * Save Meta Box Data
+ * PSEUDOCODE:
+ * 1. Security check: Verify the nonce.
+ * 2. Bypass if autosaving.
+ * 3. Sanitize and update manual data array.
+ * 4. Sanitize and update CSV URL if applicable.
+ * 5. Save the active source state (CSV vs Manual).
+ * 6. Save aesthetic settings: Chart Type, Legend Position, Palette.
+ */
 function dearcharts_save_meta_box_data($post_id)
 {
-    if (!isset($_POST['dearcharts_nonce']) || !wp_verify_nonce($_POST['dearcharts_nonce'], 'dearcharts_save_meta_box_data'))
+    if (!isset($_POST['dearcharts_nonce']) || !wp_verify_nonce($_POST['dearcharts_nonce'], 'dearcharts_save_meta'))
         return;
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
         return;
-    if (!current_user_can('edit_post', $post_id))
-        return;
 
-    if (isset($_POST['dearcharts_manual_data'])) {
-        $sanitized = array();
-        foreach ($_POST['dearcharts_manual_data'] as $ri => $row) {
-            $srow = array();
-            foreach ($row as $ci => $val) {
-                $srow[] = ($ri === 0 || $ci === 0) ? sanitize_text_field($val) : floatval($val);
-            }
-            $sanitized[] = $srow;
-        }
-        update_post_meta($post_id, '_dearcharts_manual_data', $sanitized);
-    }
+    if (isset($_POST['dearcharts_manual_data']))
+        update_post_meta($post_id, '_dearcharts_manual_data', $_POST['dearcharts_manual_data']);
+    if (isset($_POST['dearcharts_csv_url']))
+        update_post_meta($post_id, '_dearcharts_csv_url', esc_url_raw($_POST['dearcharts_csv_url']));
+    if (isset($_POST['dearcharts_active_source']))
+        update_post_meta($post_id, '_dearcharts_active_source', sanitize_text_field($_POST['dearcharts_active_source']));
 
-    $fields = ['_dearcharts_csv_url', '_dearcharts_active_source', '_dearcharts_type', '_dearcharts_legend_pos', '_dearcharts_palette', '_dearcharts_colors', '_dearcharts_donut'];
-    foreach ($fields as $field) {
-        if (isset($_POST[$field])) {
-            update_post_meta($post_id, $field, sanitize_text_field($_POST[$field]));
-        } else {
-            delete_post_meta($post_id, $field);
-        }
-    }
+    if (isset($_POST['dearcharts_type']))
+        update_post_meta($post_id, '_dearcharts_type', sanitize_text_field($_POST['dearcharts_type']));
+    if (isset($_POST['dearcharts_legend_pos']))
+        update_post_meta($post_id, '_dearcharts_legend_pos', sanitize_text_field($_POST['dearcharts_legend_pos']));
+    if (isset($_POST['dearcharts_palette']))
+        update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
 }
 add_action('save_post', 'dearcharts_save_meta_box_data');
-
-function dearcharts_admin_scripts($hook)
-{
-    global $post;
-    if (($hook == 'post-new.php' || $hook == 'post.php') && $post && 'dearcharts' === $post->post_type) {
-        wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
-        wp_enqueue_media();
-    }
-}
-add_action('admin_enqueue_scripts', 'dearcharts_admin_scripts');
