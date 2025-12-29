@@ -50,7 +50,10 @@ function dearcharts_register_cpt()
 add_action('init', 'dearcharts_register_cpt');
 
 /**
- * Include Files
+ * Include Module Files
  */
-require_once DEARCHARTS_PATH . 'includes/admin-settings.php';
-require_once DEARCHARTS_PATH . 'includes/shortcodes.php';
+// REQUIRE admin settings module (meta boxes, admin UI, data persistence)
+require_once plugin_dir_path(__FILE__) . 'includes/admin-settings.php';
+
+// REQUIRE shortcodes module (frontend shortcode and chart rendering)
+require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
