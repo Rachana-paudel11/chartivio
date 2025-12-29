@@ -443,6 +443,45 @@ function dearcharts_render_tabbed_meta_box($post)
 
             function getActiveSource() { return $('input[name="_dearcharts_active_source"]:checked').val(); }
 
+            function parseCSV(text) {
+                var lines = text.trim().split(/\r\n|\n/);
+                if (lines.length < 1) return { labels: [], datasets: [] };
+
+                // Auto-detect delimiter
+                var firstLine = lines[0];
+                var delimiter = ',';
+                if (firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') === -1) delimiter = ';';
+                if (firstLine.indexOf('\t') !== -1 && firstLine.indexOf(',') === -1) delimiter = '\t';
+
+                var headers = firstLine.split(delimiter);
+                var labels = [];
+                var datasets = [];
+
+                // Create datasets for each column except the first
+                for (var i = 1; i < headers.length; i++) {
+                    datasets.push({ label: headers[i].trim() || 'Series ' + i, data: [] });
+                }
+
+                // If only one column, use it as labels and provide dummy data? 
+                // No, standard is Col1=Labels, Col2+=Series.
+                if (datasets.length === 0) {
+                    datasets.push({ label: 'Data', data: [] });
+                }
+
+                for (var r = 1; r < lines.length; r++) {
+                    var parts = lines[r].split(delimiter);
+                    if (parts.length === 0) continue;
+                    
+                    labels.push(parts[0].trim() || 'Row ' + r);
+                    
+                    for (var c = 0; c < datasets.length; c++) {
+                        var val = parseFloat(parts[c + 1]);
+                        datasets[c].data.push(isNaN(val) ? 0 : val);
+                    }
+                }
+                return { labels: labels, datasets: datasets };
+            }
+
             function getManualData() {
                 var labels = [];
                 var datasets = [];
@@ -466,12 +505,43 @@ function dearcharts_render_tabbed_meta_box($post)
                 $('#panel-manual').toggle(source === 'manual');
 
                 var data = (source === 'manual') ? getManualData() : { labels: [], datasets: [] };
-                // CSV logic would go here if needed for live preview (simplified for manual)
 
-                if (!data.labels.length) { $('#dearchartsCanvas').hide(); $('#dearcharts-no-data').show(); return; }
-                $('#dearchartsCanvas').show(); $('#dearcharts-no-data').hide();
+                if (source === 'csv') {
+                    var url = $('#dearcharts_csv_url').val();
+                    if (!url) {
+                        $('#dearchartsCanvas').hide();
+                        $('#dearcharts-no-data').text('Enter CSV URL to see preview').show();
+                        return;
+                    }
 
-                var type = $('#dearcharts_type').val();
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) throw new Error('HTTP ' + response.status + ': ' + response.statusText);
+                            return response.text();
+                        })
+                        .then(text => {
+                            var csvData = parseCSV(text);
+                            renderChart(csvData);
+                        })
+                        .catch(err => {
+                            console.error('CSV Fetch Error:', err);
+                            $('#dearchartsCanvas').hide();
+                            
+                            var msg = 'Error fetching CSV. ';
+                            if (err.message.includes('Failed to fetch')) {
+                                msg += 'This is likely a CORS restriction or Mixed Content (HTTPS/HTTP) issue.';
+                            } else {
+                                msg += err.message;
+                            }
+                            $('#dearcharts-no-data').text(msg).show();
+                        });
+                    return;
+                }
+
+                renderChart(data);
+            }
+
+            function renderChart(data) {
                 var palette = palettes[$('#dearcharts_palette').val()] || palettes.default;
                 var legendPos = $('select[name="_dearcharts_legend_pos"]').val();
                 var isDonut = $('input[name="_dearcharts_donut"]').is(':checked');
@@ -508,7 +578,13 @@ function dearcharts_render_tabbed_meta_box($post)
             }
 
             // Events
-            $(document).on('input change', '.dearcharts-live-input', updateChart);
+            $(document).on('input change', '.dearcharts-live-input:not(#dearcharts_csv_url)', updateChart);
+
+            var csvTimeout;
+            $('#dearcharts_csv_url').on('input', function () {
+                clearTimeout(csvTimeout);
+                csvTimeout = setTimeout(updateChart, 500);
+            });
 
             $('#dearcharts-add-row').click(function () {
                 var cols = $('#dearcharts-repeater-table thead th').length - 1;
