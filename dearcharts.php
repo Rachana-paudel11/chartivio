@@ -11,12 +11,22 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+/**
+ * PSEUDOCODE: Main Entry Point
+ * 1. Initialize plugin and check for direct access security.
+ * 2. Load sub-systems: admin UI and shortcode rendering.
+ * 3. Register 'dearcharts' custom post type to manage chart data.
+ * 4. Enqueue Chart.js and WordPress Media Library for Chart Editor usage.
+ * 5. Add custom 'Shortcode' column to the charts list view for easy copying.
+ */
+
 // Load custom logic
 require_once plugin_dir_path(__FILE__) . 'includes/admin-settings.php';
 require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
 
 /**
  * Register Custom Post Type 'dearcharts'
+ * PSEUDOCODE: Create a data structure to store chart title, data, and settings.
  */
 function dearcharts_register_cpt()
 {
@@ -42,6 +52,7 @@ add_action('init', 'dearcharts_register_cpt');
 
 /**
  * Enqueue Admin Scripts for DearCharts
+ * PSEUDOCODE: Load external Chart.js library ONLY on dearcharts edit screens.
  */
 function dearcharts_admin_scripts($hook)
 {
@@ -57,6 +68,7 @@ add_action('admin_enqueue_scripts', 'dearcharts_admin_scripts');
 
 /**
  * Add Custom Columns to Admin List
+ * PSEUDOCODE: Add a column to display the shortcode string for each chart.
  */
 add_filter('manage_dearcharts_posts_columns', function ($columns) {
     $columns['shortcode'] = 'Shortcode';

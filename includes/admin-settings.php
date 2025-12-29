@@ -40,6 +40,12 @@ function dearcharts_render_usage_box($post)
 
 /**
  * Main Meta Box: Split-Screen Professional UI
+ * PSEUDOCODE:
+ * 1. Fetch current chart data and settings from post meta.
+ * 2. Define the 'Live Preview' panel (Left side).
+ * 3. Define the 'Settings' panel with Tabs (Right side).
+ * 4. Implement a unified 'Chart Editor' header with type selection.
+ * 5. Initialize the JavaScript Live Preview engine.
  */
 function dearcharts_render_main_box($post)
 {
@@ -63,13 +69,22 @@ function dearcharts_render_main_box($post)
             --dc-text: #1e293b;
         }
 
+        .dc-admin-wrapper {
+            margin: -12px;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid var(--dc-border);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+
         .dc-main-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 20px;
+            padding: 16px 20px;
             background: #fff;
-            border-bottom: 1px solid var(--dc-border);
+            border-bottom: 2px solid #f1f5f9;
         }
 
         .dc-main-header h2 {
@@ -77,14 +92,13 @@ function dearcharts_render_main_box($post)
             font-size: 18px;
             font-weight: 700;
             color: var(--dc-text);
+            letter-spacing: -0.025em;
         }
 
         .dc-split-container {
             display: flex;
             height: 480px;
-            margin: -12px;
             background: #fff;
-            border-radius: 0 0 8px 8px;
             overflow: hidden;
         }
 
@@ -324,30 +338,31 @@ function dearcharts_render_main_box($post)
         }
     </style>
 
-    <div class="dc-main-header">
-        <h2>Chart Editor</h2>
-        <div class="dc-type-selector-inline">
-            <label for="dearcharts_type">Chart Type:</label>
-            <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
-                <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
-                <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
-                <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
-                <option value="line" <?php selected($chart_type, 'line'); ?>>Line</option>
-            </select>
+    <div class="dc-admin-wrapper">
+        <div class="dc-main-header">
+            <h2>Chart Editor</h2>
+            <div class="dc-type-selector-inline">
+                <label for="dearcharts_type">Chart Type:</label>
+                <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
+                    <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
+                    <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
+                    <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
+                    <option value="line" <?php selected($chart_type, 'line'); ?>>Line</option>
+                </select>
+            </div>
         </div>
-    </div>
 
-    <div class="dc-split-container">
-        <!-- Live Preview -->
-        <div class="dc-preview-panel">
-            <div class="dc-preview-header">
-                <h3>Live Preview</h3>
-                <span id="dc-status"></span>
+        <div class="dc-split-container">
+            <!-- Live Preview -->
+            <div class="dc-preview-panel">
+                <div class="dc-preview-header">
+                    <h3>Live Preview</h3>
+                    <span id="dc-status"></span>
+                </div>
+                <div class="dc-chart-container">
+                    <canvas id="dc-live-chart"></canvas>
+                </div>
             </div>
-            <div class="dc-chart-container">
-                <canvas id="dc-live-chart"></canvas>
-            </div>
-        </div>
 
         <!-- Settings Tabs -->
         <div class="dc-settings-panel">
@@ -474,6 +489,7 @@ function dearcharts_render_main_box($post)
             </div>
         </div>
     </div>
+</div>
 
     <script>     var dcLiveChart = null; var dc_palettes = { 'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
         function dcTab(el, id) { jQuery('.dc-tab').removeClass('active'); jQuery('.dc-tab-content').removeClass('active'); jQuery(el).addClass('active'); jQuery('#' + id).addClass('active'); }
@@ -489,6 +505,13 @@ function dearcharts_render_main_box($post)
             html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
             jQuery('#dc-manual-table tbody').append(html);
         }
+        /**
+         * PSEUDOCODE: Add Column
+         * 1. Determine new column index.
+         * 2. Insert as a new header input (for the series label).
+         * 3. Iterate through all rows and append a new data input cell for that series.
+         * 4. Auto-scroll the table to the right to focus on the new column.
+         */
         function dearcharts_add_column() {
             var colIdx = jQuery('#dc-manual-table thead th').length - 1;
             var headHtml = '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series ' + colIdx + '" oninput="dearcharts_update_live_preview()"></th>';
@@ -503,6 +526,16 @@ function dearcharts_render_main_box($post)
             var $wrapper = jQuery('.dc-table-wrapper');
             $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 500);
         }
+
+        /**
+         * PSEUDOCODE: Update Live Preview
+         * 1. Safely clear the previous chart instance.
+         * 2. Read the source (CSV vs Manual).
+         * 3. If CSV: Fetch URL, parse lines, and map to Chart.js datasets.
+         * 4. If Manual: Scrape table TBODY for data and THEAD for labels.
+         * 5. Apply selected color palette from the dc_palettes dictionary.
+         * 6. Re-draw the Chart using the Chart.js API.
+         */
         async function dearcharts_update_live_preview() {
             let chartType = jQuery('#dearcharts_type').val();
             let legendPos = jQuery('#dearcharts_legend_pos').val();
@@ -581,6 +614,16 @@ function dearcharts_render_main_box($post)
     <?php
 }
 
+/**
+ * Save Meta Box Data
+ * PSEUDOCODE:
+ * 1. Security check: Verify the nonce.
+ * 2. Bypass if autosaving.
+ * 3. Sanitize and update manual data array.
+ * 4. Sanitize and update CSV URL if applicable.
+ * 5. Save the active source state (CSV vs Manual).
+ * 6. Save aesthetic settings: Chart Type, Legend Position, Palette.
+ */
 function dearcharts_save_meta_box_data($post_id)
 {
     if (!isset($_POST['dearcharts_nonce']) || !wp_verify_nonce($_POST['dearcharts_nonce'], 'dearcharts_save_meta'))
