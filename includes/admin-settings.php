@@ -117,18 +117,7 @@ function dearcharts_render_main_box($post)
         .dc-main-header .dc-main-type label { margin:0; font-size:13px; font-weight:600; color:var(--dc-muted); }
         .dc-main-header .dc-main-type select, .dc-main-header select { padding:4px 26px 4px 8px; border-radius:6px; font-size:13px; position:relative; z-index:3; box-sizing:border-box; }
         /* ensure the inline badge and icons sit behind or beside the select */
-        #dc-inline-recommend, .dc-delete-col { position:relative; z-index:1; }
-        /* Inline recommendation badge (saffron with bulb) */
-        #dc-inline-recommend { display:inline-flex; align-items:center; gap:8px; }
-        .dc-rec-badge { background: var(--dc-saffron); color: #fff; padding:6px 10px; border-radius:6px; display:inline-flex; align-items:center; gap:10px; font-size:13px; box-shadow:0 1px 0 rgba(0,0,0,0.04); }
-        .dc-rec-bulb { width:16px; height:16px; fill:#fff; flex:0 0 16px; }
-        .dc-rec-text { color:#fff; font-weight:600; font-size:13px; display:inline-flex; align-items:center; gap:8px; }
-        .dc-rec-prefix { color: rgba(255,255,255,0.95); font-size:12px; font-weight:600; margin-right:6px; }
-        .dc-rec-primary { color:#fff; font-weight:700; }
-        .dc-rec-reason { color: rgba(255,255,255,0.95); font-size:11px; opacity:0.95; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:inline-block; }
-        .dc-rec-apply { margin-left:6px; padding:4px 6px; font-size:12px; background:#fff; color:var(--dc-saffron); border-radius:4px; border:1px solid rgba(0,0,0,0.06); cursor:pointer; }
-        .dc-rec-apply:focus { outline: 2px solid rgba(255,176,32,0.2); }
-        .dc-rec-strong { color:#fff; font-weight:700; }
+        .dc-delete-col { position:relative; z-index:1; }
 
         .dc-split-container {
             display: flex;
@@ -429,20 +418,6 @@ function dearcharts_render_main_box($post)
                     <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
                     <option value="line" <?php selected($chart_type, 'line'); ?>>Line</option>
                 </select>
-                <span id="dc-inline-recommend" style="display:none; margin-left:8px;">
-                    <span class="dc-rec-badge" role="status" aria-live="polite">
-                        <svg class="dc-rec-bulb" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" aria-label="Recommendation">
-                        <path d="M9 18h6v1a1 1 0 01-1 1H10a1 1 0 01-1-1v-1z" fill="#fff"/>
-                        <path d="M12 2a6 6 0 00-4.5 9.9V14a3 3 0 003 3h3a3 3 0 003-3v-2.1A6 6 0 0012 2zm0 2a4 4 0 012.83 6.83L14.5 11H9.5l-.33-.17A4 4 0 0112 4z" fill="#fff"/>
-                        </svg>
-                        <span class="dc-rec-text">
-                            <span class="dc-rec-prefix">Recommendation:</span>
-                            <span id="dc-inline-recommend-text" class="dc-rec-primary"></span>
-                            <span id="dc-inline-recommend-reason" class="dc-rec-reason" aria-hidden="true"></span>
-                        </span>
-                        <button type="button" class="dc-rec-apply" id="dc-inline-recommend-apply" style="display:none;" aria-label="Apply recommendation">Apply</button>
-                    </span>
-                </span>
             </div>
             <div style="display:flex; gap:8px; align-items:center;">
                 <button type="button" class="button button-primary" id="dc-save-chart">Save Chart</button>
@@ -483,7 +458,7 @@ function dearcharts_render_main_box($post)
                         <div style="display:flex; gap:8px;">
                             <input type="text" name="dearcharts_csv_url" id="dearcharts_csv_url" class="dc-input-text"
                                 style="flex:1;" value="<?php echo esc_url($csv_url); ?>"
-                                oninput="dearcharts_update_live_preview()">
+                                oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();">
                             <button type="button" class="button" onclick="dcBrowseCSV()">Media</button>
                         </div>
                     </div>
@@ -790,136 +765,7 @@ function dearcharts_render_main_box($post)
             dearcharts_update_live_preview();
         }
         // ensure controls are present on DOM ready
-        jQuery(function(){ dearcharts_add_delete_col_controls();
-            // debounce recommendation trigger for table edits
-            var _recTimer = null;
-            jQuery('#dc-manual-table').on('input', 'input', function(){
-                clearTimeout(_recTimer);
-                _recTimer = setTimeout(function(){ dearcharts_recommend_inline(); }, 500);
-            });
-            // watch CSV input field
-            jQuery('#dearcharts_csv_url').on('input', function(){
-                clearTimeout(_recTimer);
-                _recTimer = setTimeout(function(){ dearcharts_recommend_inline(); dearcharts_local_autosave(); }, 600);
-            });
-            // wire apply button
-            jQuery(document).on('click', '#dc-inline-recommend-apply', function(){
-                var type = jQuery(this).data('type');
-                if (type) {
-                    jQuery('#dearcharts_type').val(type).trigger('change');
-                    dearcharts_update_live_preview();
-                    jQuery('#dc-inline-recommend').hide();
-                    jQuery('#dc-status').text('Applied: ' + jQuery('#dearcharts_type option:selected').text());
-                    setTimeout(function(){ jQuery('#dc-status').text(''); }, 2000);
-                }
-            });
-        });
-
-        function dearcharts_analyze_table() {
-            var $table = jQuery('#dc-manual-table');
-            var cols = Math.max(0, $table.find('thead th').length - 1);
-            var rows = $table.find('tbody tr').length;
-            var numericCells = 0, totalCells = 0, firstColValues = [];
-            $table.find('tbody tr').each(function(){
-                jQuery(this).find('td').each(function(idx){
-                    // skip delete button cell
-                    if (idx === cols) return;
-                    var val = jQuery(this).find('input').val();
-                    if (idx === 0) firstColValues.push(val);
-                    if (val !== undefined && val !== '') {
-                        totalCells++;
-                        if (!isNaN(parseFloat(val)) && isFinite(val)) numericCells++;
-                    }
-                });
-            });
-            var numericRatio = totalCells ? (numericCells / totalCells) : 0;
-            var timeMatches = 0; firstColValues.forEach(function(v){ if (Date.parse(v)) timeMatches++; });
-            var isTimeSeries = (rows > 1 && timeMatches / rows > 0.6);
-            return { cols: cols, rows: rows, numericRatio: numericRatio, isTimeSeries: isTimeSeries };
-        }
-
-        async function dearcharts_analyze_csv(url) {
-            if (!url) return null;
-            try {
-                // fetch small portion to avoid long downloads
-                var res = await fetch(url, { method:'GET', cache:'no-cache' });
-                if (!res.ok) return null;
-                var text = await res.text();
-                // simple CSV parsing: split lines, sample first 50 lines
-                var lines = text.split(/\r?\n/).filter(Boolean);
-                if (lines.length < 2) return null;
-                var header = lines[0].split(',');
-                var cols = Math.max(0, header.length - 1);
-                var rows = Math.max(0, Math.min(200, lines.length - 1));
-                var numericCells = 0, totalCells = 0, firstColValues = [];
-                for (var r=1; r<Math.min(lines.length, 101); r++) {
-                    var parts = lines[r].split(',');
-                    for (var c=0;c<parts.length;c++){
-                        var val = parts[c].trim();
-                        if (c===0) firstColValues.push(val);
-                        if (val !== '') { totalCells++; if (!isNaN(parseFloat(val)) && isFinite(val)) numericCells++; }
-                    }
-                }
-                var numericRatio = totalCells ? (numericCells / totalCells) : 0;
-                var timeMatches = 0; firstColValues.forEach(function(v){ if (Date.parse(v)) timeMatches++; });
-                var isTimeSeries = (rows > 1 && timeMatches / rows > 0.6);
-                return { cols: cols, rows: rows, numericRatio: numericRatio, isTimeSeries: isTimeSeries };
-            } catch (e) {
-                return null;
-            }
-        }
-
-        function dearcharts_compute_recommendation(analysis) {
-            if (!analysis) return null;
-            // simple scoring heuristics
-            var rec = null;
-            if (analysis.cols <= 1) {
-                if (analysis.isTimeSeries) {
-                    rec = { type:'line', label:'Line', score:0.95, reason:'Time-series data.' };
-                } else if (analysis.rows <= 8) {
-                    rec = { type:'pie', label:'Pie', score:0.92, reason:'Single series with few categories.' };
-                } else {
-                    rec = { type:'bar', label:'Bar', score:0.9, reason:'Single series across categories.' };
-                }
-            } else {
-                if (analysis.isTimeSeries) rec = { type:'line', label:'Line', score:0.95, reason:'Multiple series over time.' };
-                else rec = { type:'bar', label:'Bar', score:0.9, reason:'Multiple series across categories.' };
-            }
-            // nudge score down if numeric ratio low
-            if (analysis.numericRatio < 0.5) rec.score -= 0.15;
-            rec.score = Math.max(0.3, rec.score);
-            return rec;
-        }
-
-        async function dearcharts_recommend_inline() {
-            // prioritize manual table if there's manual rows, else CSV
-            var tableAnalysis = dearcharts_analyze_table();
-            var rec = null;
-            if (tableAnalysis && tableAnalysis.rows > 0) {
-                rec = dearcharts_compute_recommendation(tableAnalysis);
-            } else {
-                var csvUrl = jQuery('#dearcharts_csv_url').val();
-                if (csvUrl) {
-                    var csvAnalysis = await dearcharts_analyze_csv(csvUrl);
-                    rec = dearcharts_compute_recommendation(csvAnalysis);
-                }
-            }
-            if (rec) {
-                jQuery('#dc-inline-recommend-text').html('<span class="dc-rec-strong">' + rec.label + '</span> (' + Math.round(rec.score*100) + '%)');
-                if (rec.reason) {
-                    jQuery('#dc-inline-recommend-reason').text('— ' + rec.reason).show();
-                    jQuery('.dc-rec-badge').attr('title', rec.reason);
-                } else {
-                    jQuery('#dc-inline-recommend-reason').hide();
-                    jQuery('.dc-rec-badge').removeAttr('title');
-                }
-                jQuery('#dc-inline-recommend-apply').data('type', rec.type).show();
-                jQuery('#dc-inline-recommend').show();
-            } else {
-                jQuery('#dc-inline-recommend').hide();
-                jQuery('#dc-inline-recommend-apply').hide();
-            }
-        }
+        jQuery(function(){ dearcharts_add_delete_col_controls(); });
 
 
 
@@ -939,19 +785,27 @@ function dearcharts_render_main_box($post)
         async function dearcharts_update_live_preview() {
             let chartType = jQuery('#dearcharts_type').val();
             let legendPos = jQuery('#dearcharts_legend_pos').val();
-            let palette = dc_palettes[jQuery('#dearcharts_palette').val()] || dc_palettes['default'];
+            let paletteKey = jQuery('#dearcharts_palette').val();
+            let palette = (typeof dc_palettes !== 'undefined' && dc_palettes[paletteKey]) ? dc_palettes[paletteKey] : ((typeof dc_palettes !== 'undefined') ? dc_palettes['default'] : ['#3b82f6']);
+            
+            if (typeof Chart === 'undefined') {
+                return; // Chart.js not loaded yet
+            }
+
             var canvas = document.getElementById('dc-live-chart');
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
             
+            // Ensure any existing chart on this canvas is destroyed (fixes "Canvas is already in use")
+            var existingChart = Chart.getChart(canvas);
+            if (existingChart) {
+                existingChart.destroy();
+            }
+            dcLiveChart = null;
+            
             // Capture current state to handle race conditions
             var currentSource = jQuery('#dearcharts_active_source').val();
             var currentUrl = jQuery('#dearcharts_csv_url').val();
-
-            if (dcLiveChart) {
-                dcLiveChart.destroy();
-                dcLiveChart = null;
-            }
 
             var labels = [], datasets = [];
 
@@ -1006,8 +860,8 @@ function dearcharts_render_main_box($post)
             if (jQuery('#dearcharts_active_source').val() !== currentSource) return;
 
             datasets.forEach((ds, i) => {
-                const colorArray = labels.map((_, j) => palette[j % palette.length]);
-                const singleColor = palette[i % palette.length];
+                const colorArray = labels.map((_, j) => palette[j % palette.length] || '#ccc');
+                const singleColor = palette[i % palette.length] || '#ccc';
 
                 if (chartType === 'pie' || chartType === 'doughnut') {
                     ds.backgroundColor = colorArray;
@@ -1032,20 +886,32 @@ function dearcharts_render_main_box($post)
                 }
             });
 
-            dcLiveChart = new Chart(ctx, {
-                type: chartType,
-                data: { labels: labels, datasets: datasets },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: (chartType === 'bar' || chartType === 'line') ? { y: { beginAtZero: true } } : {},
-                    plugins: {
-                        legend: { display: legendPos !== 'none', position: legendPos }
+            try {
+                dcLiveChart = new Chart(ctx, {
+                    type: chartType,
+                    data: { labels: labels, datasets: datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: (chartType === 'bar' || chartType === 'line') ? { y: { beginAtZero: true } } : {},
+                        plugins: {
+                            legend: { display: legendPos !== 'none', position: legendPos }
+                        }
                     }
-                }
-            });
+                });
+            } catch (e) {
+                console.error('Chart Render Error:', e);
+                jQuery('#dc-status').show().text('Preview Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fff1f2' });
+            }
         }
-        jQuery(document).ready(function () { dearcharts_update_live_preview();
+        jQuery(document).ready(function () { 
+            // Initial render: ensure Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                jQuery(window).on('load', function() { dearcharts_update_live_preview(); });
+            } else {
+                dearcharts_update_live_preview();
+            }
+
             // Restore from local storage if different from saved
             var key = 'dearcharts_autosave_' + dc_post_id;
             var raw = localStorage.getItem(key);
