@@ -259,34 +259,31 @@ function dearcharts_render_main_box($post)
 
         .dc-table-wrapper {
             overflow-x: auto;
-            overflow-y: scroll;
+            overflow-y: auto;
             width: 100%;
-            max-height: 180px;
+            height: 240px;
             margin-bottom: 15px;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
-            padding-bottom: 5px;
+            padding-right: 40px; /* Prevent row delete buttons from being cut off */
             display: block;
+            background: #fff;
+            box-sizing: border-box;
         }
 
         /* Custom Scrollbar "Slider" Styling */
         .dc-table-wrapper::-webkit-scrollbar {
-            width: 10px;
-            /* Vertical scrollbar width */
-            height: 10px;
-            /* Horizontal scrollbar height */
+            width: 8px;
+            height: 8px;
         }
 
         .dc-table-wrapper::-webkit-scrollbar-track {
             background: #f1f5f9;
-            border-radius: 10px;
         }
 
         .dc-table-wrapper::-webkit-scrollbar-thumb {
-            background: #94a3b8;
-            /* Darker thumb for better visibility */
-            border-radius: 10px;
-            border: 2px solid #f1f5f9;
+            background: #cbd5e1;
+            border-radius: 4px;
         }
 
         .dc-table-wrapper::-webkit-scrollbar-thumb:hover {
@@ -296,26 +293,27 @@ function dearcharts_render_main_box($post)
         table.dc-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
-            position: relative;
+            table-layout: fixed; /* Force equal widths or respect set widths */
         }
 
         table.dc-table thead th {
             position: sticky;
             top: 0;
             z-index: 10;
+            background: #f8fafc;
+            box-shadow: 0 1px 0 #e2e8f0;
         }
 
         table.dc-table th,
         table.dc-table td {
-            padding: 10px;
-            border-bottom: 1px solid #f1f5f9;
-            width: 150px;
-            min-width: 150px;
+            padding: 8px;
+            border: 1px solid #e2e8f0;
+            box-sizing: border-box;
+            min-width: 120px;
+            vertical-align: middle;
         }
 
         table.dc-table th {
-            background: #f8fafc;
             font-weight: 600;
             color: #64748b;
             font-size: 12px;
@@ -324,17 +322,23 @@ function dearcharts_render_main_box($post)
 
         table.dc-table th:last-child,
         table.dc-table td:last-child {
-            width: 40px;
-            min-width: 40px;
+            width: 50px;
+            min-width: 50px;
             text-align: center;
+            border-right: none;
+            padding: 0;
         }
 
         table.dc-table input {
             width: 100%;
+            display: block;
+            box-sizing: border-box;
             border: 1px solid #cbd5e1;
-            padding: 8px;
+            padding: 6px 8px;
             border-radius: 4px;
             font-size: 13px;
+            height: 34px;
+            margin: 0;
         }
 
         .dc-delete-row {
@@ -342,50 +346,47 @@ function dearcharts_render_main_box($post)
             cursor: pointer;
             font-size: 18px;
             font-weight: bold;
+            line-height: 1;
+        }
+        
+        .dc-delete-row:hover {
+            background: #fef2f2;
         }
 
-        table.dc-table th {
-            position: relative;
-        }
-
-        /* Inline header control container: overlay delete icon to avoid changing column width */
+        /* Column Controls */
         .dc-col-control {
-            display: flex;
-            align-items: flex-end;
             position: relative;
             width: 100%;
-            height: 100%;
+            display: block;
         }
-        /* Ensure header input leaves room for the overlay icon without changing column width */
+        
         .dc-col-control input {
-            padding-right: 36px; /* space for the delete icon */
-            box-sizing: border-box;
-            margin-bottom: 0;
+            padding-right: 28px; /* Space for X */
         }
 
         .dc-delete-col {
             position: absolute;
-            right: 6px;
-            bottom: 6px;
+            right: 4px;
+            top: 50%;
+            transform: translateY(-50%);
             color: #ef4444;
             cursor: pointer;
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1;
-            padding: 2px 6px;
-            border-radius: 3px;
-            background: transparent;
+            font-size: 16px;
+            font-weight: bold;
+            background: none;
             border: none;
-            display: inline-flex;
+            padding: 4px;
+            line-height: 1;
+            z-index: 5;
+            display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .dc-delete-col:focus { outline: 2px solid rgba(239,68,68,0.15); border-radius:3px; }
-
-        /* Align table headers to the bottom to match data rows */
-        table.dc-table th { vertical-align: bottom; }
-        table.dc-table td { vertical-align: middle; }
+        .dc-delete-col:hover {
+            background: #fee2e2;
+            border-radius: 4px;
+        }
 
         .dc-setting-row {
             display: flex;
@@ -887,6 +888,11 @@ function dearcharts_render_main_box($post)
             });
 
             try {
+                // Prevent "Canvas is already in use" error from async race conditions
+                var activeChart = Chart.getChart(canvas);
+                if (activeChart) {
+                    activeChart.destroy();
+                }
                 dcLiveChart = new Chart(ctx, {
                     type: chartType,
                     data: { labels: labels, datasets: datasets },
@@ -958,17 +964,45 @@ function dearcharts_render_main_box($post)
                 var $btn = jQuery(this);
                 $btn.text('Saving...').attr('disabled', 'disabled').addClass('disabled');
                 
+                // CRITICAL FIX: Sync input values to DOM attributes so Gutenberg captures them correctly
+                jQuery('#dc-manual-table input').each(function(){
+                    jQuery(this).attr('value', jQuery(this).val());
+                });
+                jQuery('#dearcharts_csv_url').attr('value', jQuery('#dearcharts_csv_url').val());
+
                 // Check for Gutenberg (Block Editor)
-                if (document.body.classList.contains('block-editor-page') && window.wp && window.wp.data) {
-                    wp.data.dispatch('core/editor').savePost().then(function(){
+                if (document.body.classList.contains('block-editor-page')) {
+                    // Use AJAX for Gutenberg to ensure legacy meta box data is saved
+                    var curr = dearcharts_get_snapshot();
+                    var payload = {
+                        action: 'dearcharts_save_chart',
+                        nonce: dc_admin_nonce,
+                        post_id: dc_post_id,
+                        manual_json: JSON.stringify(curr.manual),
+                        dearcharts_csv_url: curr.csv_url,
+                        dearcharts_active_source: curr.active_source,
+                        dearcharts_type: curr.type,
+                        dearcharts_legend_pos: curr.legend_pos,
+                        dearcharts_palette: curr.palette
+                    };
+
+                    jQuery.post(ajaxurl, payload, function(res){
+                        if (res && res.success) {
+                            dc_saved_snapshot = curr;
+                            var key = 'dearcharts_autosave_' + dc_post_id; localStorage.removeItem(key);
+                            $btn.text('Save Chart').removeAttr('disabled').removeClass('disabled');
+                            jQuery('#dc-status').show().text('Saved').css({ 'color': '#065f46', 'background': '#ecfdf5' });
+                            setTimeout(function(){ jQuery('#dc-status').text(''); }, 2000);
+                            // Trigger silent save of post content/title
+                            if (window.wp && window.wp.data) { wp.data.dispatch('core/editor').savePost(); }
+                        } else {
+                            var msg = (res && res.data && res.data.message) ? res.data.message : 'Save failed';
+                            $btn.text('Save Chart').removeAttr('disabled').removeClass('disabled');
+                            jQuery('#dc-status').show().text(msg).css({ 'color': '#ef4444', 'background': '#fff1f2' });
+                        }
+                    }).fail(function(){
                         $btn.text('Save Chart').removeAttr('disabled').removeClass('disabled');
-                        jQuery('#dc-status').show().text('Saved').css({ 'color': '#065f46', 'background': '#ecfdf5' });
-                        setTimeout(function(){ jQuery('#dc-status').text(''); }, 2000);
-                        dc_saved_snapshot = dearcharts_get_snapshot();
-                        var key = 'dearcharts_autosave_' + dc_post_id; localStorage.removeItem(key);
-                    }).catch(function(){
-                        $btn.text('Save Chart').removeAttr('disabled').removeClass('disabled');
-                        jQuery('#dc-status').show().text('Save failed').css({ 'color': '#ef4444', 'background': '#fff1f2' });
+                        jQuery('#dc-status').show().text('Server Error').css({ 'color': '#ef4444', 'background': '#fff1f2' });
                     });
                 } else {
                     // Classic Editor
@@ -983,8 +1017,8 @@ function dearcharts_render_main_box($post)
 
         function dearcharts_get_snapshot() {
             var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#dearcharts_csv_url').val() || '', active_source: jQuery('#dearcharts_active_source').val() || 'manual', type: jQuery('#dearcharts_type').val() || '', legend_pos: jQuery('#dearcharts_legend_pos').val() || '', palette: jQuery('#dearcharts_palette').val() || '' };
-            // headers (skip label column i=0 and add button i=last)
-            jQuery('#dc-manual-table thead th').each(function(i){ if (i === 0 || i === jQuery('#dc-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
+            // headers (skip only add button i=last)
+            jQuery('#dc-manual-table thead th').each(function(i){ if (i === jQuery('#dc-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
             // rows
             jQuery('#dc-manual-table tbody tr').each(function(){ var row = []; jQuery(this).find('td').each(function(i){ if (i === jQuery(this).closest('tr').find('td').length - 1) return; var v = jQuery(this).find('input').val() || ''; row.push(v); }); snapshot.manual.rows.push(row); });
             return snapshot;
