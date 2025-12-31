@@ -36,7 +36,7 @@ function dearcharts_admin_assets($hook)
     if ($hook == 'post-new.php' || $hook == 'post.php') {
         if ($post && $post->post_type === 'dearcharts') {
             wp_enqueue_media();
-            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
+            wp_enqueue_script('chartjs', plugins_url('../assets/js/chartjs/chart.umd.min.js', __FILE__), array(), '4.4.1', true);
         }
     }
 }

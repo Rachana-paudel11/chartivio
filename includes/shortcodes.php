@@ -49,6 +49,9 @@ function dearcharts_render_shortcode($atts)
     $dearcharts_instance_counter++;
     $unique_id = 'dearchart-' . $post_id . '-' . $dearcharts_instance_counter;
 
+    // Enqueue assets only when shortcode is used
+    wp_enqueue_script('chartjs');
+
     // Prepare Config for JS
     $config = array(
         'id' => $unique_id,
@@ -66,7 +69,7 @@ function dearcharts_render_shortcode($atts)
     $output .= '</div>';
 
     // Inline Script to Init
-    $output .= '<script>jQuery(document).ready(function($) { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
+    $output .= '<script>document.addEventListener("DOMContentLoaded", function() { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
 
     return $output;
 }
@@ -77,8 +80,8 @@ add_shortcode('dearchart', 'dearcharts_render_shortcode');
  */
 function dearcharts_frontend_assets()
 {
-    wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
-    wp_enqueue_script('jquery');
+    // Register local Chart.js for on-demand loading
+    wp_register_script('chartjs', plugins_url('../assets/js/chartjs/chart.umd.min.js', __FILE__), array(), '4.4.1', true);
 }
 add_action('wp_enqueue_scripts', 'dearcharts_frontend_assets');
 
@@ -87,6 +90,9 @@ add_action('wp_enqueue_scripts', 'dearcharts_frontend_assets');
  */
 function dearcharts_footer_js()
 {
+    if (!wp_script_is('chartjs', 'enqueued')) {
+        return;
+    }
     ?>
     <script>
         var dc_palettes = {
