@@ -50,7 +50,11 @@ function dearcharts_render_usage_box($post)
     echo '<div style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">';
     if (isset($post->post_status) && $post->post_status === 'publish') {
         echo '<p style="margin-top:0; font-size:13px; color:#64748b;">Copy this shortcode to display the chart:</p>';
-        echo '<code style="display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">[dearchart id="' . $post->ID . '"]</code>';
+        echo '<div style="display:flex; align-items:center; gap:8px;">';
+        echo '<code id="dc-shortcode" style="flex:1; display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">[dearchart id="' . $post->ID . '"]</code>';
+        echo '<button type="button" class="button" onclick="dcCopyShortcode()">Copy</button>';
+        echo '</div>';
+        echo '<span id="dc-copy-status" style="font-size:12px; color:#065f46;"></span>';
     } else {
         echo '<p style="margin-top:0; font-size:13px; color:#64748b;">Shortcode will be available after you publish this chart. You can preview it using the Preview button.</p>';
         // Intentionally do not reveal the shortcode for unpublished charts to prevent confusion.
@@ -416,7 +420,7 @@ function dearcharts_render_main_box($post)
         <div class="dc-main-header">
             <div class="dc-main-type" style="display:flex; align-items:center; gap:8px;">
                 <label for="dearcharts_type" style="font-weight:600; color:var(--dc-muted);">Chart Type:</label>
-                <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
+                <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview(); dearcharts_local_autosave();">
                     <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
                     <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
                     <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
@@ -436,6 +440,9 @@ function dearcharts_render_main_box($post)
                         <button type="button" class="dc-rec-apply" id="dc-inline-recommend-apply" style="display:none;" aria-label="Apply recommendation">Apply</button>
                     </span>
                 </span>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <button type="button" class="button button-primary" id="dc-save-chart">Save Chart</button>
             </div>
         </div>
 
@@ -492,19 +499,19 @@ function dearcharts_render_main_box($post)
                                     <tr>
                                         <?php
                                         // Handle backward compatibility for old 2-column data
-                                        if (!empty($manual_data) && is_array($manual_data)) {
+                                        if (!empty($manual_data) && is_array($manual_data) && (isset($manual_data[0]['label']) || (isset($manual_data[0]) && is_array($manual_data[0]) && count($manual_data[0]) > 1))) {
                                             if (isset($manual_data[0]['label'])) {
                                                 // Convert old format to new format
-                                                echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Label" oninput="dearcharts_update_live_preview()"></th>';
-                                                echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Value" oninput="dearcharts_update_live_preview()"></th>';
+                                                echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Label" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
+                                                echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Value" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
                                             } else {
                                                 foreach ($manual_data[0] as $h) {
-                                                    echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="' . esc_attr($h) . '" oninput="dearcharts_update_live_preview()"></th>';
+                                                    echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="' . esc_attr($h) . '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
                                                 }
                                             }
                                         } else {
-                                            echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Label" oninput="dearcharts_update_live_preview()"></th>';
-                                            echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series 1" oninput="dearcharts_update_live_preview()"></th>';
+                                            echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Label" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
+                                            echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series 1" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
                                         }
                                         ?>
                                         <th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>
@@ -512,25 +519,38 @@ function dearcharts_render_main_box($post)
                                 </thead>
                                 <tbody>
                                     <?php
-                                    if (!empty($manual_data) && is_array($manual_data)) {
+                                    if (!empty($manual_data) && is_array($manual_data) && (isset($manual_data[0]['label']) || count($manual_data) > 1)) {
                                         if (isset($manual_data[0]['label'])) {
                                             foreach ($manual_data as $i => $row) {
+                                                if (!isset($row['label']) || !isset($row['value'])) continue;
                                                 echo '<tr>';
-                                                echo '<td><input type="text" name="dearcharts_manual_data[' . ($i + 1) . '][]" value="' . esc_attr($row['label']) . '" oninput="dearcharts_update_live_preview()"></td>';
-                                                echo '<td><input type="text" name="dearcharts_manual_data[' . ($i + 1) . '][]" value="' . esc_attr($row['value']) . '" oninput="dearcharts_update_live_preview()"></td>';
-                                                echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
+                                                echo '<td><input type="text" name="dearcharts_manual_data[' . ($i + 1) . '][]" value="' . esc_attr($row['label']) . '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
+                                                echo '<td><input type="text" name="dearcharts_manual_data[' . ($i + 1) . '][]" value="' . esc_attr($row['value']) . '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
+                                                echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
                                             }
                                         } else {
-                                            for ($r = 1; $r < count($manual_data); $r++) {
+                                            foreach ($manual_data as $r => $row) {
+                                                if ($r === 0 || !is_array($row)) continue;
                                                 echo '<tr>';
-                                                foreach ($manual_data[$r] as $cell) {
-                                                    echo '<td><input type="text" name="dearcharts_manual_data[' . $r . '][]" value="' . esc_attr($cell) . '" oninput="dearcharts_update_live_preview()"></td>';
+                                                foreach ($row as $cell) {
+                                                    echo '<td><input type="text" name="dearcharts_manual_data[' . esc_attr($r) . '][]" value="' . esc_attr($cell) . '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
                                                 }
-                                                echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
+                                                echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
                                             }
                                         }
                                     } else {
-                                        echo '<tr><td><input type="text" name="dearcharts_manual_data[1][]" value="Jan" oninput="dearcharts_update_live_preview()"></td><td><input type="text" name="dearcharts_manual_data[1][]" value="10" oninput="dearcharts_update_live_preview()"></td><td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
+                                        // Default row logic: match header count if possible
+                                        $col_count = 2;
+                                        if (!empty($manual_data) && isset($manual_data[0]) && is_array($manual_data[0])) {
+                                            $col_count = count($manual_data[0]);
+                                        }
+                                        if ($col_count < 2) $col_count = 2;
+                                        
+                                        echo '<tr><td><input type="text" name="dearcharts_manual_data[1][]" value="Jan" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
+                                        for ($c = 1; $c < $col_count; $c++) {
+                                            echo '<td><input type="text" name="dearcharts_manual_data[1][]" value="10" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
+                                        }
+                                        echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
                                     }
                                     ?>
                                 </tbody>
@@ -539,6 +559,7 @@ function dearcharts_render_main_box($post)
                         <div style="display:flex; gap:10px;">
                             <button type="button" class="button" onclick="dearcharts_add_row()">+ Add Row</button>
                             <button type="button" class="button" onclick="dearcharts_add_column()">+ Add Column</button>
+                            <button type="button" class="button" onclick="dearcharts_transpose_table()" title="Swap Rows and Columns">Transpose</button>
                         </div>
                     </div>
                 </div>
@@ -551,7 +572,7 @@ function dearcharts_render_main_box($post)
                         <div class="dc-setting-row">
                             <span class="dc-setting-label">Legend Position</span>
                             <select name="dearcharts_legend_pos" id="dearcharts_legend_pos"
-                                onchange="dearcharts_update_live_preview()">
+                                onchange="dearcharts_update_live_preview(); dearcharts_local_autosave();">
                                 <option value="top" <?php selected($legend_pos, 'top'); ?>>Top</option>
                                 <option value="bottom" <?php selected($legend_pos, 'bottom'); ?>>Bottom</option>
                                 <option value="left" <?php selected($legend_pos, 'left'); ?>>Left</option>
@@ -562,7 +583,7 @@ function dearcharts_render_main_box($post)
                         <div class="dc-setting-row">
                             <span class="dc-setting-label">Color Palette</span>
                             <select name="dearcharts_palette" id="dearcharts_palette"
-                                onchange="dearcharts_update_live_preview()">
+                                onchange="dearcharts_update_live_preview(); dearcharts_local_autosave();">
                                 <option value="default" <?php selected($palette_key, 'default'); ?>>Standard</option>
                                 <option value="pastel" <?php selected($palette_key, 'pastel'); ?>>Pastel</option>
                                 <option value="ocean" <?php selected($palette_key, 'ocean'); ?>>Ocean</option>
@@ -578,20 +599,111 @@ function dearcharts_render_main_box($post)
     </div>
 </div>
 
-    <script>     var dcLiveChart = null; var dc_palettes = { 'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
+    <script>
+        var dcLiveChart = null;
+        var dc_post_id = <?php echo intval($post->ID); ?>;
+        var dc_admin_nonce = '<?php echo wp_create_nonce('dearcharts_save_meta'); ?>';
+        var dc_current_csv_data = null; // Store parsed CSV data for snapshot comparison
+        // Normalized snapshot of saved post meta for client-side comparisons
+        var dc_saved_snapshot = <?php
+            $saved_manual_norm = array('headers' => array(), 'rows' => array());
+            if (!empty($manual_data) && is_array($manual_data)) {
+                // Legacy label/value format
+                if (isset($manual_data[0]) && is_array($manual_data[0]) && isset($manual_data[0]['label'])) {
+                    $saved_manual_norm['headers'] = array('Label', 'Value');
+                    foreach ($manual_data as $i => $row) {
+                        if (!isset($row['label']) || !isset($row['value'])) continue;
+                        $saved_manual_norm['rows'][] = array($row['label'], $row['value']);
+                    }
+                } else {
+                    // Columnar format: first row is headers
+                    $headers = isset($manual_data[0]) && is_array($manual_data[0]) ? array_values($manual_data[0]) : array();
+                    $saved_manual_norm['headers'] = $headers;
+                    foreach ($manual_data as $k => $row) {
+                        if ($k === 0 || !is_array($row)) continue;
+                        $saved_manual_norm['rows'][] = array_values($row);
+                    }
+                }
+            }
+            $saved_snapshot = array(
+                'manual' => $saved_manual_norm,
+                'csv_url' => $csv_url,
+                'csv_data' => get_post_meta($post->ID, '_dearcharts_csv_data', true) ?: null, // Parsed CSV data for comparison
+                'active_source' => $active_source,
+                'type' => $chart_type,
+                'legend_pos' => $legend_pos,
+                'palette' => $palette_key
+            );
+            echo wp_json_encode($saved_snapshot);
+        ?>;
+        var dc_palettes = { 'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
+
+        function dc_parse_csv(str) {
+            var arr = [];
+            var quote = false;
+            for (var row = 0, col = 0, c = 0; c < str.length; c++) {
+                var cc = str[c], nc = str[c+1];
+                arr[row] = arr[row] || [];
+                arr[row][col] = arr[row][col] || '';
+                if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+                if (cc == '"') { quote = !quote; continue; }
+                if (cc == ',' && !quote) { ++col; continue; }
+                if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+                if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+                if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+                arr[row][col] += cc;
+            }
+            return arr;
+        }
+
         function dcTab(el, id) { jQuery('.dc-tab').removeClass('active'); jQuery('.dc-tab-content').removeClass('active'); jQuery(el).addClass('active'); jQuery('#' + id).addClass('active'); }
-        function dcSetSource(src) { jQuery('#dearcharts_active_source').val(src); jQuery('#dc-csv-body, #dc-manual-body').css({ 'opacity': 0.5, 'pointer-events': 'none' }); jQuery('#dc-' + src + '-body').css({ 'opacity': 1, 'pointer-events': 'auto' }); dearcharts_update_live_preview(); }
-        function dcBrowseCSV() { var media = wp.media({ title: 'Select CSV', multiple: false }).open().on('select', function () { var url = media.state().get('selection').first().toJSON().url; jQuery('#dearcharts_csv_url').val(url); dearcharts_update_live_preview(); }); }
+        function dcSetSource(src) { jQuery('#dearcharts_active_source').val(src); jQuery('#dc-csv-body, #dc-manual-body').css({ 'opacity': 0.5, 'pointer-events': 'none' }); jQuery('#dc-' + src + '-body').css({ 'opacity': 1, 'pointer-events': 'auto' }); dearcharts_update_live_preview(); dearcharts_local_autosave(); }
+        function dcBrowseCSV() { var media = wp.media({ title: 'Select CSV', multiple: false }).open().on('select', function () { var url = media.state().get('selection').first().toJSON().url; jQuery('#dearcharts_csv_url').val(url); dearcharts_update_live_preview(); dearcharts_local_autosave(); }); }
         function dearcharts_add_row() {
             var colCount = jQuery('#dc-manual-table thead th').length - 1;
             var rowKey = Date.now();
             var html = '<tr>';
             for (var i = 0; i < colCount; i++) {
-                html += '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview()"></td>';
+                html += '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
             }
-            html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
+            html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
             jQuery('#dc-manual-table tbody').append(html);
         }
+        /**
+         * Transpose Table Data (Swap Rows and Columns)
+         */
+        function dearcharts_transpose_table() {
+            if (!confirm('Transpose data (swap rows and columns)? This will overwrite the current table arrangement.')) return;
+            var snap = dearcharts_get_snapshot();
+            var oldH = snap.manual.headers;
+            var oldR = snap.manual.rows;
+            
+            // Build matrix: [Headers, Row1, Row2...]
+            var matrix = [oldH].concat(oldR);
+            
+            // Transpose matrix
+            var newMatrix = matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex] || ''));
+            
+            // Clear table
+            jQuery('#dc-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>');
+            jQuery('#dc-manual-table tbody').html('');
+            
+            // Rebuild Headers
+            newMatrix[0].forEach(h => jQuery('<th><input type="text" name="dearcharts_manual_data[0][]" value="'+(h||'').replace(/"/g, '&quot;')+'" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>').insertBefore(jQuery('#dc-manual-table thead th').last()));
+            
+            // Rebuild Rows
+            newMatrix.slice(1).forEach((row, idx) => {
+                var html = '<tr>';
+                row.forEach(cell => html += '<td><input type="text" name="dearcharts_manual_data['+(Date.now()+idx)+'][]" value="'+(cell||'').replace(/"/g, '&quot;')+'" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>');
+                html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
+                jQuery('#dc-manual-table tbody').append(html);
+            });
+            
+            dearcharts_add_delete_col_controls();
+            dearcharts_update_live_preview();
+            dearcharts_local_autosave();
+        }
+
         /**
          * PSEUDOCODE: Add Column
          * 1. Determine new column index.
@@ -601,12 +713,12 @@ function dearcharts_render_main_box($post)
          */
         function dearcharts_add_column() {
             var colIdx = jQuery('#dc-manual-table thead th').length - 1;
-            var headHtml = '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series ' + colIdx + '" oninput="dearcharts_update_live_preview()"></th>';
+            var headHtml = '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series ' + colIdx + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
             jQuery(headHtml).insertBefore(jQuery('#dc-manual-table thead th').last());
             jQuery('#dc-manual-table tbody tr').each(function () {
                 var rowKeyMatch = jQuery(this).find('td:first input').attr('name').match(/\[(.*?)\]/);
                 var rowKey = rowKeyMatch ? rowKeyMatch[1] : Date.now();
-                var cellHtml = '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview()"></td>';
+                var cellHtml = '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
                 jQuery(cellHtml).insertBefore(jQuery(this).find('td').last());
             });
             // add delete controls for columns and update preview
@@ -685,7 +797,7 @@ function dearcharts_render_main_box($post)
             // watch CSV input field
             jQuery('#dearcharts_csv_url').on('input', function(){
                 clearTimeout(_recTimer);
-                _recTimer = setTimeout(function(){ dearcharts_recommend_inline(); }, 600);
+                _recTimer = setTimeout(function(){ dearcharts_recommend_inline(); dearcharts_local_autosave(); }, 600);
             });
             // wire apply button
             jQuery(document).on('click', '#dc-inline-recommend-apply', function(){
@@ -828,34 +940,48 @@ function dearcharts_render_main_box($post)
             var canvas = document.getElementById('dc-live-chart');
             if (!canvas) return;
             var ctx = canvas.getContext('2d');
-            var source = jQuery('#dearcharts_active_source').val();
+            
+            // Capture current state to handle race conditions
+            var currentSource = jQuery('#dearcharts_active_source').val();
+            var currentUrl = jQuery('#dearcharts_csv_url').val();
 
-            if (dcLiveChart) dcLiveChart.destroy();
+            if (dcLiveChart) {
+                dcLiveChart.destroy();
+                dcLiveChart = null;
+            }
 
             var labels = [], datasets = [];
 
-            if (source === 'csv') {
-                var url = jQuery('#dearcharts_csv_url').val();
-                if (!url) return;
+            if (currentSource === 'csv') {
+                if (!currentUrl) {
+                    jQuery('#dc-status').hide();
+                    return;
+                }
                 try {
-                    const response = await fetch(url);
+                    const response = await fetch(currentUrl);
+                    // Race condition check: Ensure source and URL haven't changed during fetch
+                    if (jQuery('#dearcharts_active_source').val() !== 'csv' || jQuery('#dearcharts_csv_url').val() !== currentUrl) return;
+
                     const text = await response.text();
-                    const lines = text.trim().split(/\r\n|\n/);
-                    const heads = lines[0].split(',');
+                    const rows = dc_parse_csv(text.trim());
+                    if (rows.length < 2) throw new Error("Invalid CSV");
+                    const heads = rows[0];
                     for (var i = 1; i < heads.length; i++) datasets.push({ label: heads[i].trim(), data: [] });
-                    for (var r = 1; r < lines.length; r++) {
-                        const row = lines[r].split(',');
-                        if (row.length < 1) continue;
+                    for (var r = 1; r < rows.length; r++) {
+                        const row = rows[r];
+                        if (row.length < 2) continue;
                         labels.push(row[0].trim());
                         for (var c = 0; c < datasets.length; c++) {
-                            var val = parseFloat(row[c + 1]);
+                            var val = parseFloat((row[c + 1] || '').replace(/,/g, ''));
                             datasets[c].data.push(isNaN(val) ? 0 : val);
                         }
                     }
                     jQuery('#dc-status').show().text('CSV Loaded').css({ 'color': '#10b981', 'background': '#f0fdf4' });
                 } catch (e) {
+                    if (jQuery('#dearcharts_active_source').val() !== 'csv') return;
                     console.error('CSV Fetch Error:', e);
-                    jQuery('#dc-status').show().text('CSV Error').css({ 'color': '#ef4444', 'background': '#fef2f2' });
+                    jQuery('#dc-status').show().text('Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fef2f2' });
+                    return;
                 }
             } else {
                 jQuery('#dc-manual-table thead th').each(function (i) {
@@ -873,17 +999,34 @@ function dearcharts_render_main_box($post)
                 });
             }
 
+            // Final race condition check before drawing
+            if (jQuery('#dearcharts_active_source').val() !== currentSource) return;
+
             datasets.forEach((ds, i) => {
-                let colors = (datasets.length > 1) ? palette[i % palette.length] : labels.map((_, j) => palette[j % palette.length]);
-                if (chartType === 'bar' || chartType === 'line') {
-                    ds.backgroundColor = (datasets.length > 1) ? palette[i % palette.length] : palette;
-                    ds.borderColor = (datasets.length > 1) ? palette[i % palette.length] : palette;
-                } else {
-                    ds.backgroundColor = colors;
-                    ds.borderColor = colors;
+                const colorArray = labels.map((_, j) => palette[j % palette.length]);
+                const singleColor = palette[i % palette.length];
+
+                if (chartType === 'pie' || chartType === 'doughnut') {
+                    ds.backgroundColor = colorArray;
+                    ds.borderColor = '#ffffff';
+                    ds.borderWidth = 2;
+                } else if (chartType === 'bar') {
+                    if (datasets.length > 1) {
+                        ds.backgroundColor = singleColor;
+                        ds.borderColor = singleColor;
+                    } else {
+                        ds.backgroundColor = colorArray;
+                        ds.borderColor = colorArray;
+                    }
+                    ds.borderWidth = 1;
+                } else if (chartType === 'line') {
+                    ds.backgroundColor = singleColor;
+                    ds.borderColor = singleColor;
+                    ds.borderWidth = 2;
+                    ds.fill = false;
+                    ds.pointBackgroundColor = '#fff';
+                    ds.pointBorderColor = singleColor;
                 }
-                ds.borderWidth = (chartType === 'line') ? 2 : 1;
-                ds.fill = (chartType === 'line') ? false : true;
             });
 
             dcLiveChart = new Chart(ctx, {
@@ -899,7 +1042,132 @@ function dearcharts_render_main_box($post)
                 }
             });
         }
-        jQuery(document).ready(function () { dearcharts_update_live_preview(); });
+        jQuery(document).ready(function () { dearcharts_update_live_preview();
+            // Restore from local storage if different from saved
+            var key = 'dearcharts_autosave_' + dc_post_id;
+            var raw = localStorage.getItem(key);
+            if (raw) {
+                try {
+                    var local_snapshot = JSON.parse(raw);
+                    if (!snapshotsEqual(local_snapshot, dc_saved_snapshot)) {
+                        // restore from local
+                        jQuery('#dearcharts_active_source').val(local_snapshot.active_source);
+                        dcSetSource(local_snapshot.active_source);
+                        jQuery('#dearcharts_csv_url').val(local_snapshot.csv_url);
+                        jQuery('#dearcharts_type').val(local_snapshot.type);
+                        jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
+                        jQuery('#dearcharts_palette').val(local_snapshot.palette);
+                        if (local_snapshot.active_source === 'manual') {
+                            // clear table
+                            jQuery('#dc-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>');
+                            jQuery('#dc-manual-table tbody').html('');
+                            // add headers
+                            local_snapshot.manual.headers.forEach(function(h) {
+                                jQuery('<th><input type="text" name="dearcharts_manual_data[0][]" value="' + h.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>').insertBefore(jQuery('#dc-manual-table thead th:last'));
+                            });
+                            // add rows
+                            local_snapshot.manual.rows.forEach(function(row, idx) {
+                                var html = '<tr>';
+                                row.forEach(function(cell) {
+                                    html += '<td><input type="text" name="dearcharts_manual_data[' + (idx + 1) + '][]" value="' + cell.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
+                                });
+                                html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
+                                jQuery('#dc-manual-table tbody').append(html);
+                            });
+                            dearcharts_add_delete_col_controls();
+                        }
+                        dearcharts_update_live_preview();
+                        updateSaveButtonState();
+                    }
+                } catch(e) {}
+            }
+            // Initialize autosave (no restore UI)
+            dearcharts_local_autosave();
+            jQuery('#dc-save-chart').on('click', function(){
+                // If no changes compared to saved snapshot, inform the user
+                var curr = dearcharts_get_snapshot();
+                if (snapshotsEqual(curr, dc_saved_snapshot)) {
+                    jQuery('#dc-status').show().text('No changes to save').css({ 'color': '#475569', 'background': '#f8fafc' });
+                    setTimeout(function(){ jQuery('#dc-status').text(''); }, 2000);
+                    return;
+                }
+                // disable button while saving
+                var $btn = jQuery(this).attr('disabled', true).addClass('disabled');
+                jQuery('#dc-status').show().text('Saving...').css({ 'color': '#1e3a8a', 'background': '#eef2ff' });
+                // prepare payload
+                var payload = {
+                    action: 'dearcharts_save_chart',
+                    nonce: dc_admin_nonce,
+                    post_id: dc_post_id,
+                    manual_json: JSON.stringify(curr.manual),
+                    dearcharts_csv_url: curr.csv_url,
+                    dearcharts_active_source: curr.active_source,
+                    dearcharts_type: curr.type,
+                    dearcharts_legend_pos: curr.legend_pos,
+                    dearcharts_palette: curr.palette
+                };
+                jQuery.post(ajaxurl, payload, function(res){
+                    if (res && res.success) {
+                        // update saved snapshot and clear local autosave
+                        dc_saved_snapshot = curr;
+                        var key = 'dearcharts_autosave_' + dc_post_id; localStorage.removeItem(key);
+                        jQuery('#dc-status').show().text(res.data && res.data.no_changes ? 'No changes' : 'Saved').css({ 'color': '#065f46', 'background': '#ecfdf5' });
+                        setTimeout(function(){ jQuery('#dc-status').text(''); }, 2000);
+                        updateSaveButtonState();
+                    } else {
+                        var msg = (res && res.data && res.data.message) ? res.data.message : 'Save failed';
+                        jQuery('#dc-status').show().text(msg).css({ 'color': '#ef4444', 'background': '#fff1f2' });
+                        setTimeout(function(){ jQuery('#dc-status').text(''); }, 3000);
+                    }
+                }).fail(function(){ jQuery('#dc-status').show().text('Save failed').css({ 'color': '#ef4444', 'background': '#fff1f2' }); }).always(function(){ $btn.removeAttr('disabled').removeClass('disabled'); });
+            });
+        });
+
+        function dearcharts_get_snapshot() {
+            var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#dearcharts_csv_url').val() || '', active_source: jQuery('#dearcharts_active_source').val() || 'manual', type: jQuery('#dearcharts_type').val() || '', legend_pos: jQuery('#dearcharts_legend_pos').val() || '', palette: jQuery('#dearcharts_palette').val() || '' };
+            // headers (skip label column i=0 and add button i=last)
+            jQuery('#dc-manual-table thead th').each(function(i){ if (i === 0 || i === jQuery('#dc-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
+            // rows
+            jQuery('#dc-manual-table tbody tr').each(function(){ var row = []; jQuery(this).find('td').each(function(i){ if (i === jQuery(this).closest('tr').find('td').length - 1) return; var v = jQuery(this).find('input').val() || ''; row.push(v); }); snapshot.manual.rows.push(row); });
+            return snapshot;
+        }
+
+        function snapshotsEqual(a,b){ try { return JSON.stringify(a) === JSON.stringify(b); } catch(e){ return false; } }
+
+        
+
+        function dearcharts_local_autosave(init) {
+            var key = 'dearcharts_autosave_' + dc_post_id;
+            var curr = dearcharts_get_snapshot();
+            var raw = JSON.stringify(curr);
+            localStorage.setItem(key, raw);
+            // show restore button only when there's a local snapshot different from saved
+            try {
+                var savedRaw = JSON && dc_saved_snapshot ? JSON.stringify(dc_saved_snapshot) : '';
+                var hasDiff = savedRaw !== raw;
+                /* don't show a restore button; we keep a local snapshot for safety but do not expose restore UI */
+            // no restore UI; just update button disability state below
+                updateSaveButtonState();
+            } catch(e){ }
+        }
+
+        function updateSaveButtonState(){ var curr = dearcharts_get_snapshot(); if (snapshotsEqual(curr, dc_saved_snapshot)) { jQuery('#dc-save-chart').attr('disabled', true).addClass('disabled'); } else { jQuery('#dc-save-chart').removeAttr('disabled').removeClass('disabled'); } }
+
+        function dcCopyShortcode() {
+            var shortcode = document.getElementById('dc-shortcode').textContent;
+            navigator.clipboard.writeText(shortcode).then(function() {
+                document.getElementById('dc-copy-status').textContent = 'Copied!';
+                setTimeout(function() {
+                    document.getElementById('dc-copy-status').textContent = '';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Failed to copy: ', err);
+                document.getElementById('dc-copy-status').textContent = 'Copy failed';
+                setTimeout(function() {
+                    document.getElementById('dc-copy-status').textContent = '';
+                }, 2000);
+            });
+        }
     </script>
     <?php
 }
@@ -949,6 +1217,7 @@ function dearcharts_save_meta_box_data($post_id)
 
     if (isset($_POST['dearcharts_manual_data'])) {
         $manual = dearcharts_sanitize_manual_data($_POST['dearcharts_manual_data']);
+        ksort($manual); // Ensure headers (index 0) are first
         update_post_meta($post_id, '_dearcharts_manual_data', $manual);
     }
     if (isset($_POST['dearcharts_csv_url']))
@@ -964,3 +1233,91 @@ function dearcharts_save_meta_box_data($post_id)
         update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
 }
 add_action('save_post', 'dearcharts_save_meta_box_data');
+
+/**
+ * AJAX Save Handler for quick saving from the editor without publishing the post.
+ */
+function dearcharts_ajax_save_chart() {
+    // Validate nonce and permissions
+    if (! isset($_POST['nonce']) || ! wp_verify_nonce($_POST['nonce'], 'dearcharts_save_meta')) {
+        wp_send_json_error(array('message' => 'Invalid nonce'));
+    }
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+    if (! $post_id || ! current_user_can('edit_post', $post_id)) {
+        wp_send_json_error(array('message' => 'Unauthorized'));
+    }
+
+    // Build current saved normalized snapshot for comparison
+    $saved_manual = get_post_meta($post_id, '_dearcharts_manual_data', true);
+    $saved_manual_norm = array('headers' => array(), 'rows' => array());
+    if (!empty($saved_manual) && is_array($saved_manual)) {
+        if (isset($saved_manual[0]) && is_array($saved_manual[0]) && isset($saved_manual[0]['label'])) {
+            $saved_manual_norm['headers'] = array('Label', 'Value');
+            foreach ($saved_manual as $row) {
+                if (!isset($row['label']) || !isset($row['value'])) continue;
+                $saved_manual_norm['rows'][] = array($row['label'], $row['value']);
+            }
+        } else {
+            $headers = isset($saved_manual[0]) && is_array($saved_manual[0]) ? array_values($saved_manual[0]) : array();
+            $saved_manual_norm['headers'] = $headers;
+            foreach ($saved_manual as $k => $row) {
+                if ($k === 0 || !is_array($row)) continue;
+                $saved_manual_norm['rows'][] = array_values($row);
+            }
+        }
+    }
+
+    $current_snapshot = array(
+        'manual' => $saved_manual_norm,
+        'csv_url' => get_post_meta($post_id, '_dearcharts_csv_url', true),
+        'active_source' => get_post_meta($post_id, '_dearcharts_active_source', true),
+        'type' => get_post_meta($post_id, '_dearcharts_type', true),
+        'legend_pos' => get_post_meta($post_id, '_dearcharts_legend_pos', true),
+        'palette' => get_post_meta($post_id, '_dearcharts_palette', true)
+    );
+
+    // Parse incoming snapshot from request
+    $incoming_manual = array();
+    if (isset($_POST['manual_json']) && $_POST['manual_json']) {
+        $incoming_manual = json_decode(wp_unslash($_POST['manual_json']), true);
+        if (!is_array($incoming_manual)) $incoming_manual = array('headers'=>array(), 'rows'=>array());
+    }
+    $incoming_snapshot = array(
+        'manual' => is_array($incoming_manual) ? $incoming_manual : array('headers'=>array(), 'rows'=>array()),
+        'csv_url' => isset($_POST['dearcharts_csv_url']) ? esc_url_raw($_POST['dearcharts_csv_url']) : '',
+        'active_source' => isset($_POST['dearcharts_active_source']) ? sanitize_text_field($_POST['dearcharts_active_source']) : '',
+        'type' => isset($_POST['dearcharts_type']) ? sanitize_text_field($_POST['dearcharts_type']) : '',
+        'legend_pos' => isset($_POST['dearcharts_legend_pos']) ? sanitize_text_field($_POST['dearcharts_legend_pos']) : '',
+        'palette' => isset($_POST['dearcharts_palette']) ? sanitize_text_field($_POST['dearcharts_palette']) : ''
+    );
+
+    // If incoming snapshot equals saved snapshot, return fast 'no changes'
+    if ($incoming_snapshot == $current_snapshot) {
+        wp_send_json_success(array('message' => 'No changes', 'no_changes' => true));
+    }
+
+    // Apply updates (only for fields present in the request)
+    if (!empty($incoming_manual) && is_array($incoming_manual)) {
+        // convert normalized manual to storage format: headers + rows -> columnar array
+        // store as first row = headers, subsequent rows indexed numerically
+        $store_manual = array();
+        $store_manual[0] = $incoming_manual['headers'];
+        foreach ($incoming_manual['rows'] as $idx => $r) {
+            $store_manual[$idx + 1] = $r;
+        }
+        update_post_meta($post_id, '_dearcharts_manual_data', dearcharts_sanitize_manual_data($store_manual));
+    }
+    if (isset($_POST['dearcharts_csv_url']))
+        update_post_meta($post_id, '_dearcharts_csv_url', esc_url_raw($_POST['dearcharts_csv_url']));
+    if (isset($_POST['dearcharts_active_source']))
+        update_post_meta($post_id, '_dearcharts_active_source', sanitize_text_field($_POST['dearcharts_active_source']));
+    if (isset($_POST['dearcharts_type']))
+        update_post_meta($post_id, '_dearcharts_type', sanitize_text_field($_POST['dearcharts_type']));
+    if (isset($_POST['dearcharts_legend_pos']))
+        update_post_meta($post_id, '_dearcharts_legend_pos', sanitize_text_field($_POST['dearcharts_legend_pos']));
+    if (isset($_POST['dearcharts_palette']))
+        update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
+
+    wp_send_json_success(array('message' => 'Saved'));
+}
+add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');

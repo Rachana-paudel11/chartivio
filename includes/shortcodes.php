@@ -39,6 +39,36 @@ function dearcharts_render_shortcode($atts)
     $csv_url = get_post_meta($post_id, '_dearcharts_csv_url', true);
     $active_source = get_post_meta($post_id, '_dearcharts_active_source', true) ?: ((!empty($csv_url)) ? 'csv' : 'manual');
 
+    // Server-side CSV Parsing
+    if ($active_source === 'csv' && !empty($csv_url)) {
+        $response = wp_remote_get($csv_url);
+        if (!is_wp_error($response) && wp_remote_retrieve_response_code($response) === 200) {
+            $csv_body = wp_remote_retrieve_body($response);
+            
+            // Remove BOM if present to prevent header issues
+            $csv_body = preg_replace('/^\xEF\xBB\xBF/', '', $csv_body);
+
+            // Parse CSV robustly using a temporary stream
+            $stream = fopen('php://temp', 'r+');
+            fwrite($stream, $csv_body);
+            rewind($stream);
+            
+            $parsed_rows = array();
+            while (($row = fgetcsv($stream)) !== false) {
+                // Filter out completely empty rows
+                if (array_filter($row)) {
+                    $parsed_rows[] = $row;
+                }
+            }
+            fclose($stream);
+
+            if (!empty($parsed_rows)) {
+                $manual_data = $parsed_rows;
+                $active_source = 'manual'; // Override source so JS uses the pre-parsed data
+            }
+        }
+    }
+
     // Aesthetic Settings
     $chart_type = get_post_meta($post_id, '_dearcharts_type', true) ?: (get_post_meta($post_id, '_dearcharts_is_donut', true) === '1' ? 'doughnut' : 'pie');
     $legend_pos = get_post_meta($post_id, '_dearcharts_legend_pos', true) ?: 'top';
@@ -66,7 +96,7 @@ function dearcharts_render_shortcode($atts)
     $output .= '</div>';
 
     // Inline Script to Init
-    $output .= '<script>jQuery(document).ready(function($) { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
+    $output .= '<script>document.addEventListener("DOMContentLoaded", function() { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
 
     return $output;
 }
@@ -98,6 +128,24 @@ function dearcharts_footer_js()
             'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F']
         };
 
+        function dc_parse_csv(str) {
+            var arr = [];
+            var quote = false;
+            for (var row = 0, col = 0, c = 0; c < str.length; c++) {
+                var cc = str[c], nc = str[c+1];
+                arr[row] = arr[row] || [];
+                arr[row][col] = arr[row][col] || '';
+                if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+                if (cc == '"') { quote = !quote; continue; }
+                if (cc == ',' && !quote) { ++col; continue; }
+                if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+                if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+                if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+                arr[row][col] += cc;
+            }
+            return arr;
+        }
+
         /**
          * PSEUDOCODE: dearcharts_init_frontend
          * 1. Get the 2D drawing context of the target canvas.
@@ -124,16 +172,30 @@ function dearcharts_footer_js()
 
                 // PSEUDOCODE: Assign colors from palette to each dataset or each data point.
                 ds.forEach((set, i) => {
-                    let colors = (ds.length > 1) ? palette[i % palette.length] : l.map((_, j) => palette[j % palette.length]);
-                    if (realType === 'bar' || realType === 'line') {
-                        set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : palette;
-                        set.borderColor = (ds.length > 1) ? palette[i % palette.length] : palette;
-                    } else {
-                        set.backgroundColor = colors;
-                        set.borderColor = colors;
+                    const colorArray = l.map((_, j) => palette[j % palette.length]);
+                    const singleColor = palette[i % palette.length];
+
+                    if (realType === 'pie' || realType === 'doughnut') {
+                        set.backgroundColor = colorArray;
+                        set.borderColor = '#ffffff';
+                        set.borderWidth = 2;
+                    } else if (realType === 'bar') {
+                        if (ds.length > 1) {
+                            set.backgroundColor = singleColor;
+                            set.borderColor = singleColor;
+                        } else {
+                            set.backgroundColor = colorArray;
+                            set.borderColor = colorArray;
+                        }
+                        set.borderWidth = 1;
+                    } else if (realType === 'line') {
+                        set.backgroundColor = singleColor;
+                        set.borderColor = singleColor;
+                        set.borderWidth = 2;
+                        set.fill = false;
+                        set.pointBackgroundColor = '#fff';
+                        set.pointBorderColor = singleColor;
                     }
-                    set.borderWidth = (realType === 'line') ? 2 : 1;
-                    set.fill = (realType === 'line') ? false : true;
                 });
 
                 new Chart(ctx, {
@@ -152,16 +214,21 @@ function dearcharts_footer_js()
             if (config.source === 'csv' && config.csvUrl) {
                 // PSEUDOCODE: Fetch raw CSV text from the stored URL.
                 fetch(config.csvUrl).then(res => res.text()).then(text => {
-                    const lines = text.trim().split(/\r\n|\n/);
+                    const rows = dc_parse_csv(text.trim());
                     let labels = [], datasets = [];
-                    const headParts = lines[0].split(',');
+                    if (rows.length < 2) return;
+                    const headParts = rows[0];
                     // PSEUDOCODE: Identify multiple datasets (columns) based on the first row header.
                     for (let i = 1; i < headParts.length; i++) datasets.push({ label: headParts[i].trim(), data: [] });
                     // PSEUDOCODE: Map subsequent rows to labels (Col 1) and data points (Col 2+).
-                    for (let r = 1; r < lines.length; r++) {
-                        const rowParts = lines[r].split(',');
+                    for (let r = 1; r < rows.length; r++) {
+                        const rowParts = rows[r];
+                        if (rowParts.length < 2) continue;
                         labels.push(rowParts[0].trim());
-                        for (let c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(rowParts[c + 1]) || 0);
+                        for (let c = 0; c < datasets.length; c++) {
+                            let val = parseFloat((rowParts[c + 1] || '').replace(/,/g, ''));
+                            datasets[c].data.push(isNaN(val) ? 0 : val);
+                        }
                     }
                     drawChart(labels, datasets);
                 });
@@ -179,7 +246,8 @@ function dearcharts_footer_js()
                             datasets.push({ label: 'Value', data: [] });
                             rows.forEach((row) => {
                                 labels.push(row.label || '');
-                                datasets[0].data.push(parseFloat(row.value) || 0);
+                                let val = parseFloat(String(row.value || '').replace(/,/g, ''));
+                                datasets[0].data.push(isNaN(val) ? 0 : val);
                             });
                         } else {
                             // Multi-Series Columnar Format Handling
@@ -189,7 +257,10 @@ function dearcharts_footer_js()
                             // Extract labels and values from subsequent rows.
                             for (let r = 1; r < rows.length; r++) {
                                 labels.push(rows[r][0]);
-                                for (let c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(rows[r][c + 1]) || 0);
+                                for (let c = 0; c < datasets.length; c++) {
+                                    let val = parseFloat(String(rows[r][c + 1] || '').replace(/,/g, ''));
+                                    datasets[c].data.push(isNaN(val) ? 0 : val);
+                                }
                             }
                         }
                     }
