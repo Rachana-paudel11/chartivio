@@ -825,4 +825,7 @@ add_action('manage_dearcharts_posts_custom_column', function ($column, $post_id)
             break;
     }
 }, 10, 2);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
