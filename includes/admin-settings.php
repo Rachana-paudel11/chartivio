@@ -835,23 +835,17 @@ add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
  */
 add_filter('manage_dearcharts_posts_columns', function ($columns) {
     $new_columns = array();
-    // Ensure checkbox is first
-    if (isset($columns['cb'])) {
-        $new_columns['cb'] = $columns['cb'];
-    }
-    // Add ID column
+    // 1. Checkbox
+    if (isset($columns['cb'])) $new_columns['cb'] = $columns['cb'];
+    // 2. ID
     $new_columns['dc_id'] = 'ID';
-    
-    // Add remaining columns
-    foreach ($columns as $key => $value) {
-        if ($key !== 'cb') {
-            $new_columns[$key] = $value;
-        }
-    }
-    
-    // Add Shortcode column
+    // 3. Title
+    if (isset($columns['title'])) $new_columns['title'] = $columns['title'];
+    // 4. Shortcode
     $new_columns['dc_shortcode'] = 'Shortcode';
-    
+    // 5. Date
+    if (isset($columns['date'])) $new_columns['date'] = $columns['date'];
+
     return $new_columns;
 });
 
