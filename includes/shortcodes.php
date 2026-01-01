@@ -64,7 +64,7 @@ function dearcharts_render_shortcode($atts)
     );
 
     // Output Container
-    $output = '<div class="dearchart-container" style="position: relative; width: 100%; max-width: 600px; height: 400px; margin: 0 auto;">';
+    $output = '<div class="dearchart-container" style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
     $output .= '<canvas id="' . esc_attr($unique_id) . '"></canvas>';
     $output .= '</div>';
 
@@ -148,9 +148,10 @@ function dearcharts_footer_js()
                     options: {
                         indexAxis: indexAxis,
                         responsive: true,
-                        maintainAspectRatio: false,
+                        maintainAspectRatio: true,
+                        aspectRatio: 1,
                         scales: (realType === 'bar' || realType === 'line') ? { y: { beginAtZero: true } } : {},
-                        plugins: { legend: { display: config.legendPos !== 'none', position: config.legendPos } }
+                        plugins: { legend: { display: config.legendPos !== 'none' && (ds.length > 1 || ['pie', 'doughnut'].includes(realType)), position: config.legendPos } }
                     }
                 });
             };
@@ -207,3 +208,12 @@ function dearcharts_footer_js()
     <?php
 }
 add_action('wp_footer', 'dearcharts_footer_js');
+
+/**
+ * Add CSS to hide post-metadata on Frontend Single View
+ */
+add_action('wp_head', function() {
+    if (is_singular('dearcharts')) {
+        echo '<style>.entry-meta, .byline, .cat-links, .post-author, .post-date { display: none !important; }</style>';
+    }
+});

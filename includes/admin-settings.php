@@ -892,22 +892,15 @@ function dearcharts_render_main_box($post)
                 }
             });
 
-            try {
-                // Prevent "Canvas is already in use" error from async race conditions
-                var activeChart = Chart.getChart(canvas);
-                if (activeChart) {
-                    activeChart.destroy();
-                }
-                dcLiveChart = new Chart(ctx, {
-                    type: chartType,
-                    data: { labels: labels, datasets: datasets },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: (chartType === 'bar' || chartType === 'line') ? { y: { beginAtZero: true } } : {},
-                        plugins: {
-                            legend: { display: legendPos !== 'none', position: legendPos }
-                        }
+            dcLiveChart = new Chart(ctx, {
+                type: chartType,
+                data: { labels: labels, datasets: datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: (chartType === 'bar' || chartType === 'line') ? { y: { beginAtZero: true } } : {},
+                    plugins: {
+                        legend: { display: legendPos !== 'none' && (datasets.length > 1 || ['pie', 'doughnut'].includes(chartType)), position: legendPos }
                     }
                 });
             } catch (e) {
@@ -1063,6 +1056,43 @@ function dearcharts_render_main_box($post)
                 setTimeout(function() {
                     document.getElementById('dc-copy-status').textContent = '';
                 }, 2000);
+            });
+        }
+
+        function dearcharts_quick_save(btn) {
+            var $btn = jQuery(btn);
+            var originalText = $btn.text();
+            $btn.text('Saving...').prop('disabled', true);
+            
+            var headers = [];
+            jQuery('#dc-manual-table thead th input').each(function() { headers.push(jQuery(this).val()); });
+            
+            var rows = [];
+            jQuery('#dc-manual-table tbody tr').each(function() {
+                var row = [];
+                jQuery(this).find('td input').each(function() { row.push(jQuery(this).val()); });
+                if(row.length > 0) rows.push(row);
+            });
+            
+            var data = {
+                action: 'dearcharts_save_chart',
+                nonce: jQuery('#dearcharts_nonce').val(),
+                post_id: $btn.data('pid'),
+                manual_json: JSON.stringify({ headers: headers, rows: rows }),
+                dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
+                dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
+                dearcharts_type: jQuery('#dearcharts_type').val(),
+                dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
+                dearcharts_palette: jQuery('#dearcharts_palette').val()
+            };
+            
+            jQuery.post(ajaxurl, data, function(res) {
+                $btn.text(originalText).prop('disabled', false);
+                if(res.success) {
+                    jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                } else {
+                    alert('Save Failed');
+                }
             });
         }
 
