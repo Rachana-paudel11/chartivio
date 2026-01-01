@@ -360,11 +360,7 @@ function dearcharts_render_main_box($post)
 
     <div class="dc-admin-wrapper">
         <div class="dc-main-header">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <h2>Chart Editor</h2>
-                <button type="button" class="button button-primary" data-pid="<?php echo $post->ID; ?>" onclick="dearcharts_quick_save(this)">Save Chart</button>
-                <span id="dc-save-status" style="font-size:13px; font-weight:500;"></span>
-            </div>
+            <h2>Chart Editor</h2>
             <div class="dc-type-selector-inline">
                 <label for="dearcharts_type">Chart Type:</label>
                 <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
@@ -458,10 +454,9 @@ function dearcharts_render_main_box($post)
                                                 echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
                                             }
                                         } else {
-                                            foreach ($manual_data as $r => $row_data) {
-                                                if ($r === 0 || !is_array($row_data)) continue;
+                                            for ($r = 1; $r < count($manual_data); $r++) {
                                                 echo '<tr>';
-                                                foreach ($row_data as $cell) {
+                                                foreach ($manual_data[$r] as $cell) {
                                                     echo '<td><input type="text" name="dearcharts_manual_data[' . $r . '][]" value="' . esc_attr($cell) . '" oninput="dearcharts_update_live_preview()"></td>';
                                                 }
                                                 echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
@@ -660,7 +655,6 @@ function dearcharts_render_main_box($post)
                 nonce: jQuery('#dearcharts_nonce').val(),
                 post_id: $btn.data('pid'),
                 manual_json: JSON.stringify({ headers: headers, rows: rows }),
-                post_title: jQuery('#title').val(),
                 dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
                 dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
                 dearcharts_type: jQuery('#dearcharts_type').val(),
@@ -827,15 +821,6 @@ function dearcharts_ajax_save_chart() {
     if (isset($_POST['dearcharts_palette']))
         update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
 
-    // Update Post Title and Modified Date so it appears correctly in the Post List
-    if ($post_id) {
-        $post_data = array('ID' => $post_id);
-        if (isset($_POST['post_title']) && !empty($_POST['post_title'])) {
-            $post_data['post_title'] = sanitize_text_field($_POST['post_title']);
-        }
-        wp_update_post($post_data);
-    }
-
     wp_send_json_success(array('message' => 'Saved'));
 }
 add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
@@ -845,23 +830,17 @@ add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
  */
 add_filter('manage_dearcharts_posts_columns', function ($columns) {
     $new_columns = array();
-    // Ensure checkbox is first
-    if (isset($columns['cb'])) {
-        $new_columns['cb'] = $columns['cb'];
-    }
-    // Add ID column
+    // 1. Checkbox
+    if (isset($columns['cb'])) $new_columns['cb'] = $columns['cb'];
+    // 2. ID
     $new_columns['dc_id'] = 'ID';
-    
-    // Add remaining columns
-    foreach ($columns as $key => $value) {
-        if ($key !== 'cb') {
-            $new_columns[$key] = $value;
-        }
-    }
-    
-    // Add Shortcode column
+    // 3. Title
+    if (isset($columns['title'])) $new_columns['title'] = $columns['title'];
+    // 4. Shortcode
     $new_columns['dc_shortcode'] = 'Shortcode';
-    
+    // 5. Date
+    if (isset($columns['date'])) $new_columns['date'] = $columns['date'];
+
     return $new_columns;
 });
 
@@ -871,21 +850,7 @@ add_action('manage_dearcharts_posts_custom_column', function ($column, $post_id)
             echo intval($post_id);
             break;
         case 'dc_shortcode':
-            $code = '[dearchart id="' . intval($post_id) . '"]';
-            echo '<div style="display:flex; align-items:center; gap:5px;">';
-            echo '<code style="background:#f1f5f9; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0; font-size:12px;">' . $code . '</code>';
-            echo '<button type="button" class="button button-small" onclick="var btn=this; navigator.clipboard.writeText(\'' . $code . '\').then(function(){ var orig=btn.innerText; btn.innerText=\'Copied!\'; setTimeout(function(){ btn.innerText=orig; }, 1500); });">Copy</button>';
-            echo '</div>';
+            echo '<code style="background:#f1f5f9; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0; font-size:12px;">[dearchart id="' . intval($post_id) . '"]</code>';
             break;
     }
 }, 10, 2);
-
-/**
- * Add CSS to hide Author and Category columns in Admin List
- */
-add_action('admin_head', function() {
-    global $typenow;
-    if ($typenow === 'dearcharts') {
-        echo '<style>th.column-author, td.column-author, th.column-categories, td.column-categories { display: none !important; }</style>';
-    }
-});
