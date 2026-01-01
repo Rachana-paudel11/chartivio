@@ -699,8 +699,6 @@ function dearcharts_save_meta_box_data($post_id)
         update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
 }
 add_action('save_post', 'dearcharts_save_meta_box_data');
-<<<<<<< Updated upstream
-=======
 
 /**
  * AJAX Save Handler for quick saving from the editor without publishing the post.
@@ -789,3 +787,39 @@ function dearcharts_ajax_save_chart() {
     wp_send_json_success(array('message' => 'Saved'));
 }
 add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
+
+/**
+ * Add ID and Shortcode columns to the DearCharts admin list
+ */
+add_filter('manage_dearcharts_posts_columns', function ($columns) {
+    $new_columns = array();
+    // Ensure checkbox is first
+    if (isset($columns['cb'])) {
+        $new_columns['cb'] = $columns['cb'];
+    }
+    // Add ID column
+    $new_columns['dc_id'] = 'ID';
+    
+    // Add remaining columns
+    foreach ($columns as $key => $value) {
+        if ($key !== 'cb') {
+            $new_columns[$key] = $value;
+        }
+    }
+    
+    // Add Shortcode column
+    $new_columns['dc_shortcode'] = 'Shortcode';
+    
+    return $new_columns;
+});
+
+add_action('manage_dearcharts_posts_custom_column', function ($column, $post_id) {
+    switch ($column) {
+        case 'dc_id':
+            echo intval($post_id);
+            break;
+        case 'dc_shortcode':
+            echo '<code style="background:#f1f5f9; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0; font-size:12px;">[dearchart id="' . intval($post_id) . '"]</code>';
+            break;
+    }
+}, 10, 2);
