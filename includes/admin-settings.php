@@ -360,7 +360,11 @@ function dearcharts_render_main_box($post)
 
     <div class="dc-admin-wrapper">
         <div class="dc-main-header">
-            <h2>Chart Editor</h2>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <h2>Chart Editor</h2>
+                <button type="button" class="button button-primary" data-pid="<?php echo $post->ID; ?>" onclick="dearcharts_quick_save(this)">Save Chart</button>
+                <span id="dc-save-status" style="font-size:13px; font-weight:500;"></span>
+            </div>
             <div class="dc-type-selector-inline">
                 <label for="dearcharts_type">Chart Type:</label>
                 <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
@@ -454,9 +458,10 @@ function dearcharts_render_main_box($post)
                                                 echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
                                             }
                                         } else {
-                                            for ($r = 1; $r < count($manual_data); $r++) {
+                                            foreach ($manual_data as $r => $row_data) {
+                                                if ($r === 0 || !is_array($row_data)) continue;
                                                 echo '<tr>';
-                                                foreach ($manual_data[$r] as $cell) {
+                                                foreach ($row_data as $cell) {
                                                     echo '<td><input type="text" name="dearcharts_manual_data[' . $r . '][]" value="' . esc_attr($cell) . '" oninput="dearcharts_update_live_preview()"></td>';
                                                 }
                                                 echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
@@ -629,8 +634,46 @@ function dearcharts_render_main_box($post)
                     maintainAspectRatio: false,
                     scales: (chartType === 'bar' || chartType === 'line') ? { y: { beginAtZero: true } } : {},
                     plugins: {
-                        legend: { display: legendPos !== 'none', position: legendPos }
+                        legend: { display: legendPos !== 'none' && (datasets.length > 1 || ['pie', 'doughnut'].includes(chartType)), position: legendPos }
                     }
+                }
+            });
+        }
+
+        function dearcharts_quick_save(btn) {
+            var $btn = jQuery(btn);
+            var originalText = $btn.text();
+            $btn.text('Saving...').prop('disabled', true);
+            
+            var headers = [];
+            jQuery('#dc-manual-table thead th input').each(function() { headers.push(jQuery(this).val()); });
+            
+            var rows = [];
+            jQuery('#dc-manual-table tbody tr').each(function() {
+                var row = [];
+                jQuery(this).find('td input').each(function() { row.push(jQuery(this).val()); });
+                if(row.length > 0) rows.push(row);
+            });
+            
+            var data = {
+                action: 'dearcharts_save_chart',
+                nonce: jQuery('#dearcharts_nonce').val(),
+                post_id: $btn.data('pid'),
+                manual_json: JSON.stringify({ headers: headers, rows: rows }),
+                post_title: jQuery('#title').val(),
+                dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
+                dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
+                dearcharts_type: jQuery('#dearcharts_type').val(),
+                dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
+                dearcharts_palette: jQuery('#dearcharts_palette').val()
+            };
+            
+            jQuery.post(ajaxurl, data, function(res) {
+                $btn.text(originalText).prop('disabled', false);
+                if(res.success) {
+                    jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                } else {
+                    alert('Save Failed');
                 }
             });
         }
@@ -699,3 +742,150 @@ function dearcharts_save_meta_box_data($post_id)
         update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
 }
 add_action('save_post', 'dearcharts_save_meta_box_data');
+
+/**
+ * AJAX Save Handler for quick saving from the editor without publishing the post.
+ */
+function dearcharts_ajax_save_chart() {
+    // Validate nonce and permissions
+    if (! isset($_POST['nonce']) || ! wp_verify_nonce($_POST['nonce'], 'dearcharts_save_meta')) {
+        wp_send_json_error(array('message' => 'Invalid nonce'));
+    }
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
+    if (! $post_id || ! current_user_can('edit_post', $post_id)) {
+        wp_send_json_error(array('message' => 'Unauthorized'));
+    }
+
+    // Build current saved normalized snapshot for comparison
+    $saved_manual = get_post_meta($post_id, '_dearcharts_manual_data', true);
+    $saved_manual_norm = array('headers' => array(), 'rows' => array());
+    if (!empty($saved_manual) && is_array($saved_manual)) {
+        if (isset($saved_manual[0]) && is_array($saved_manual[0]) && isset($saved_manual[0]['label'])) {
+            $saved_manual_norm['headers'] = array('Label', 'Value');
+            foreach ($saved_manual as $row) {
+                if (!isset($row['label']) || !isset($row['value'])) continue;
+                $saved_manual_norm['rows'][] = array($row['label'], $row['value']);
+            }
+        } else {
+            $headers = isset($saved_manual[0]) && is_array($saved_manual[0]) ? array_values($saved_manual[0]) : array();
+            $saved_manual_norm['headers'] = $headers;
+            foreach ($saved_manual as $k => $row) {
+                if ($k === 0 || !is_array($row)) continue;
+                $saved_manual_norm['rows'][] = array_values($row);
+            }
+        }
+    }
+
+    $current_snapshot = array(
+        'manual' => $saved_manual_norm,
+        'csv_url' => get_post_meta($post_id, '_dearcharts_csv_url', true),
+        'active_source' => get_post_meta($post_id, '_dearcharts_active_source', true),
+        'type' => get_post_meta($post_id, '_dearcharts_type', true),
+        'legend_pos' => get_post_meta($post_id, '_dearcharts_legend_pos', true),
+        'palette' => get_post_meta($post_id, '_dearcharts_palette', true)
+    );
+
+    // Parse incoming snapshot from request
+    $incoming_manual = array();
+    if (isset($_POST['manual_json']) && $_POST['manual_json']) {
+        $incoming_manual = json_decode(wp_unslash($_POST['manual_json']), true);
+        if (!is_array($incoming_manual)) $incoming_manual = array('headers'=>array(), 'rows'=>array());
+    }
+    $incoming_snapshot = array(
+        'manual' => is_array($incoming_manual) ? $incoming_manual : array('headers'=>array(), 'rows'=>array()),
+        'csv_url' => isset($_POST['dearcharts_csv_url']) ? esc_url_raw($_POST['dearcharts_csv_url']) : '',
+        'active_source' => isset($_POST['dearcharts_active_source']) ? sanitize_text_field($_POST['dearcharts_active_source']) : '',
+        'type' => isset($_POST['dearcharts_type']) ? sanitize_text_field($_POST['dearcharts_type']) : '',
+        'legend_pos' => isset($_POST['dearcharts_legend_pos']) ? sanitize_text_field($_POST['dearcharts_legend_pos']) : '',
+        'palette' => isset($_POST['dearcharts_palette']) ? sanitize_text_field($_POST['dearcharts_palette']) : ''
+    );
+
+    // If incoming snapshot equals saved snapshot, return fast 'no changes'
+    if ($incoming_snapshot == $current_snapshot) {
+        wp_send_json_success(array('message' => 'No changes', 'no_changes' => true));
+    }
+
+    // Apply updates (only for fields present in the request)
+    if (!empty($incoming_manual) && is_array($incoming_manual)) {
+        // convert normalized manual to storage format: headers + rows -> columnar array
+        // store as first row = headers, subsequent rows indexed numerically
+        $store_manual = array();
+        $store_manual[0] = $incoming_manual['headers'];
+        foreach ($incoming_manual['rows'] as $idx => $r) {
+            $store_manual[$idx + 1] = $r;
+        }
+        update_post_meta($post_id, '_dearcharts_manual_data', dearcharts_sanitize_manual_data($store_manual));
+    }
+    if (isset($_POST['dearcharts_csv_url']))
+        update_post_meta($post_id, '_dearcharts_csv_url', esc_url_raw($_POST['dearcharts_csv_url']));
+    if (isset($_POST['dearcharts_active_source']))
+        update_post_meta($post_id, '_dearcharts_active_source', sanitize_text_field($_POST['dearcharts_active_source']));
+    if (isset($_POST['dearcharts_type']))
+        update_post_meta($post_id, '_dearcharts_type', sanitize_text_field($_POST['dearcharts_type']));
+    if (isset($_POST['dearcharts_legend_pos']))
+        update_post_meta($post_id, '_dearcharts_legend_pos', sanitize_text_field($_POST['dearcharts_legend_pos']));
+    if (isset($_POST['dearcharts_palette']))
+        update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
+
+    // Update Post Title and Modified Date so it appears correctly in the Post List
+    if ($post_id) {
+        $post_data = array('ID' => $post_id);
+        if (isset($_POST['post_title']) && !empty($_POST['post_title'])) {
+            $post_data['post_title'] = sanitize_text_field($_POST['post_title']);
+        }
+        wp_update_post($post_data);
+    }
+
+    wp_send_json_success(array('message' => 'Saved'));
+}
+add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
+
+/**
+ * Add ID and Shortcode columns to the DearCharts admin list
+ */
+add_filter('manage_dearcharts_posts_columns', function ($columns) {
+    $new_columns = array();
+    // Ensure checkbox is first
+    if (isset($columns['cb'])) {
+        $new_columns['cb'] = $columns['cb'];
+    }
+    // Add ID column
+    $new_columns['dc_id'] = 'ID';
+    
+    // Add remaining columns
+    foreach ($columns as $key => $value) {
+        if ($key !== 'cb') {
+            $new_columns[$key] = $value;
+        }
+    }
+    
+    // Add Shortcode column
+    $new_columns['dc_shortcode'] = 'Shortcode';
+    
+    return $new_columns;
+});
+
+add_action('manage_dearcharts_posts_custom_column', function ($column, $post_id) {
+    switch ($column) {
+        case 'dc_id':
+            echo intval($post_id);
+            break;
+        case 'dc_shortcode':
+            $code = '[dearchart id="' . intval($post_id) . '"]';
+            echo '<div style="display:flex; align-items:center; gap:5px;">';
+            echo '<code style="background:#f1f5f9; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0; font-size:12px;">' . $code . '</code>';
+            echo '<button type="button" class="button button-small" onclick="var btn=this; navigator.clipboard.writeText(\'' . $code . '\').then(function(){ var orig=btn.innerText; btn.innerText=\'Copied!\'; setTimeout(function(){ btn.innerText=orig; }, 1500); });">Copy</button>';
+            echo '</div>';
+            break;
+    }
+}, 10, 2);
+
+/**
+ * Add CSS to hide Author and Category columns in Admin List
+ */
+add_action('admin_head', function() {
+    global $typenow;
+    if ($typenow === 'dearcharts') {
+        echo '<style>th.column-author, td.column-author, th.column-categories, td.column-categories { display: none !important; }</style>';
+    }
+});
