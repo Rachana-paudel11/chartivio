@@ -411,9 +411,14 @@ function dearcharts_render_main_box($post)
 
     <div class="dc-admin-wrapper">
         <div class="dc-main-header">
-            <div class="dc-main-type" style="display:flex; align-items:center; gap:8px;">
-                <label for="dearcharts_type" style="font-weight:600; color:var(--dc-muted);">Chart Type:</label>
-                <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview(); dearcharts_local_autosave();">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <h2>Chart Editor</h2>
+                <button type="button" class="button button-primary" data-pid="<?php echo $post->ID; ?>" onclick="dearcharts_quick_save(this)">Save Chart</button>
+                <span id="dc-save-status" style="font-size:13px; font-weight:500;"></span>
+            </div>
+            <div class="dc-type-selector-inline">
+                <label for="dearcharts_type">Chart Type:</label>
+                <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
                     <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
                     <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
                     <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
@@ -508,11 +513,11 @@ function dearcharts_render_main_box($post)
                                                 echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
                                             }
                                         } else {
-                                            foreach ($manual_data as $r => $row) {
-                                                if ($r === 0 || !is_array($row)) continue;
+                                            foreach ($manual_data as $r => $row_data) {
+                                                if ($r === 0 || !is_array($row_data)) continue;
                                                 echo '<tr>';
-                                                foreach ($row as $cell) {
-                                                    echo '<td><input type="text" name="dearcharts_manual_data[' . esc_attr($r) . '][]" value="' . esc_attr($cell) . '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
+                                                foreach ($row_data as $cell) {
+                                                    echo '<td><input type="text" name="dearcharts_manual_data[' . $r . '][]" value="' . esc_attr($cell) . '" oninput="dearcharts_update_live_preview()"></td>';
                                                 }
                                                 echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
                                             }
@@ -1060,6 +1065,44 @@ function dearcharts_render_main_box($post)
                 }, 2000);
             });
         }
+
+        function dearcharts_quick_save(btn) {
+            var $btn = jQuery(btn);
+            var originalText = $btn.text();
+            $btn.text('Saving...').prop('disabled', true);
+            
+            var headers = [];
+            jQuery('#dc-manual-table thead th input').each(function() { headers.push(jQuery(this).val()); });
+            
+            var rows = [];
+            jQuery('#dc-manual-table tbody tr').each(function() {
+                var row = [];
+                jQuery(this).find('td input').each(function() { row.push(jQuery(this).val()); });
+                if(row.length > 0) rows.push(row);
+            });
+            
+            var data = {
+                action: 'dearcharts_save_chart',
+                nonce: jQuery('#dearcharts_nonce').val(),
+                post_id: $btn.data('pid'),
+                manual_json: JSON.stringify({ headers: headers, rows: rows }),
+                dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
+                dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
+                dearcharts_type: jQuery('#dearcharts_type').val(),
+                dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
+                dearcharts_palette: jQuery('#dearcharts_palette').val()
+            };
+            
+            jQuery.post(ajaxurl, data, function(res) {
+                $btn.text(originalText).prop('disabled', false);
+                if(res.success) {
+                    jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                } else {
+                    alert('Save Failed');
+                }
+            });
+        }
+        jQuery(document).ready(function () { dearcharts_update_live_preview(); });
     </script>
     <?php
 }
@@ -1213,3 +1256,33 @@ function dearcharts_ajax_save_chart() {
     wp_send_json_success(array('message' => 'Saved'));
 }
 add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
+
+/**
+ * Add ID and Shortcode columns to the DearCharts admin list
+ */
+add_filter('manage_dearcharts_posts_columns', function ($columns) {
+    $new_columns = array();
+    // 1. Checkbox
+    if (isset($columns['cb'])) $new_columns['cb'] = $columns['cb'];
+    // 2. ID
+    $new_columns['dc_id'] = 'ID';
+    // 3. Title
+    if (isset($columns['title'])) $new_columns['title'] = $columns['title'];
+    // 4. Shortcode
+    $new_columns['dc_shortcode'] = 'Shortcode';
+    // 5. Date
+    if (isset($columns['date'])) $new_columns['date'] = $columns['date'];
+
+    return $new_columns;
+});
+
+add_action('manage_dearcharts_posts_custom_column', function ($column, $post_id) {
+    switch ($column) {
+        case 'dc_id':
+            echo intval($post_id);
+            break;
+        case 'dc_shortcode':
+            echo '<code style="background:#f1f5f9; padding:3px 6px; border-radius:4px; border:1px solid #e2e8f0; font-size:12px;">[dearchart id="' . intval($post_id) . '"]</code>';
+            break;
+    }
+}, 10, 2);
