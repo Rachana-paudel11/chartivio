@@ -28,6 +28,35 @@ function dearcharts_add_custom_metaboxes()
 add_action('add_meta_boxes', 'dearcharts_add_custom_metaboxes');
 
 /**
+ * Custom Admin Columns for DearCharts
+ */
+function dearcharts_set_custom_columns($columns) {
+    // Insert ID and Shortcode after Title
+    $new_columns = array();
+    foreach ($columns as $key => $value) {
+        $new_columns[$key] = $value;
+        if ($key === 'title') {
+            $new_columns['dearcharts_id'] = 'ID';
+            $new_columns['dearcharts_shortcode'] = 'Shortcode';
+        }
+    }
+    return $new_columns;
+}
+add_filter('manage_dearcharts_posts_columns', 'dearcharts_set_custom_columns');
+
+function dearcharts_custom_column_content($column, $post_id) {
+    switch ($column) {
+        case 'dearcharts_id':
+            echo $post_id;
+            break;
+        case 'dearcharts_shortcode':
+            echo '<code>[dearchart id="' . $post_id . '"]</code>';
+            break;
+    }
+}
+add_action('manage_dearcharts_posts_custom_column', 'dearcharts_custom_column_content', 10, 2);
+
+/**
  * Enqueue Admin Assets
  */
 function dearcharts_admin_assets($hook)
