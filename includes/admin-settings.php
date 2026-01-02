@@ -78,7 +78,7 @@ add_action('admin_enqueue_scripts', 'dearcharts_admin_assets');
  */
 function dearcharts_render_usage_box($post)
 {
-    echo '<div id="dearcharts-usage-content" style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">';
+    echo '<div style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">';
     if (isset($post->post_status) && $post->post_status === 'publish') {
         echo '<p style="margin-top:0; font-size:13px; color:#64748b;">Copy this shortcode to display the chart:</p>';
         echo '<code style="display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">[dearchart id="' . $post->ID . '"]</code>';
@@ -743,6 +743,7 @@ function dearcharts_render_main_box($post)
                     dearcharts_palette: jQuery('#dearcharts_palette').val()
                 };
             
+<<<<<<< HEAD
                 jQuery.post(ajaxurl, data, function(res) {
                     $btn.text(originalText).prop('disabled', false);
                     if(res.success) {
@@ -766,6 +767,122 @@ function dearcharts_render_main_box($post)
             jQuery(document).ready(function () { dearcharts_update_live_preview(); });
         </script>
         <?php
+=======
+            var rows = [];
+            jQuery('#dc-manual-table tbody tr').each(function() {
+                var row = [];
+                jQuery(this).find('td input').each(function() { row.push(jQuery(this).val()); });
+                if(row.length > 0) rows.push(row);
+            });
+            
+            var data = {
+                action: 'dearcharts_save_chart',
+                nonce: jQuery('#dearcharts_nonce').val(),
+                post_id: $btn.data('pid'),
+                manual_json: JSON.stringify({ headers: headers, rows: rows }),
+                dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
+                dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
+                dearcharts_type: jQuery('#dearcharts_type').val(),
+                dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
+                dearcharts_palette: jQuery('#dearcharts_palette').val()
+            };
+            
+            jQuery.post(ajaxurl, data, function(res) {
+                $btn.text(originalText).prop('disabled', false);
+                if(res.success) {
+                    jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                } else {
+                    alert('Save Failed');
+                }
+            });
+        }
+
+        function dearcharts_quick_save(btn) {
+            var $btn = jQuery(btn);
+            var originalText = $btn.text();
+            $btn.text('Saving...').prop('disabled', true);
+            
+            var headers = [];
+            jQuery('#dc-manual-table thead th input').each(function() { headers.push(jQuery(this).val()); });
+            
+            var rows = [];
+            jQuery('#dc-manual-table tbody tr').each(function() {
+                var row = [];
+                jQuery(this).find('td input').each(function() { row.push(jQuery(this).val()); });
+                if(row.length > 0) rows.push(row);
+            });
+            
+            var data = {
+                action: 'dearcharts_save_chart',
+                nonce: jQuery('#dearcharts_nonce').val(),
+                post_id: $btn.data('pid'),
+                manual_json: JSON.stringify({ headers: headers, rows: rows }),
+                dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
+                dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
+                dearcharts_type: jQuery('#dearcharts_type').val(),
+                dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
+                dearcharts_palette: jQuery('#dearcharts_palette').val()
+            };
+            
+            jQuery.post(ajaxurl, data, function(res) {
+                $btn.text(originalText).prop('disabled', false);
+                if(res.success) {
+                    jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                } else {
+                    alert('Save Failed');
+                }
+            });
+        }
+
+        function dearcharts_quick_save(btn) {
+            // Validation: Ensure Title is present
+            var title = jQuery('#title').val();
+            if (!title || title.trim() === '') {
+                alert('Please enter a title in the main WordPress title box before saving.');
+                jQuery('#title').focus();
+                return;
+            }
+
+            var $btn = jQuery(btn);
+            var originalText = $btn.text();
+            $btn.text('Saving...').prop('disabled', true);
+            
+            var headers = [];
+            jQuery('#dc-manual-table thead th input').each(function() { headers.push(jQuery(this).val()); });
+            
+            var rows = [];
+            jQuery('#dc-manual-table tbody tr').each(function() {
+                var row = [];
+                jQuery(this).find('td input').each(function() { row.push(jQuery(this).val()); });
+                if(row.length > 0) rows.push(row);
+            });
+            
+            var data = {
+                action: 'dearcharts_save_chart',
+                nonce: jQuery('#dearcharts_nonce').val(),
+                post_id: $btn.data('pid'),
+                manual_json: JSON.stringify({ headers: headers, rows: rows }),
+                post_title: title,
+                dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
+                dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
+                dearcharts_type: jQuery('#dearcharts_type').val(),
+                dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
+                dearcharts_palette: jQuery('#dearcharts_palette').val()
+            };
+            
+            jQuery.post(ajaxurl, data, function(res) {
+                $btn.text(originalText).prop('disabled', false);
+                if(res.success) {
+                    jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                } else {
+                    alert('Save Failed');
+                }
+            });
+        }
+        jQuery(document).ready(function () { dearcharts_update_live_preview(); });
+    </script>
+    <?php
+>>>>>>> parent of 0aa0c08 (update save chart and remove publish meta box)
 }
 
 /**
@@ -866,17 +983,10 @@ function dearcharts_ajax_save_chart()
         update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
 
     // Update Title
-    // Update Title & Publish
-    $update_args = array(
-        'ID' => $post_id,
-        'post_status' => 'publish'
-    );
     if (isset($_POST['post_title'])) {
-        $update_args['post_title'] = sanitize_text_field($_POST['post_title']);
+        wp_update_post(array('ID' => $post_id, 'post_title' => sanitize_text_field($_POST['post_title'])));
     }
-    wp_update_post($update_args);
 
-    $shortcode = '[dearchart id="' . $post_id . '"]';
-    wp_send_json_success(array('message' => 'Saved', 'shortcode' => $shortcode));
+    wp_send_json_success(array('message' => 'Saved'));
 }
 add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
