@@ -1,0 +1,42 @@
+# WordPress
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.bak
+*~
+*.swp
+
+# Backup files
+*-backup-*
+backup/
+backups/
+
+# Node modules (if you add build tools later)
+node_modules/
+package-lock.json
+
+# Chart.js library (if you download it manually)
+# Uncomment if you want to ignore the Chart.js library
+# assets/js/chartjs/
+
