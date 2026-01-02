@@ -268,40 +268,80 @@ function dearcharts_render_main_box($post)
         #dc-manual-body {
             transition: opacity 0.3s ease;
             overflow: visible;
-            display: flex;
-            flex-direction: column;
+            display: block !important;
+            visibility: visible !important;
         }
         
-        /* Ensure buttons are always visible */
+        #dc-manual-body * {
+            visibility: visible !important;
+        }
+        
+        #dc-manual-body table,
+        #dc-manual-body .dc-table-wrapper,
+        #dc-manual-body .dc-table-actions {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+        }
+        
+        /* Ensure buttons are always visible below the table */
         .dc-table-actions {
             flex-shrink: 0 !important;
-            margin-top: auto !important;
             background: #fff !important;
             position: relative !important;
             z-index: 10 !important;
             width: 100% !important;
+            margin-top: 12px !important;
+            padding-top: 12px !important;
+            border-top: 1px solid #e2e8f0 !important;
+            display: flex !important;
+            gap: 10px !important;
+            flex-wrap: wrap !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
-        #dc-manual-body {
-            min-height: 350px;
+        .dc-table-actions button {
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         .dc-table-wrapper {
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
-            height: 300px;
-            max-height: 300px;
-            margin-bottom: 0;
+            height: 150px !important;
+            max-height: 150px !important;
+            min-height: 150px !important;
+            margin-bottom: 15px;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
             padding: 0;
-            display: block;
+            display: block !important;
+            visibility: visible !important;
             background: #fff;
             box-sizing: border-box;
             position: relative;
             -webkit-overflow-scrolling: touch;
-            flex-shrink: 1;
+            flex-shrink: 0;
+        }
+        
+        table.dc-table {
+            display: table !important;
+            visibility: visible !important;
+            width: 100% !important;
+        }
+        
+        table.dc-table th,
+        table.dc-table td {
+            display: table-cell !important;
+            visibility: visible !important;
+        }
+        
+        table.dc-table th:last-child {
+            display: table-cell !important;
+            visibility: visible !important;
         }
 
         /* Custom Scrollbar "Slider" Styling */
@@ -342,7 +382,6 @@ function dearcharts_render_main_box($post)
         table.dc-table th,
         table.dc-table td {
             padding: 10px 8px;
-            border: 1px solid #e2e8f0;
             box-sizing: border-box;
             min-width: 100px;
             vertical-align: middle;
@@ -368,16 +407,18 @@ function dearcharts_render_main_box($post)
         }
 
         table.dc-table input {
-            width: 100%;
-            display: block;
-            box-sizing: border-box;
-            border: 1px solid #cbd5e1;
-            padding: 8px 10px;
-            border-radius: 4px;
-            font-size: 13px;
-            height: 36px;
-            margin: 0;
+            width: 100% !important;
+            display: block !important;
+            box-sizing: border-box !important;
+            border: 1px solid #cbd5e1 !important;
+            padding: 8px 10px !important;
+            border-radius: 4px !important;
+            font-size: 13px !important;
+            height: 36px !important;
+            margin: 0 !important;
             transition: border-color 0.2s;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
         table.dc-table input:focus {
@@ -387,65 +428,63 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-delete-row {
-            color: #ef4444;
-            cursor: pointer;
-            font-size: 20px;
-            font-weight: bold;
-            line-height: 1;
-            padding: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 4px;
-            transition: all 0.2s;
-            min-height: 36px;
+            color: #ef4444 !important;
+            cursor: pointer !important;
+            padding: 12px !important;
+
+            font-size: 18px !important;
+            font-weight: bold !important;
+            line-height: 1 !important;
+            display: table-cell !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
         
         .dc-delete-row:hover {
-            background: #fee2e2;
-            color: #dc2626;
-            transform: scale(1.1);
+            background: #fef2f2;
         }
 
         /* Column Controls */
         .dc-col-control {
-            position: relative;
-            width: 100%;
-            display: block;
+            position: relative !important;
+            width: 100% !important;
+            display: block !important;
         }
         
         .dc-col-control input {
-            padding-right: 28px; /* Space for X */
+            padding-right: 28px !important; /* Space for X */
+        }
+        
+        table.dc-table th .dc-col-control {
+            display: block !important;
+            width: 100% !important;
+            position: relative !important;
         }
 
         .dc-delete-col {
-            position: absolute;
-            right: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #ef4444;
-            cursor: pointer;
-            font-size: 18px;
-            font-weight: bold;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #fee2e2;
-            padding: 4px 6px;
-            line-height: 1;
-            z-index: 5;
-            display: flex;
+            position: absolute !important;
+            right: 4px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+            color: #ef4444 !important;
+            cursor: pointer !important;
+            font-size: 16px !important;
+            font-weight: bold !important;
+            background: none !important;
+            border: none !important;
+            padding: 4px !important;
+            line-height: 1 !important;
+            z-index: 5 !important;
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
             align-items: center;
             justify-content: center;
-            border-radius: 3px;
-            transition: all 0.2s;
-            min-width: 24px;
-            min-height: 24px;
         }
 
         .dc-delete-col:hover {
             background: #fee2e2;
-            border-color: #ef4444;
-            color: #dc2626;
-            transform: translateY(-50%) scale(1.1);
+            border-radius: 4px;
         }
 
             .dc-setting-row {
@@ -533,7 +572,38 @@ function dearcharts_render_main_box($post)
                         <input type="radio" name="dc_source_selector" value="manual" <?php checked($active_source, 'manual'); ?> onclick="dcSetSource('manual')">
                     </div>
                     <div class="dc-card-body" id="dc-manual-body"
-                        style="<?php echo ($active_source === 'manual') ? '' : 'opacity:0.5; pointer-events:none;'; ?>">
+                        style="<?php echo ($active_source === 'manual') ? 'opacity:1 !important; pointer-events:auto !important; visibility:visible !important;' : 'opacity:0.5; pointer-events:none;'; ?>">
+                        <style>
+                            /* Ensure everything is visible when manual is active */
+                            #dc-manual-body {
+                                display: block !important;
+                            }
+                            #dc-manual-body .dc-table-wrapper,
+                            #dc-manual-body table,
+                            #dc-manual-body th,
+                            #dc-manual-body td,
+                            #dc-manual-body .dc-delete-row,
+                            #dc-manual-body .dc-delete-col,
+                            #dc-manual-body .dc-table-actions,
+                            #dc-manual-body button {
+                                visibility: visible !important;
+                                display: block !important;
+                                opacity: 1 !important;
+                            }
+                            #dc-manual-body table {
+                                display: table !important;
+                            }
+                            #dc-manual-body th,
+                            #dc-manual-body td {
+                                display: table-cell !important;
+                            }
+                            #dc-manual-body .dc-table-actions {
+                                display: flex !important;
+                            }
+                            #dc-manual-body button {
+                                display: inline-block !important;
+                            }
+                        </style>
                         <div class="dc-table-wrapper">
                             <table class="dc-table" id="dc-manual-table">
                                 <thead>
@@ -555,7 +625,7 @@ function dearcharts_render_main_box($post)
                                             echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series 1" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
                                         }
                                         ?>
-                                        <th style="width:45px; min-width:45px; max-width:45px; cursor:pointer; background: #eff6ff; text-align: center; font-size: 18px; font-weight: bold; color: var(--dc-primary);" onclick="dearcharts_add_column()" title="Add Column">+</th>
+                                        <th style="width:45px !important; min-width:45px !important; max-width:45px !important; cursor:pointer !important; background: #eff6ff !important; text-align: center !important; font-size: 18px !important; font-weight: bold !important; color: var(--dc-primary) !important; display: table-cell !important; visibility: visible !important; opacity: 1 !important;" onclick="dearcharts_add_column()" title="Add Column">+</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -597,10 +667,9 @@ function dearcharts_render_main_box($post)
                                 </tbody>
                             </table>
                         </div>
-                        <div class="dc-table-actions" style="display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
-                            <button type="button" class="button button-secondary" onclick="dearcharts_add_row()" style="min-width: 120px; font-weight: 500;">+ Add Row</button>
-                            <button type="button" class="button button-secondary" onclick="dearcharts_add_column()" style="min-width: 120px; font-weight: 500;">+ Add Column</button>
-                            <button type="button" class="button button-secondary" onclick="dearcharts_transpose_table()" title="Swap Rows and Columns" style="min-width: 120px;">Transpose</button>
+                        <div class="dc-table-actions" style="display:flex !important; gap:10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0; visibility: visible !important; opacity: 1 !important;">
+                            <button type="button" class="button button-secondary" onclick="dearcharts_add_row()" style="min-width: 120px; font-weight: 500; display: inline-block !important; visibility: visible !important;">+ Add Row</button>
+                            <button type="button" class="button button-secondary" onclick="dearcharts_add_column()" style="min-width: 120px; font-weight: 500; display: inline-block !important; visibility: visible !important;">+ Add Column</button>
                         </div>
                     </div>
                 </div>
@@ -699,7 +768,19 @@ function dearcharts_render_main_box($post)
         }
 
         function dcTab(el, id) { jQuery('.dc-tab').removeClass('active'); jQuery('.dc-tab-content').removeClass('active'); jQuery(el).addClass('active'); jQuery('#' + id).addClass('active'); }
-        function dcSetSource(src) { jQuery('#dearcharts_active_source').val(src); jQuery('#dc-csv-body, #dc-manual-body').css({ 'opacity': 0.5, 'pointer-events': 'none' }); jQuery('#dc-' + src + '-body').css({ 'opacity': 1, 'pointer-events': 'auto' }); dearcharts_update_live_preview(); dearcharts_local_autosave(); }
+        function dcSetSource(src) { 
+            jQuery('#dearcharts_active_source').val(src); 
+            jQuery('#dc-csv-body, #dc-manual-body').css({ 'opacity': 0.5, 'pointer-events': 'none' }); 
+            jQuery('#dc-' + src + '-body').css({ 'opacity': 1, 'pointer-events': 'auto' }); 
+            if (src === 'manual') {
+                // Re-initialize column delete controls when switching to manual
+                setTimeout(function() {
+                    dearcharts_add_delete_col_controls();
+                }, 100);
+            }
+            dearcharts_update_live_preview(); 
+            dearcharts_local_autosave(); 
+        }
         function dcBrowseCSV() { var media = wp.media({ title: 'Select CSV', multiple: false }).open().on('select', function () { var url = media.state().get('selection').first().toJSON().url; jQuery('#dearcharts_csv_url').val(url); dearcharts_update_live_preview(); dearcharts_local_autosave(); }); }
         function dearcharts_add_row() {
             var colCount = jQuery('#dc-manual-table thead th').length - 1;
@@ -710,6 +791,8 @@ function dearcharts_render_main_box($post)
             }
             html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
             jQuery('#dc-manual-table tbody').append(html);
+            dearcharts_update_live_preview();
+            dearcharts_local_autosave();
         }
         /**
          * Transpose Table Data (Swap Rows and Columns)
@@ -828,8 +911,20 @@ function dearcharts_render_main_box($post)
             dearcharts_add_delete_col_controls();
             dearcharts_update_live_preview();
         }
-        // ensure controls are present on DOM ready
-        jQuery(function(){ dearcharts_add_delete_col_controls(); });
+        // ensure controls are present on DOM ready and after table is rendered
+        jQuery(function(){ 
+            // Initial call
+            setTimeout(function() {
+                dearcharts_add_delete_col_controls();
+            }, 200);
+            
+            // Also call when manual source is active
+            if (jQuery('#dearcharts_active_source').val() === 'manual') {
+                setTimeout(function() {
+                    dearcharts_add_delete_col_controls();
+                }, 500);
+            }
+        });
 
 
 
