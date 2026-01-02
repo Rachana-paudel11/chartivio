@@ -249,19 +249,24 @@ function dearcharts_render_main_box($post)
                 font-size: 13px;
             }
 
-            .dc-card-body {
-                padding: 12px;
-            }
+        .dc-card-body {
+            padding: 15px;
+        }
+
+        #dc-manual-body {
+            transition: opacity 0.3s ease;
+        }
 
         .dc-table-wrapper {
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
-            height: 240px;
+            max-height: 300px;
+            min-height: 200px;
             margin-bottom: 15px;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
-            padding-right: 40px; /* Prevent row delete buttons from being cut off */
+            padding: 8px;
             display: block;
             background: #fff;
             box-sizing: border-box;
@@ -289,7 +294,8 @@ function dearcharts_render_main_box($post)
         table.dc-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed; /* Force equal widths or respect set widths */
+            table-layout: auto;
+            margin: 0;
         }
 
         table.dc-table thead th {
@@ -297,32 +303,35 @@ function dearcharts_render_main_box($post)
             top: 0;
             z-index: 10;
             background: #f8fafc;
-            box-shadow: 0 1px 0 #e2e8f0;
+            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
         }
 
         table.dc-table th,
         table.dc-table td {
-            padding: 8px;
+            padding: 10px 8px;
             border: 1px solid #e2e8f0;
             box-sizing: border-box;
-            min-width: 120px;
+            min-width: 100px;
             vertical-align: middle;
+            white-space: nowrap;
         }
 
         table.dc-table th {
             font-weight: 600;
-            color: #64748b;
+            color: #475569;
             font-size: 12px;
             text-transform: uppercase;
+            background: #f8fafc;
         }
 
         table.dc-table th:last-child,
         table.dc-table td:last-child {
-            width: 50px;
-            min-width: 50px;
+            width: 45px;
+            min-width: 45px;
+            max-width: 45px;
             text-align: center;
             border-right: none;
-            padding: 0;
+            padding: 4px;
         }
 
         table.dc-table input {
@@ -330,23 +339,39 @@ function dearcharts_render_main_box($post)
             display: block;
             box-sizing: border-box;
             border: 1px solid #cbd5e1;
-            padding: 6px 8px;
+            padding: 8px 10px;
             border-radius: 4px;
             font-size: 13px;
-            height: 34px;
+            height: 36px;
             margin: 0;
+            transition: border-color 0.2s;
+        }
+
+        table.dc-table input:focus {
+            outline: none;
+            border-color: var(--dc-primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
         }
 
         .dc-delete-row {
             color: #ef4444;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 20px;
             font-weight: bold;
             line-height: 1;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+            min-height: 36px;
         }
         
         .dc-delete-row:hover {
-            background: #fef2f2;
+            background: #fee2e2;
+            color: #dc2626;
+            transform: scale(1.1);
         }
 
         /* Column Controls */
@@ -362,26 +387,32 @@ function dearcharts_render_main_box($post)
 
         .dc-delete-col {
             position: absolute;
-            right: 4px;
+            right: 6px;
             top: 50%;
             transform: translateY(-50%);
             color: #ef4444;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
-            background: none;
-            border: none;
-            padding: 4px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #fee2e2;
+            padding: 4px 6px;
             line-height: 1;
             z-index: 5;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 3px;
+            transition: all 0.2s;
+            min-width: 24px;
+            min-height: 24px;
         }
 
         .dc-delete-col:hover {
             background: #fee2e2;
-            border-radius: 4px;
+            border-color: #ef4444;
+            color: #dc2626;
+            transform: translateY(-50%) scale(1.1);
         }
 
             .dc-setting-row {
@@ -420,9 +451,6 @@ function dearcharts_render_main_box($post)
                     <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
                     <option value="line" <?php selected($chart_type, 'line'); ?>>Line</option>
                 </select>
-            </div>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <button type="button" class="button button-primary" id="dc-save-chart">Save Chart</button>
             </div>
         </div>
 
@@ -536,10 +564,10 @@ function dearcharts_render_main_box($post)
                                 </tbody>
                             </table>
                         </div>
-                        <div style="display:flex; gap:10px;">
-                            <button type="button" class="button" onclick="dearcharts_add_row()">+ Add Row</button>
-                            <button type="button" class="button" onclick="dearcharts_add_column()">+ Add Column</button>
-                            <button type="button" class="button" onclick="dearcharts_transpose_table()" title="Swap Rows and Columns">Transpose</button>
+                        <div style="display:flex; gap:10px; flex-wrap: wrap; margin-top: 10px;">
+                            <button type="button" class="button button-secondary" onclick="dearcharts_add_row()" style="min-width: 120px;">+ Add Row</button>
+                            <button type="button" class="button button-secondary" onclick="dearcharts_add_column()" style="min-width: 120px;">+ Add Column</button>
+                            <button type="button" class="button button-secondary" onclick="dearcharts_transpose_table()" title="Swap Rows and Columns" style="min-width: 120px;">Transpose</button>
                         </div>
                     </div>
                 </div>
@@ -1180,61 +1208,6 @@ function dearcharts_render_main_box($post)
             }
             // Initialize autosave (no restore UI)
             dearcharts_local_autosave();
-            
-            jQuery('#dc-save-chart').on('click', function(e){
-                e.preventDefault();
-                var $btn = jQuery(this);
-                $btn.text('Saving...').attr('disabled', 'disabled').addClass('disabled');
-                
-                // CRITICAL FIX: Sync input values to DOM attributes so Gutenberg captures them correctly
-                jQuery('#dc-manual-table input').each(function(){
-                    jQuery(this).attr('value', jQuery(this).val());
-                });
-                jQuery('#dearcharts_csv_url').attr('value', jQuery('#dearcharts_csv_url').val());
-
-                // Check for Gutenberg (Block Editor)
-                if (document.body.classList.contains('block-editor-page')) {
-                    // Use AJAX for Gutenberg to ensure legacy meta box data is saved
-                    var curr = dearcharts_get_snapshot();
-                    var payload = {
-                        action: 'dearcharts_save_chart',
-                        nonce: dc_admin_nonce,
-                        post_id: dc_post_id,
-                        manual_json: JSON.stringify(curr.manual),
-                        dearcharts_csv_url: curr.csv_url,
-                        dearcharts_active_source: curr.active_source,
-                        dearcharts_type: curr.type,
-                        dearcharts_legend_pos: curr.legend_pos,
-                        dearcharts_palette: curr.palette
-                    };
-
-                    jQuery.post(ajaxurl, payload, function(res){
-                        if (res && res.success) {
-                            dc_saved_snapshot = curr;
-                            var key = 'dearcharts_autosave_' + dc_post_id; localStorage.removeItem(key);
-                            $btn.text('Save Chart').removeAttr('disabled').removeClass('disabled');
-                            jQuery('#dc-status').show().text('Saved').css({ 'color': '#065f46', 'background': '#ecfdf5' });
-                            setTimeout(function(){ jQuery('#dc-status').text(''); }, 2000);
-                            // Trigger silent save of post content/title
-                            if (window.wp && window.wp.data) { wp.data.dispatch('core/editor').savePost(); }
-                        } else {
-                            var msg = (res && res.data && res.data.message) ? res.data.message : 'Save failed';
-                            $btn.text('Save Chart').removeAttr('disabled').removeClass('disabled');
-                            jQuery('#dc-status').show().text(msg).css({ 'color': '#ef4444', 'background': '#fff1f2' });
-                        }
-                    }).fail(function(){
-                        $btn.text('Save Chart').removeAttr('disabled').removeClass('disabled');
-                        jQuery('#dc-status').show().text('Server Error').css({ 'color': '#ef4444', 'background': '#fff1f2' });
-                    });
-                } else {
-                    // Classic Editor
-                    if (jQuery('#publish').length) {
-                        jQuery('#publish').trigger('click');
-                    } else {
-                        jQuery('form#post').submit();
-                    }
-                }
-            });
         });
 
         function dearcharts_get_snapshot() {
