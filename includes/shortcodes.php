@@ -19,9 +19,12 @@ function dearcharts_render_shortcode($atts)
 {
     $atts = shortcode_atts(array(
         'id' => '',
+<<<<<<< HEAD
         'width' => '35%',
         'height' => '400px',
         'max_width' => '100%'
+=======
+>>>>>>> parent of ec15bdd (Merge branch 'save_chart_update')
     ), $atts, 'dearchart');
 
     $post_id = intval($atts['id']);
@@ -67,15 +70,18 @@ function dearcharts_render_shortcode($atts)
     );
 
     // Output Container
+<<<<<<< HEAD
     $style = "position: relative; width: " . esc_attr($atts['width']) . "; max-width: " . esc_attr($atts['max_width']) . "; height: " . esc_attr($atts['height']) . "; margin: 0 auto;";
     $output = '<div class="dearchart-container" style="' . $style . '">';
     $output .= '<canvas id="' . esc_attr($unique_id) . '" style="width: 100%; height: 100%;"></canvas>';
+=======
+    $output = '<div class="dearchart-container" style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
+    $output .= '<canvas id="' . esc_attr($unique_id) . '"></canvas>';
+>>>>>>> parent of ec15bdd (Merge branch 'save_chart_update')
     $output .= '</div>';
 
     // Inline Script to Init
-    // Enqueue assets if not already (safeguard for AJAX or weird loading contexts)
-    wp_enqueue_script('chartjs');
-    $output .= '<script>jQuery(document).ready(function($) { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
+    $output .= '<script>document.addEventListener("DOMContentLoaded", function() { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
 
     return $output;
 }
@@ -88,9 +94,12 @@ function dearcharts_frontend_assets()
 {
     // Register local Chart.js for on-demand loading
     wp_register_script('chartjs', plugins_url('../assets/js/chartjs/chart.umd.min.js', __FILE__), array(), '4.4.1', true);
+<<<<<<< HEAD
 
     // Register plugin frontend logic, dependent on Chart.js
     wp_register_script('dearcharts-frontend', plugins_url('../assets/js/dearcharts.js', __FILE__), array('chartjs'), '1.0.0', true);
+=======
+>>>>>>> parent of ec15bdd (Merge branch 'save_chart_update')
 }
 add_action('wp_enqueue_scripts', 'dearcharts_frontend_assets');
 
