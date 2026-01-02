@@ -24,6 +24,8 @@ function dearcharts_add_custom_metaboxes()
 {
     add_meta_box('dearcharts_main_box', 'Chart Configuration', 'dearcharts_render_main_box', 'dearcharts', 'normal', 'high');
     add_meta_box('dearcharts_usage_box', 'Chart Shortcodes', 'dearcharts_render_usage_box', 'dearcharts', 'side', 'low');
+    // Remove default Publish box since we have a custom Save button
+    remove_meta_box('submitdiv', 'dearcharts', 'side');
 }
 add_action('add_meta_boxes', 'dearcharts_add_custom_metaboxes');
 
@@ -47,7 +49,7 @@ add_action('admin_enqueue_scripts', 'dearcharts_admin_assets');
  */
 function dearcharts_render_usage_box($post)
 {
-    echo '<div style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">';
+    echo '<div id="dearcharts-usage-content" style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">';
     if (isset($post->post_status) && $post->post_status === 'publish') {
         echo '<p style="margin-top:0; font-size:13px; color:#64748b;">Copy this shortcode to display the chart:</p>';
         echo '<div style="display:flex; align-items:center; gap:8px;">';
@@ -1173,6 +1175,17 @@ function dearcharts_render_main_box($post)
                 $btn.text(originalText).prop('disabled', false);
                 if(res.success) {
                     jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                    
+                    // Show shortcode if returned
+                    if(res.data && res.data.shortcode) {
+                        // Update the Usage Meta Box
+                        var $usageBox = jQuery('#dearcharts-usage-content');
+                        if($usageBox.length) {
+                             var html = '<p style="margin-top:0; font-size:13px; color:#64748b;">Copy this shortcode to display the chart:</p>';
+                             html += '<code style="display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">' + res.data.shortcode + '</code>';
+                             $usageBox.html(html);
+                        }
+                    }
                 } else {
                     alert('Save Failed');
                 }
@@ -1275,10 +1288,17 @@ function dearcharts_ajax_save_chart() {
     if (isset($_POST['dearcharts_palette'])) update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
 
     // Update Title
+    // Update Title & Publish
+    $update_args = array(
+        'ID' => $post_id,
+        'post_status' => 'publish'
+    );
     if (isset($_POST['post_title'])) {
-        wp_update_post(array('ID' => $post_id, 'post_title' => sanitize_text_field($_POST['post_title'])));
+        $update_args['post_title'] = sanitize_text_field($_POST['post_title']);
     }
+    wp_update_post($update_args);
 
-    wp_send_json_success(array('message' => 'Saved'));
+    $shortcode = '[dearchart id="' . $post_id . '"]';
+    wp_send_json_success(array('message' => 'Saved', 'shortcode' => $shortcode));
 }
 add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
