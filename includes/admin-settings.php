@@ -170,6 +170,7 @@ function dearcharts_render_main_box($post)
                 display: flex;
                 flex-direction: column;
                 overflow: hidden;
+                min-height: 0;
             }
 
             .dc-tabs {
@@ -218,8 +219,18 @@ function dearcharts_render_main_box($post)
                 display: none;
                 padding: 15px 20px;
                 flex: 1;
-                overflow-y: auto;
-                max-height: 100%;
+                overflow: visible;
+                min-height: 0;
+            }
+            
+            /* Ensure manual data entry table wrapper is the only scrollable element */
+            #dc-manual-body {
+                overflow: visible !important;
+            }
+            
+            #dc-manual-body .dc-table-wrapper {
+                overflow-x: auto !important;
+                overflow-y: auto !important;
             }
 
             .dc-tab-content.active {
@@ -251,25 +262,46 @@ function dearcharts_render_main_box($post)
 
         .dc-card-body {
             padding: 15px;
+            overflow: visible;
         }
 
         #dc-manual-body {
             transition: opacity 0.3s ease;
+            overflow: visible;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Ensure buttons are always visible */
+        .dc-table-actions {
+            flex-shrink: 0 !important;
+            margin-top: auto !important;
+            background: #fff !important;
+            position: relative !important;
+            z-index: 10 !important;
+            width: 100% !important;
+        }
+        
+        #dc-manual-body {
+            min-height: 350px;
         }
 
         .dc-table-wrapper {
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
+            height: 300px;
             max-height: 300px;
-            min-height: 200px;
-            margin-bottom: 15px;
+            margin-bottom: 0;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
-            padding: 8px;
+            padding: 0;
             display: block;
             background: #fff;
             box-sizing: border-box;
+            position: relative;
+            -webkit-overflow-scrolling: touch;
+            flex-shrink: 1;
         }
 
         /* Custom Scrollbar "Slider" Styling */
@@ -296,6 +328,7 @@ function dearcharts_render_main_box($post)
             border-collapse: collapse;
             table-layout: auto;
             margin: 0;
+            border-spacing: 0;
         }
 
         table.dc-table thead th {
@@ -564,9 +597,9 @@ function dearcharts_render_main_box($post)
                                 </tbody>
                             </table>
                         </div>
-                        <div style="display:flex; gap:10px; flex-wrap: wrap; margin-top: 10px;">
-                            <button type="button" class="button button-secondary" onclick="dearcharts_add_row()" style="min-width: 120px;">+ Add Row</button>
-                            <button type="button" class="button button-secondary" onclick="dearcharts_add_column()" style="min-width: 120px;">+ Add Column</button>
+                        <div class="dc-table-actions" style="display:flex; gap:10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
+                            <button type="button" class="button button-secondary" onclick="dearcharts_add_row()" style="min-width: 120px; font-weight: 500;">+ Add Row</button>
+                            <button type="button" class="button button-secondary" onclick="dearcharts_add_column()" style="min-width: 120px; font-weight: 500;">+ Add Column</button>
                             <button type="button" class="button button-secondary" onclick="dearcharts_transpose_table()" title="Swap Rows and Columns" style="min-width: 120px;">Transpose</button>
                         </div>
                     </div>
