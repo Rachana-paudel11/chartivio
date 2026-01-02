@@ -36,7 +36,7 @@ function dearcharts_admin_assets($hook)
     if ($hook == 'post-new.php' || $hook == 'post.php') {
         if ($post && $post->post_type === 'dearcharts') {
             wp_enqueue_media();
-            wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
+            wp_enqueue_script('chartjs', plugins_url('../assets/js/chartjs/chart.umd.min.js', __FILE__), array(), '4.4.1', true);
         }
     }
 }
@@ -584,6 +584,7 @@ function dearcharts_render_main_box($post)
         var dc_post_id = <?php echo intval($post->ID); ?>;
         var dc_admin_nonce = '<?php echo wp_create_nonce('dearcharts_save_meta'); ?>';
         var dc_current_csv_data = null; // Store parsed CSV data for snapshot comparison
+        var dc_is_updating_preview = false; // Flag to prevent concurrent updates
         // Normalized snapshot of saved post meta for client-side comparisons
         var dc_saved_snapshot = <?php
             $saved_manual_norm = array('headers' => array(), 'rows' => array());
@@ -785,35 +786,127 @@ function dearcharts_render_main_box($post)
          * 6. Re-draw the Chart using the Chart.js API.
          */
         async function dearcharts_update_live_preview() {
-            let chartType = jQuery('#dearcharts_type').val();
-            let legendPos = jQuery('#dearcharts_legend_pos').val();
-            let paletteKey = jQuery('#dearcharts_palette').val();
-            let palette = (typeof dc_palettes !== 'undefined' && dc_palettes[paletteKey]) ? dc_palettes[paletteKey] : ((typeof dc_palettes !== 'undefined') ? dc_palettes['default'] : ['#3b82f6']);
+            // Prevent concurrent calls
+            if (dc_is_updating_preview) {
+                return;
+            }
+            dc_is_updating_preview = true;
             
+            try {
+            // Wait for Chart.js to be available
             if (typeof Chart === 'undefined') {
-                return; // Chart.js not loaded yet
+                // Retry after a short delay if Chart.js is still loading
+                setTimeout(function() {
+                    if (typeof Chart !== 'undefined') {
+                        dc_is_updating_preview = false;
+                        dearcharts_update_live_preview();
+                    }
+                }, 100);
+                dc_is_updating_preview = false;
+                return;
             }
 
             var canvas = document.getElementById('dc-live-chart');
-            if (!canvas) return;
+            if (!canvas) {
+                dc_is_updating_preview = false;
+                return;
+            }
+            
+            // Ensure canvas has proper dimensions
+            var container = canvas.parentElement;
+            if (container && (canvas.width === 0 || canvas.height === 0)) {
+                var rect = container.getBoundingClientRect();
+                if (rect.width > 0 && rect.height > 0) {
+                    canvas.width = rect.width;
+                    canvas.height = rect.height;
+                } else {
+                    // Fallback dimensions
+                    canvas.width = 400;
+                    canvas.height = 400;
+                }
+            }
+            
             var ctx = canvas.getContext('2d');
             
             // Ensure any existing chart on this canvas is destroyed (fixes "Canvas is already in use")
-            var existingChart = Chart.getChart(canvas);
-            if (existingChart) {
-                existingChart.destroy();
+            // Destroy in order: global reference first, then Chart.js registry
+            
+            // First, destroy the global chart reference if it exists
+            if (dcLiveChart) {
+                try {
+                    if (typeof dcLiveChart.destroy === 'function') {
+                        dcLiveChart.destroy();
+                    }
+                } catch (e) {
+                    console.warn('Error destroying dcLiveChart:', e);
+                }
+                dcLiveChart = null;
             }
-            dcLiveChart = null;
+            
+            // Then check Chart.js registry for any chart on this canvas
+            try {
+                if (typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
+                    var existingChart = Chart.getChart(canvas);
+                    if (existingChart && existingChart !== dcLiveChart) {
+                        try {
+                            existingChart.destroy();
+                        } catch (e) {
+                            console.warn('Error destroying chart from registry:', e);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Error accessing Chart.js registry:', e);
+            }
+            
+            // Clear the canvas context to ensure clean state
+            try {
+                var cWidth = canvas.width || 400;
+                var cHeight = canvas.height || 400;
+                ctx.clearRect(0, 0, cWidth, cHeight);
+            } catch (e) {
+                console.warn('Error clearing canvas:', e);
+            }
+            
+            // Small delay to ensure Chart.js has fully cleaned up before creating new chart
+            // This prevents "Canvas is already in use" errors
+            await new Promise(resolve => setTimeout(resolve, 20));
+            
+            // Double-check canvas is still available and not in use
+            try {
+                var checkChart = Chart.getChart(canvas);
+                if (checkChart) {
+                    console.warn('Chart still exists after destruction, forcing cleanup');
+                    checkChart.destroy();
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+            } catch (e) {
+                // Ignore - canvas might be ready
+            }
+            
+            // Get settings with defaults
+            let chartType = jQuery('#dearcharts_type').val() || 'pie';
+            let legendPos = jQuery('#dearcharts_legend_pos').val() || 'top';
+            let paletteKey = jQuery('#dearcharts_palette').val() || 'default';
+            let palette = (typeof dc_palettes !== 'undefined' && dc_palettes[paletteKey]) ? dc_palettes[paletteKey] : ((typeof dc_palettes !== 'undefined') ? dc_palettes['default'] : ['#3b82f6']);
             
             // Capture current state to handle race conditions
-            var currentSource = jQuery('#dearcharts_active_source').val();
+            var currentSource = jQuery('#dearcharts_active_source').val() || 'manual';
             var currentUrl = jQuery('#dearcharts_csv_url').val();
 
             var labels = [], datasets = [];
 
             if (currentSource === 'csv') {
-                if (!currentUrl) {
-                    jQuery('#dc-status').hide();
+                if (!currentUrl || currentUrl.trim() === '') {
+                    jQuery('#dc-status').show().text('No CSV URL provided').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
+                    // Show empty chart state
+                    var cWidth = canvas.width || 400;
+                    var cHeight = canvas.height || 400;
+                    ctx.clearRect(0, 0, cWidth, cHeight);
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('No CSV URL provided', cWidth / 2, cHeight / 2);
                     return;
                 }
                 try {
@@ -821,46 +914,133 @@ function dearcharts_render_main_box($post)
                     // Race condition check: Ensure source and URL haven't changed during fetch
                     if (jQuery('#dearcharts_active_source').val() !== 'csv' || jQuery('#dearcharts_csv_url').val() !== currentUrl) return;
 
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch CSV: ' + response.statusText);
+                    }
+
                     const text = await response.text();
+                    if (!text || text.trim() === '') {
+                        throw new Error('CSV file is empty');
+                    }
+
                     const rows = dc_parse_csv(text.trim());
-                    if (rows.length < 2) throw new Error("Invalid CSV");
+                    if (!rows || rows.length < 2) {
+                        throw new Error('Invalid CSV format - need at least header and one data row');
+                    }
+                    
                     const heads = rows[0];
-                    for (var i = 1; i < heads.length; i++) datasets.push({ label: heads[i].trim(), data: [] });
+                    if (!heads || heads.length < 2) {
+                        throw new Error('CSV must have at least 2 columns (label + data)');
+                    }
+
+                    // Create datasets from headers (skip first column which is labels)
+                    for (var i = 1; i < heads.length; i++) {
+                        datasets.push({ label: (heads[i] || 'Series ' + i).trim(), data: [] });
+                    }
+
+                    // Populate data from rows
                     for (var r = 1; r < rows.length; r++) {
                         const row = rows[r];
-                        if (row.length < 2) continue;
-                        labels.push(row[0].trim());
+                        if (!row || row.length < 2) continue;
+                        var label = (row[0] || '').trim();
+                        if (label === '') continue; // Skip rows with empty labels
+                        labels.push(label);
                         for (var c = 0; c < datasets.length; c++) {
-                            var val = parseFloat((row[c + 1] || '').replace(/,/g, ''));
+                            var val = parseFloat((row[c + 1] || '').replace(/,/g, '').trim());
                             datasets[c].data.push(isNaN(val) ? 0 : val);
                         }
                     }
+
+                    if (labels.length === 0) {
+                        throw new Error('No valid data rows found in CSV');
+                    }
+
                     jQuery('#dc-status').show().text('CSV Loaded').css({ 'color': '#10b981', 'background': '#f0fdf4' });
                 } catch (e) {
                     if (jQuery('#dearcharts_active_source').val() !== 'csv') return;
                     console.error('CSV Fetch Error:', e);
                     jQuery('#dc-status').show().text('Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fef2f2' });
+                    // Clear canvas and show error
+                    var cWidth = canvas.width || 400;
+                    var cHeight = canvas.height || 400;
+                    ctx.clearRect(0, 0, cWidth, cHeight);
+                    ctx.fillStyle = '#ef4444';
+                    ctx.font = '14px sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Error: ' + e.message, cWidth / 2, cHeight / 2);
                     return;
                 }
             } else {
+                // Manual data entry
+                var headerCount = 0;
                 jQuery('#dc-manual-table thead th').each(function (i) {
-                    var val = jQuery(this).find('input').val();
-                    if (i > 0 && val !== undefined) datasets.push({ label: val, data: [] });
+                    // Skip the last column (delete button column)
+                    if (i === jQuery('#dc-manual-table thead th').length - 1) return;
+                    var val = jQuery(this).find('input').val() || '';
+                    if (i === 0) {
+                        // First column is labels, don't create dataset for it
+                        headerCount++;
+                    } else {
+                        datasets.push({ label: val || 'Series ' + (datasets.length + 1), data: [] });
+                        headerCount++;
+                    }
                 });
+
                 jQuery('#dc-manual-table tbody tr').each(function () {
-                    var rowLabel = jQuery(this).find('td:first input').val();
+                    var rowLabel = jQuery(this).find('td:first input').val() || '';
+                    if (rowLabel.trim() === '') return; // Skip empty rows
                     labels.push(rowLabel);
+                    var colIndex = 0;
                     jQuery(this).find('td').each(function (i) {
-                        if (i > 0 && i < datasets.length + 1) {
-                            datasets[i - 1].data.push(parseFloat(jQuery(this).find('input').val()) || 0);
+                        // Skip the last column (delete button)
+                        if (i === jQuery(this).closest('tr').find('td').length - 1) return;
+                        if (colIndex > 0 && colIndex <= datasets.length) {
+                            var val = parseFloat(jQuery(this).find('input').val()) || 0;
+                            datasets[colIndex - 1].data.push(val);
                         }
+                        colIndex++;
                     });
+                });
+
+                // Ensure all datasets have the same number of data points as labels
+                datasets.forEach(function(ds) {
+                    while (ds.data.length < labels.length) {
+                        ds.data.push(0);
+                    }
                 });
             }
 
             // Final race condition check before drawing
             if (jQuery('#dearcharts_active_source').val() !== currentSource) return;
 
+            // Validate we have data to render
+            if (labels.length === 0 || datasets.length === 0) {
+                jQuery('#dc-status').show().text('No data to display').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
+                // Clear canvas and show message
+                var cWidth = canvas.width || 400;
+                var cHeight = canvas.height || 400;
+                ctx.clearRect(0, 0, cWidth, cHeight);
+                ctx.fillStyle = '#64748b';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('No data to display', cWidth / 2, cHeight / 2);
+                return;
+            }
+
+            // Validate datasets have data
+            var hasData = false;
+            datasets.forEach(function(ds) {
+                if (ds.data && ds.data.length > 0) {
+                    var sum = ds.data.reduce(function(a, b) { return a + b; }, 0);
+                    if (sum > 0) hasData = true;
+                }
+            });
+
+            if (!hasData) {
+                jQuery('#dc-status').show().text('All values are zero').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
+            }
+
+            // Apply colors to datasets
             datasets.forEach((ds, i) => {
                 const colorArray = labels.map((_, j) => palette[j % palette.length] || '#ccc');
                 const singleColor = palette[i % palette.length] || '#ccc';
@@ -888,29 +1068,77 @@ function dearcharts_render_main_box($post)
                 }
             });
 
+            // Create the chart
             dcLiveChart = new Chart(ctx, {
                 type: chartType,
                 data: { labels: labels, datasets: datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: (chartType === 'bar' || chartType === 'line') ? { y: { beginAtZero: true } } : {},
+                    scales: (chartType === 'bar' || chartType === 'line') ? { 
+                        y: { beginAtZero: true } 
+                    } : {},
                     plugins: {
-                        legend: { display: legendPos !== 'none' && (datasets.length > 1 || ['pie', 'doughnut'].includes(chartType)), position: legendPos }
+                        legend: { 
+                            display: legendPos !== 'none' && (datasets.length > 1 || ['pie', 'doughnut'].includes(chartType)), 
+                            position: legendPos || 'top'
+                        }
                     }
-                });
+                }
+            });
             } catch (e) {
                 console.error('Chart Render Error:', e);
                 jQuery('#dc-status').show().text('Preview Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fff1f2' });
+                // Try to clear canvas on error
+                try {
+                    var errorCanvas = document.getElementById('dc-live-chart');
+                    if (errorCanvas) {
+                        var errorCtx = errorCanvas.getContext('2d');
+                        var cWidth = errorCanvas.width || 400;
+                        var cHeight = errorCanvas.height || 400;
+                        errorCtx.clearRect(0, 0, cWidth, cHeight);
+                        errorCtx.fillStyle = '#ef4444';
+                        errorCtx.font = '14px sans-serif';
+                        errorCtx.textAlign = 'center';
+                        errorCtx.fillText('Error: ' + e.message, cWidth / 2, cHeight / 2);
+                    }
+                } catch (clearError) {
+                    console.error('Error clearing canvas:', clearError);
+                }
+            } finally {
+                // Always reset the flag
+                dc_is_updating_preview = false;
             }
         }
         jQuery(document).ready(function () { 
             // Initial render: ensure Chart.js is loaded
-            if (typeof Chart === 'undefined') {
-                jQuery(window).on('load', function() { dearcharts_update_live_preview(); });
-            } else {
-                dearcharts_update_live_preview();
+            function initPreview() {
+                if (typeof Chart === 'undefined') {
+                    // Wait for Chart.js to load, check every 100ms for up to 5 seconds
+                    var attempts = 0;
+                    var checkInterval = setInterval(function() {
+                        attempts++;
+                        if (typeof Chart !== 'undefined') {
+                            clearInterval(checkInterval);
+                            dearcharts_update_live_preview();
+                        } else if (attempts > 50) {
+                            clearInterval(checkInterval);
+                            console.error('Chart.js failed to load after 5 seconds');
+                            jQuery('#dc-status').show().text('Chart.js library not loaded').css({ 'color': '#ef4444', 'background': '#fef2f2' });
+                        }
+                    }, 100);
+                } else {
+                    dearcharts_update_live_preview();
+                }
             }
+            
+            // Try immediately, then also on window load as fallback
+            initPreview();
+            jQuery(window).on('load', function() {
+                if (typeof Chart !== 'undefined' && !dcLiveChart) {
+                    dearcharts_update_live_preview();
+                }
+            });
 
             // Restore from local storage if different from saved
             var key = 'dearcharts_autosave_' + dc_post_id;
@@ -1100,7 +1328,6 @@ function dearcharts_render_main_box($post)
                 }
             });
         }
-        jQuery(document).ready(function () { dearcharts_update_live_preview(); });
     </script>
     <?php
 }
