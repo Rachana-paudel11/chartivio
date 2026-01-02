@@ -793,6 +793,8 @@ function dearcharts_render_main_box($post)
             jQuery('#dc-manual-table tbody').append(html);
             dearcharts_update_live_preview();
             dearcharts_local_autosave();
+            var $wrapper = jQuery('.dc-table-wrapper');
+            $wrapper.animate({ scrollTop: $wrapper.prop("scrollHeight") }, 500);
         }
         /**
          * Transpose Table Data (Swap Rows and Columns)
@@ -1424,6 +1426,9 @@ function dearcharts_render_main_box($post)
                 $btn.text(originalText).prop('disabled', false);
                 if(res.success) {
                     jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                    if (res.data.shortcode_html) {
+                        jQuery('#dearcharts_usage_box .inside').html(res.data.shortcode_html);
+                    }
                 } else {
                     alert('Save Failed');
                 }
@@ -1531,10 +1536,18 @@ function dearcharts_ajax_save_chart()
         update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
 
     // Update Title
+    $update_args = array('ID' => $post_id, 'post_status' => 'publish');
     if (isset($_POST['post_title'])) {
-        wp_update_post(array('ID' => $post_id, 'post_title' => sanitize_text_field($_POST['post_title'])));
+        $update_args['post_title'] = sanitize_text_field($_POST['post_title']);
     }
+    wp_update_post($update_args);
 
-    wp_send_json_success(array('message' => 'Saved'));
+    // Generate Shortcode HTML
+    $shortcode_html = '<div style="background:#f8fafc; padding:12px; border-radius:6px; border:1px solid #e2e8f0;">';
+    $shortcode_html .= '<p style="margin-top:0; font-size:13px; color:#64748b;">Copy this shortcode to display the chart:</p>';
+    $shortcode_html .= '<code style="display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">[dearchart id="' . $post_id . '"]</code>';
+    $shortcode_html .= '</div>';
+
+    wp_send_json_success(array('message' => 'Saved', 'shortcode_html' => $shortcode_html));
 }
 add_action('wp_ajax_dearcharts_save_chart', 'dearcharts_ajax_save_chart');
