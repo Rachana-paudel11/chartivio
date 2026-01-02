@@ -19,6 +19,9 @@ function dearcharts_render_shortcode($atts)
 {
     $atts = shortcode_atts(array(
         'id' => '',
+        'width' => '100%',
+        'height' => '400px',
+        'max_width' => '600px'
     ), $atts, 'dearchart');
 
     $post_id = intval($atts['id']);
@@ -64,12 +67,15 @@ function dearcharts_render_shortcode($atts)
     );
 
     // Output Container
-    $output = '<div class="dearchart-container" style="position: relative; width: 100%; max-width: 600px; margin: 0 auto;">';
+    $style = "position: relative; width: " . esc_attr($atts['width']) . "; max-width: " . esc_attr($atts['max_width']) . "; height: " . esc_attr($atts['height']) . "; margin: 0 auto;";
+    $output = '<div class="dearchart-container" style="' . $style . '">';
     $output .= '<canvas id="' . esc_attr($unique_id) . '"></canvas>';
     $output .= '</div>';
 
     // Inline Script to Init
-    $output .= '<script>document.addEventListener("DOMContentLoaded", function() { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
+    // Enqueue assets if not already (safeguard for AJAX or weird loading contexts)
+    wp_enqueue_script('chartjs');
+    $output .= '<script>jQuery(document).ready(function($) { if(typeof dearcharts_init_frontend === "function") { dearcharts_init_frontend(' . wp_json_encode($config) . '); } });</script>';
 
     return $output;
 }
@@ -80,8 +86,11 @@ add_shortcode('dearchart', 'dearcharts_render_shortcode');
  */
 function dearcharts_frontend_assets()
 {
-    // Register local Chart.js for on-demand loading
-    wp_register_script('chartjs', plugins_url('../assets/js/chartjs/chart.umd.min.js', __FILE__), array(), '4.4.1', true);
+    global $post;
+    if (is_a($post, 'WP_Post') && has_shortcode($post->post_content, 'dearchart')) {
+        wp_enqueue_script('chartjs', 'https://cdn.jsdelivr.net/npm/chart.js', array(), '4.4.1', true);
+        wp_enqueue_script('jquery');
+    }
 }
 add_action('wp_enqueue_scripts', 'dearcharts_frontend_assets');
 
