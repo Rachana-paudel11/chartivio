@@ -487,9 +487,11 @@ function dearcharts_render_main_box($post)
                                                 echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
                                             }
                                         } else {
-                                            for ($r = 1; $r < count($manual_data); $r++) {
+                                            foreach ($manual_data as $r => $row) {
+                                                if ($r === 0) continue;
+                                                if (!is_array($row)) continue;
                                                 echo '<tr>';
-                                                foreach ($manual_data[$r] as $cell) {
+                                                foreach ($row as $cell) {
                                                     echo '<td><input type="text" name="dearcharts_manual_data[' . $r . '][]" value="' . esc_attr($cell) . '" oninput="dearcharts_update_live_preview()"></td>';
                                                 }
                                                 echo '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview();">×</td></tr>';
@@ -601,6 +603,7 @@ function dearcharts_render_main_box($post)
             if (dcLiveChart) dcLiveChart.destroy();
 
             var labels = [], datasets = [];
+            let xTitle = '', yTitle = '';
 
             if (source === 'csv') {
                 var url = jQuery('#dearcharts_csv_url').val();
@@ -610,6 +613,10 @@ function dearcharts_render_main_box($post)
                     const text = await response.text();
                     const lines = text.trim().split(/\r\n|\n/);
                     const heads = lines[0].split(',');
+                    
+                    xTitle = heads[0] ? heads[0].trim() : '';
+                    yTitle = (heads.length === 2 && heads[1]) ? heads[1].trim() : '';
+
                     for (var i = 1; i < heads.length; i++) datasets.push({ label: heads[i].trim(), data: [] });
                     for (var r = 1; r < lines.length; r++) {
                         const row = lines[r].split(',');
@@ -626,10 +633,16 @@ function dearcharts_render_main_box($post)
                     jQuery('#dc-status').show().text('CSV Error').css({ 'color': '#ef4444', 'background': '#fef2f2' });
                 }
             } else {
+                var headerInputs = [];
                 jQuery('#dc-manual-table thead th').each(function (i) {
                     var val = jQuery(this).find('input').val();
+                    headerInputs.push(val);
                     if (i > 0 && val !== undefined) datasets.push({ label: val, data: [] });
                 });
+                
+                xTitle = headerInputs[0] || '';
+                if (headerInputs.length === 2 && headerInputs[1]) yTitle = headerInputs[1];
+
                 jQuery('#dc-manual-table tbody tr').each(function () {
                     var rowLabel = jQuery(this).find('td:first input').val();
                     labels.push(rowLabel);
@@ -642,11 +655,15 @@ function dearcharts_render_main_box($post)
             }
 
             datasets.forEach((ds, i) => {
-                let colors = (datasets.length > 1) ? palette[i % palette.length] : labels.map((_, j) => palette[j % palette.length]);
+                let colors = palette; // Default for pie/doughnut
+
                 if (chartType === 'bar' || chartType === 'line') {
-                    ds.backgroundColor = (datasets.length > 1) ? palette[i % palette.length] : palette;
-                    ds.borderColor = (datasets.length > 1) ? palette[i % palette.length] : palette;
+                    // For Bar/Line: Use a distinct color for the entire dataset
+                    let singleColor = palette[i % palette.length];
+                    ds.backgroundColor = singleColor;
+                    ds.borderColor = singleColor;
                 } else {
+                    // For Pie/Doughnut
                     ds.backgroundColor = colors;
                     ds.borderColor = colors;
                 }
@@ -660,7 +677,21 @@ function dearcharts_render_main_box($post)
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    scales: (chartType === 'bar' || chartType === 'line') ? { y: { beginAtZero: true } } : {},
+                    scales: (chartType === 'bar' || chartType === 'line') ? { 
+                        y: { 
+                            beginAtZero: true,
+                            title: {
+                                display: !!yTitle,
+                                text: yTitle
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: !!xTitle,
+                                text: xTitle
+                            }
+                        }
+                    } : {},
                     plugins: {
                         legend: { display: legendPos !== 'none', position: legendPos }
                     }

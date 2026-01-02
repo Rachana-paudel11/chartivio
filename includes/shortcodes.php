@@ -19,9 +19,9 @@ function dearcharts_render_shortcode($atts)
 {
     $atts = shortcode_atts(array(
         'id' => '',
-        'width' => '100%',
+        'width' => '35%',
         'height' => '400px',
-        'max_width' => '600px'
+        'max_width' => '100%'
     ), $atts, 'dearchart');
 
     $post_id = intval($atts['id']);
@@ -66,7 +66,7 @@ function dearcharts_render_shortcode($atts)
     // Output Container
     $style = "position: relative; width: " . esc_attr($atts['width']) . "; max-width: " . esc_attr($atts['max_width']) . "; height: " . esc_attr($atts['height']) . "; margin: 0 auto;";
     $output = '<div class="dearchart-container" style="' . $style . '">';
-    $output .= '<canvas id="' . esc_attr($unique_id) . '"></canvas>';
+    $output .= '<canvas id="' . esc_attr($unique_id) . '" style="width: 100%; height: 100%;"></canvas>';
     $output .= '</div>';
 
     // Inline Script to Init
@@ -122,7 +122,7 @@ function dearcharts_footer_js()
             var ctx = canvas.getContext('2d');
             var palette = dc_palettes[config.palette] || dc_palettes['default'];
 
-            var drawChart = (l, ds) => {
+            var drawChart = (l, ds, xTitle, yTitle) => {
                 let realType = config.type;
                 let indexAxis = 'x';
 
@@ -133,11 +133,15 @@ function dearcharts_footer_js()
 
                 // PSEUDOCODE: Assign colors from palette to each dataset or each data point.
                 ds.forEach((set, i) => {
-                    let colors = (ds.length > 1) ? palette[i % palette.length] : l.map((_, j) => palette[j % palette.length]);
+                    let colors = palette; // Default for pie/doughnut (distributed colors)
+
                     if (realType === 'bar' || realType === 'line') {
-                        set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : palette;
-                        set.borderColor = (ds.length > 1) ? palette[i % palette.length] : palette;
+                        // For Bar/Line: Use a distinct color for the entire dataset
+                        let singleColor = palette[i % palette.length];
+                        set.backgroundColor = singleColor;
+                        set.borderColor = singleColor;
                     } else {
+                        // For Pie/Doughnut: Use the full palette (one color per slice)
                         set.backgroundColor = colors;
                         set.borderColor = colors;
                     }
@@ -152,7 +156,21 @@ function dearcharts_footer_js()
                         indexAxis: indexAxis,
                         responsive: true,
                         maintainAspectRatio: false,
-                        scales: (realType === 'bar' || realType === 'line') ? { y: { beginAtZero: true } } : {},
+                        scales: (realType === 'bar' || realType === 'line') ? {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: !!yTitle,
+                                    text: yTitle
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: !!xTitle,
+                                    text: xTitle
+                                }
+                            }
+                        } : {},
                         plugins: { legend: { display: config.legendPos !== 'none', position: config.legendPos } }
                     }
                 });
@@ -164,6 +182,10 @@ function dearcharts_footer_js()
                     const lines = text.trim().split(/\r\n|\n/);
                     let labels = [], datasets = [];
                     const headParts = lines[0].split(',');
+
+                    let xTitle = headParts[0] ? headParts[0].trim() : '';
+                    let yTitle = (headParts.length === 2 && headParts[1]) ? headParts[1].trim() : '';
+
                     // PSEUDOCODE: Identify multiple datasets (columns) based on the first row header.
                     for (let i = 1; i < headParts.length; i++) datasets.push({ label: headParts[i].trim(), data: [] });
                     // PSEUDOCODE: Map subsequent rows to labels (Col 1) and data points (Col 2+).
@@ -172,10 +194,11 @@ function dearcharts_footer_js()
                         labels.push(rowParts[0].trim());
                         for (let c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(rowParts[c + 1]) || 0);
                     }
-                    drawChart(labels, datasets);
+                    drawChart(labels, datasets, xTitle, yTitle);
                 });
             } else {
                 let labels = [], datasets = [];
+                let xTitle = '', yTitle = '';
                 let raw = config.manualData;
                 if (raw) {
                     // PSEUDOCODE: Convert storage format (array or object) into a sequential list of rows.
@@ -185,6 +208,8 @@ function dearcharts_footer_js()
                         // PSEUDOCODE: Check if data is in 'Legacy' (label/value) or 'Multi-Series' (columnar) format.
                         if (rows[0] && rows[0].label !== undefined) {
                             // Legacy Format Handling
+                            xTitle = 'Label';
+                            yTitle = 'Value';
                             datasets.push({ label: 'Value', data: [] });
                             rows.forEach((row) => {
                                 labels.push(row.label || '');
@@ -193,6 +218,9 @@ function dearcharts_footer_js()
                         } else {
                             // Multi-Series Columnar Format Handling
                             const headers = rows[0];
+                            xTitle = headers[0] ? headers[0] : '';
+                            if (headers.length === 2) yTitle = headers[1];
+                            
                             // Extract series names from the header row.
                             for (let i = 1; i < headers.length; i++) datasets.push({ label: headers[i], data: [] });
                             // Extract labels and values from subsequent rows.
@@ -203,7 +231,7 @@ function dearcharts_footer_js()
                         }
                     }
                 }
-                drawChart(labels, datasets);
+                drawChart(labels, datasets, xTitle, yTitle);
             }
         }
     </script>
