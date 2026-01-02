@@ -1049,7 +1049,7 @@ function dearcharts_render_main_box($post)
             let palette = (typeof dc_palettes !== 'undefined' && dc_palettes[paletteKey]) ? dc_palettes[paletteKey] : ((typeof dc_palettes !== 'undefined') ? dc_palettes['default'] : ['#3b82f6']);
             
             // Capture current state to handle race conditions
-            var currentSource = jQuery('#dearcharts_active_source').val() || 'manual';
+            var currentSource = jQuery('input[name="dc_source_selector"]:checked').val() || jQuery('#dearcharts_active_source').val() || 'manual';
             var currentUrl = jQuery('#dearcharts_csv_url').val();
 
             var labels = [], datasets = [];
@@ -1130,6 +1130,7 @@ function dearcharts_render_main_box($post)
                 }
             } else {
                 // Manual data entry
+                jQuery('#dc-status').hide();
                 var headerCount = 0;
                 jQuery('#dc-manual-table thead th').each(function (i) {
                     // Skip the last column (delete button column)
