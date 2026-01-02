@@ -522,7 +522,7 @@ function dearcharts_render_main_box($post)
                                             echo '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series 1" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
                                         }
                                         ?>
-                                        <th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>
+                                        <th style="width:45px; min-width:45px; max-width:45px; cursor:pointer; background: #eff6ff; text-align: center; font-size: 18px; font-weight: bold; color: var(--dc-primary);" onclick="dearcharts_add_column()" title="Add Column">+</th>
                                     </tr>
                                 </thead>
                                 <tbody>
