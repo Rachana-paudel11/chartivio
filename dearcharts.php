@@ -60,3 +60,40 @@ require_once plugin_dir_path(__FILE__) . 'includes/admin-settings.php';
 
 // REQUIRE shortcodes module (frontend shortcode and chart rendering)
 require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
+
+/**
+ * Add Custom Columns to Admin List
+ */
+add_filter('manage_edit-dearcharts_columns', 'dearcharts_add_admin_columns');
+function dearcharts_add_admin_columns($columns)
+{
+    // Insert new columns after the checkbox
+    $new_columns = array();
+    $new_columns['cb'] = $columns['cb'];
+    $new_columns['title'] = $columns['title'];
+    $new_columns['dearcharts_shortcode'] = 'Shortcode';
+    $new_columns['dearcharts_id'] = 'ID';
+    $new_columns['dearcharts_type'] = 'Type';
+    $new_columns['date'] = $columns['date'];
+    return $new_columns;
+}
+
+/**
+ * Populate Custom Columns
+ */
+add_action('manage_dearcharts_posts_custom_column', 'dearcharts_populate_admin_columns', 10, 2);
+function dearcharts_populate_admin_columns($column, $post_id)
+{
+    switch ($column) {
+        case 'dearcharts_shortcode':
+            echo '<code style="user-select:all;">[dearchart id="' . $post_id . '"]</code>';
+            break;
+        case 'dearcharts_id':
+            echo $post_id;
+            break;
+        case 'dearcharts_type':
+            $type = get_post_meta($post_id, '_dearcharts_type', true);
+            echo ucfirst($type ?: 'Default');
+            break;
+    }
+}
