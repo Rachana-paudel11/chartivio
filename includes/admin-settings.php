@@ -506,6 +506,45 @@ function dearcharts_render_main_box($post)
 
         /* Hide default WordPress Publish box */
         #submitdiv { visibility: hidden; position: absolute; width: 0; height: 0; overflow: hidden; }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1000px) {
+            .dc-split-container {
+                flex-direction: column;
+                height: auto !important;
+            }
+
+            .dc-preview-panel {
+                flex: 0 0 auto;
+                width: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--dc-border);
+                padding: 20px;
+            }
+
+            .dc-chart-container {
+                 max-width: 100%;
+                 margin: 0 auto; /* Center on mobile */
+            }
+
+            .dc-settings-panel {
+                flex: 1 0 auto;
+                min-height: 500px; /* Ensure space for settings */
+            }
+            
+            .dc-main-header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            
+            .dc-type-selector-inline {
+                margin-left: 0;
+                width: 100%;
+                justify-content: space-between;
+                padding-top: 10px;
+                border-top: 1px solid #f1f5f9;
+            }
+        }
     </style>
 
     <div class="dc-admin-wrapper">
