@@ -31,12 +31,15 @@ function dearcharts_register_cpt()
             'edit_item' => 'Edit Chart',
             'all_items' => 'All Charts'
         ),
-        'public' => true,
+        'public' => false,
         'show_ui' => true,
         'show_in_menu' => true,
+        'publicly_queryable' => false,
+        'exclude_from_search' => true,
         'menu_icon' => 'dashicons-chart-area',
         'supports' => array('title'),
         'has_archive' => false,
+
     );
 
     // IF register_post_type function exists THEN
