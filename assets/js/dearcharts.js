@@ -53,7 +53,15 @@ function dearcharts_init_frontend(config) {
                 responsive: true,
                 maintainAspectRatio: true,
                 aspectRatio: 1,
-                scales: (realType === 'bar' || realType === 'line') ? { y: { beginAtZero: true } } : {},
+                scales: (realType === 'bar' || realType === 'line') ? { 
+                    y: { 
+                        beginAtZero: true,
+                        title: { display: !!config.yaxisLabel, text: config.yaxisLabel }
+                    },
+                    x: {
+                        title: { display: !!config.xaxisLabel, text: config.xaxisLabel }
+                    }
+                } : {},
                 plugins: { legend: { display: config.legendPos !== 'none' && (ds.length > 1 || ['pie', 'doughnut'].includes(realType)), position: config.legendPos } }
             }
         });

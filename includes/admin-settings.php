@@ -78,6 +78,8 @@ function dearcharts_render_main_box($post)
     $chart_type = get_post_meta($post->ID, '_dearcharts_type', true) ?: (get_post_meta($post->ID, '_dearcharts_is_donut', true) === '1' ? 'doughnut' : 'pie');
     $legend_pos = get_post_meta($post->ID, '_dearcharts_legend_pos', true) ?: 'top';
     $palette_key = get_post_meta($post->ID, '_dearcharts_palette', true) ?: 'default';
+    $xaxis_label = get_post_meta($post->ID, '_dearcharts_xaxis_label', true);
+    $yaxis_label = get_post_meta($post->ID, '_dearcharts_yaxis_label', true);
 
     wp_nonce_field('dearcharts_save_meta', 'dearcharts_nonce');
     ?>
@@ -741,6 +743,20 @@ function dearcharts_render_main_box($post)
                                 <option value="forest" <?php selected($palette_key, 'forest'); ?>>Forest</option>
                             </select>
                         </div>
+                        <div class="dc-setting-row">
+                            <span class="dc-setting-label">X-Axis Title</span>
+                            <input type="text" name="dearcharts_xaxis_label" id="dearcharts_xaxis_label" 
+                                value="<?php echo esc_attr($xaxis_label); ?>" 
+                                style="width: 50% !important;"
+                                oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();">
+                        </div>
+                        <div class="dc-setting-row">
+                            <span class="dc-setting-label">Y-Axis Title</span>
+                            <input type="text" name="dearcharts_yaxis_label" id="dearcharts_yaxis_label" 
+                                value="<?php echo esc_attr($yaxis_label); ?>" 
+                                style="width: 50% !important;"
+                                oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -782,7 +798,9 @@ function dearcharts_render_main_box($post)
                 'active_source' => $active_source,
                 'type' => $chart_type,
                 'legend_pos' => $legend_pos,
-                'palette' => $palette_key
+                'palette' => $palette_key,
+                'xaxis_label' => $xaxis_label,
+                'yaxis_label' => $yaxis_label
             );
             echo wp_json_encode($saved_snapshot);
         ?>;
@@ -1086,6 +1104,8 @@ function dearcharts_render_main_box($post)
             let legendPos = jQuery('#dearcharts_legend_pos').val() || 'top';
             let paletteKey = jQuery('#dearcharts_palette').val() || 'default';
             let palette = (typeof dc_palettes !== 'undefined' && dc_palettes[paletteKey]) ? dc_palettes[paletteKey] : ((typeof dc_palettes !== 'undefined') ? dc_palettes['default'] : ['#3b82f6']);
+            let xaxisLabel = jQuery('#dearcharts_xaxis_label').val() || '';
+            let yaxisLabel = jQuery('#dearcharts_yaxis_label').val() || '';
             
             // Capture current state to handle race conditions
             var currentSource = jQuery('input[name="dc_source_selector"]:checked').val() || jQuery('#dearcharts_active_source').val() || 'manual';
@@ -1274,7 +1294,19 @@ function dearcharts_render_main_box($post)
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: (chartType === 'bar' || chartType === 'line') ? { 
-                        y: { beginAtZero: true } 
+                        y: { 
+                            beginAtZero: true,
+                            title: {
+                                display: !!yaxisLabel,
+                                text: yaxisLabel
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: !!xaxisLabel,
+                                text: xaxisLabel
+                            }
+                        }
                     } : {},
                     plugins: {
                         legend: { 
@@ -1351,7 +1383,10 @@ function dearcharts_render_main_box($post)
                         jQuery('#dearcharts_csv_url').val(local_snapshot.csv_url);
                         jQuery('#dearcharts_type').val(local_snapshot.type);
                         jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
+                        jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
                         jQuery('#dearcharts_palette').val(local_snapshot.palette);
+                        if (local_snapshot.xaxis_label !== undefined) jQuery('#dearcharts_xaxis_label').val(local_snapshot.xaxis_label);
+                        if (local_snapshot.yaxis_label !== undefined) jQuery('#dearcharts_yaxis_label').val(local_snapshot.yaxis_label);
                         if (local_snapshot.active_source === 'manual') {
                             // clear table
                             jQuery('#dc-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>');
@@ -1381,7 +1416,7 @@ function dearcharts_render_main_box($post)
         });
 
         function dearcharts_get_snapshot() {
-            var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#dearcharts_csv_url').val() || '', active_source: jQuery('#dearcharts_active_source').val() || 'manual', type: jQuery('#dearcharts_type').val() || '', legend_pos: jQuery('#dearcharts_legend_pos').val() || '', palette: jQuery('#dearcharts_palette').val() || '' };
+            var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#dearcharts_csv_url').val() || '', active_source: jQuery('#dearcharts_active_source').val() || 'manual', type: jQuery('#dearcharts_type').val() || '', legend_pos: jQuery('#dearcharts_legend_pos').val() || '', palette: jQuery('#dearcharts_palette').val() || '', xaxis_label: jQuery('#dearcharts_xaxis_label').val() || '', yaxis_label: jQuery('#dearcharts_yaxis_label').val() || '' };
             // headers (skip only add button i=last)
             jQuery('#dc-manual-table thead th').each(function(i){ if (i === jQuery('#dc-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
             // rows
@@ -1459,7 +1494,9 @@ function dearcharts_render_main_box($post)
                 dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
                 dearcharts_type: jQuery('#dearcharts_type').val(),
                 dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
-                dearcharts_palette: jQuery('#dearcharts_palette').val()
+                dearcharts_palette: jQuery('#dearcharts_palette').val(),
+                dearcharts_xaxis_label: jQuery('#dearcharts_xaxis_label').val(),
+                dearcharts_yaxis_label: jQuery('#dearcharts_yaxis_label').val()
             };
             
             jQuery.post(ajaxurl, data, function(res) {
@@ -1537,6 +1574,11 @@ function dearcharts_save_meta_box_data($post_id)
         update_post_meta($post_id, '_dearcharts_legend_pos', sanitize_text_field($_POST['dearcharts_legend_pos']));
     if (isset($_POST['dearcharts_palette']))
         update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
+
+    if (isset($_POST['dearcharts_xaxis_label']))
+        update_post_meta($post_id, '_dearcharts_xaxis_label', sanitize_text_field($_POST['dearcharts_xaxis_label']));
+    if (isset($_POST['dearcharts_yaxis_label']))
+        update_post_meta($post_id, '_dearcharts_yaxis_label', sanitize_text_field($_POST['dearcharts_yaxis_label']));
 }
 add_action('save_post', 'dearcharts_save_meta_box_data');
 
@@ -1574,6 +1616,10 @@ function dearcharts_ajax_save_chart()
         update_post_meta($post_id, '_dearcharts_legend_pos', sanitize_text_field($_POST['dearcharts_legend_pos']));
     if (isset($_POST['dearcharts_palette']))
         update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
+    if (isset($_POST['dearcharts_xaxis_label']))
+        update_post_meta($post_id, '_dearcharts_xaxis_label', sanitize_text_field($_POST['dearcharts_xaxis_label']));
+    if (isset($_POST['dearcharts_yaxis_label']))
+        update_post_meta($post_id, '_dearcharts_yaxis_label', sanitize_text_field($_POST['dearcharts_yaxis_label']));
 
     // Update Title
     $update_args = array('ID' => $post_id, 'post_status' => 'publish');

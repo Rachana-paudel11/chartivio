@@ -46,6 +46,8 @@ function dearcharts_render_shortcode($atts)
     $chart_type = get_post_meta($post_id, '_dearcharts_type', true) ?: (get_post_meta($post_id, '_dearcharts_is_donut', true) === '1' ? 'doughnut' : 'pie');
     $legend_pos = get_post_meta($post_id, '_dearcharts_legend_pos', true) ?: 'top';
     $palette_key = get_post_meta($post_id, '_dearcharts_palette', true) ?: 'default';
+    $xaxis_label = get_post_meta($post_id, '_dearcharts_xaxis_label', true);
+    $yaxis_label = get_post_meta($post_id, '_dearcharts_yaxis_label', true);
 
     // Ensure a stable, unique ID per page render (avoids changing on each reload)
     static $dearcharts_instance_counter = 0;
@@ -61,6 +63,8 @@ function dearcharts_render_shortcode($atts)
         'type' => $chart_type,
         'legendPos' => $legend_pos,
         'palette' => $palette_key,
+        'xaxisLabel' => $xaxis_label,
+        'yaxisLabel' => $yaxis_label,
         'source' => $active_source,
         'csvUrl' => $csv_url,
         'manualData' => $manual_data
@@ -95,7 +99,7 @@ add_action('wp_enqueue_scripts', 'dearcharts_frontend_assets');
 /**
  * Add CSS to hide post-metadata on Frontend Single View
  */
-add_action('wp_head', function() {
+add_action('wp_head', function () {
     if (is_singular('dearcharts')) {
         echo '<style>.entry-meta, .byline, .cat-links, .post-author, .post-date { display: none !important; }</style>';
     }
