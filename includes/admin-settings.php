@@ -547,6 +547,11 @@ function dearcharts_render_main_box($post)
                 border-top: 1px solid #f1f5f9;
             }
         }
+
+        /* Hide the default WordPress "Add title" placeholder/label */
+        #title-prompt-text {
+            display: none !important;
+        }
     </style>
 
     <div class="dc-admin-wrapper">
@@ -1463,10 +1468,38 @@ function dearcharts_render_main_box($post)
 
         function dearcharts_quick_save(btn) {
             // Validation: Ensure Title is present
-            var title = jQuery('#title').val();
+            // Validation: Ensure Title is present
+            var $titleInput = jQuery('input[name="post_title"]'); // Support standard post title input
+            if ($titleInput.length === 0) {
+                 // Fallback if not found by name, try ID
+                 $titleInput = jQuery('#title');
+            }
+
+            var title = $titleInput.val();
             if (!title || title.trim() === '') {
-                alert('Please enter a title in the main WordPress title box before saving.');
-                jQuery('#title').focus();
+                // Instead of alert, show inline error
+                var originalPlaceholder = $titleInput.attr('placeholder');
+                
+                // Hide WordPress default prompt label if it exists
+                jQuery('#title-prompt-text').addClass('screen-reader-text');
+                
+                $titleInput.css('border', '2px solid #ef4444');
+                $titleInput.attr('placeholder', 'Please enter a title');
+                $titleInput.focus();
+                
+                // Revert style on input
+                $titleInput.one('input', function() {
+                    jQuery(this).css('border', '');
+                    // Restore prompt text visibility if empty and needed (standard WP behavior)
+                    if (jQuery(this).val().trim() === '') {
+                        jQuery('#title-prompt-text').removeClass('screen-reader-text');
+                    }
+                    if (originalPlaceholder) {
+                        jQuery(this).attr('placeholder', originalPlaceholder);
+                    } else {
+                        jQuery(this).removeAttr('placeholder');
+                    }
+                });
                 return;
             }
 
@@ -1503,6 +1536,17 @@ function dearcharts_render_main_box($post)
                 $btn.text(originalText).prop('disabled', false);
                 if(res.success) {
                     jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+                    
+                    // Mark post as NOT dirty to prevent browser "Leave site" warnings
+                    if (typeof wp !== 'undefined' && wp.autosave && wp.autosave.server) {
+                        wp.autosave.server.postChanged = false;
+                    }
+                    // Reset the "initial" state for the Heartbeat API if needed
+                    if (window.onbeforeunload) {
+                        // Suppress warning for this navigation if navigating immediately
+                        // But usually marking postChanged = false is enough for WP
+                    }
+
                     if (res.data.shortcode_html) {
                         jQuery('#dearcharts_usage_box .inside').html(res.data.shortcode_html);
                     }
