@@ -72,8 +72,11 @@ function dearcharts_render_shortcode($atts)
 
     // Output Container
     $style = "position: relative; width: " . esc_attr($atts['width']) . "; max-width: " . esc_attr($atts['max_width']) . "; height: " . esc_attr($atts['height']) . "; margin: 0 auto;";
-    $output = '<div class="dearchart-container" style="' . $style . '">';
+    $output = '<div class="dearchart-shortcode-wrapper" style="text-align:center; margin-bottom: 20px;">';
+    $output .= '<h3 class="dearchart-title">' . esc_html($post->post_title) . '</h3>';
+    $output .= '<div class="dearchart-container" style="' . $style . '">';
     $output .= '<canvas id="' . esc_attr($unique_id) . '" style="width: 100%; height: 100%;"></canvas>';
+    $output .= '</div>';
     $output .= '</div>';
 
     // Inline Script to Init
