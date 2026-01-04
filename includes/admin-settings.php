@@ -633,7 +633,7 @@ function dearcharts_render_main_box($post)
                         </div>
                         <div class="dc-card-body">
                             <select id="dc_source_selector_dropdown" onchange="dcSetSource(this.value)"
-                                style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid var(--dc-border); background: #f8fafc; font-size: 14px; font-weight: 500;">
+                                style="width: 100%; padding: 8px 35px 8px 12px; border-radius: 6px; border: 1px solid var(--dc-border); background: #f8fafc url('data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2364748b%22 stroke-width=%222%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpolyline points=%226 9 12 15 18 9%22%3E%3C/polyline%3E%3C/svg%3E') no-repeat right 10px center; background-size: 16px; appearance: none; font-size: 14px; font-weight: 500; cursor: pointer; color: var(--dc-text);">
                                 <option value="manual" <?php selected($active_source, 'manual'); ?>>Manual Data Entry
                                 </option>
                                 <option value="csv" <?php selected($active_source, 'csv'); ?>>Import from CSV</option>
