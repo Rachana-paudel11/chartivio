@@ -19,7 +19,7 @@ function dearcharts_render_shortcode($atts)
 {
     $atts = shortcode_atts(array(
         'id' => '',
-        'width' => '35%',
+        'width' => '100%',
         'height' => '400px',
         'max_width' => '100%'
     ), $atts, 'dearchart');
@@ -71,11 +71,15 @@ function dearcharts_render_shortcode($atts)
     );
 
     // Output Container
-    $style = "position: relative; width: " . esc_attr($atts['width']) . "; max-width: " . esc_attr($atts['max_width']) . "; height: " . esc_attr($atts['height']) . "; margin: 0 auto;";
-    $output = '<div class="dearchart-shortcode-wrapper" style="text-align:center; margin-bottom: 20px;">';
-    $output .= '<h3 class="dearchart-title">' . esc_html($post->post_title) . '</h3>';
-    $output .= '<div class="dearchart-container" style="' . $style . '">';
+    $inner_style = "width: " . esc_attr($atts['width']) . "; max-width: " . esc_attr($atts['max_width']) . "; margin: 0 auto; text-align: left;";
+    $chart_container_style = "position: relative; height: " . esc_attr($atts['height']) . "; width: 100%;";
+
+    $output = '<div class="dearchart-shortcode-wrapper" style="margin-bottom: 30px;">';
+    $output .= '<div class="dearchart-inner" style="' . $inner_style . '">';
+    $output .= '<h3 class="dearchart-title" style="margin: 0 0 15px 0; font-size: 1.25rem; font-weight: 600; color: #1e293b;">' . esc_html($post->post_title) . '</h3>';
+    $output .= '<div class="dearchart-container" style="' . $chart_container_style . '">';
     $output .= '<canvas id="' . esc_attr($unique_id) . '" style="width: 100%; height: 100%;"></canvas>';
+    $output .= '</div>';
     $output .= '</div>';
     $output .= '</div>';
 

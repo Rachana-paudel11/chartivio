@@ -51,10 +51,9 @@ function dearcharts_init_frontend(config) {
             options: {
                 indexAxis: indexAxis,
                 responsive: true,
-                maintainAspectRatio: true,
-                aspectRatio: 1,
-                scales: (realType === 'bar' || realType === 'line') ? { 
-                    y: { 
+                maintainAspectRatio: false,
+                scales: (realType === 'bar' || realType === 'line') ? {
+                    y: {
                         beginAtZero: true,
                         title: { display: !!config.yaxisLabel, text: config.yaxisLabel }
                     },
