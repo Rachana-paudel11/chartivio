@@ -2,8 +2,8 @@
 /**
  * Plugin Name: DearCharts
  * Description: A custom post type for managing charts with a tabbed meta box interface.
- * Version: 1.1
- * Author: Your Name
+ * Version: 1.0
+ * Author: Rachana Paudel
  */
 
 if (!defined('ABSPATH')) {

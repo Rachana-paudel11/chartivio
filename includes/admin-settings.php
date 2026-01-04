@@ -557,18 +557,17 @@ function dearcharts_render_main_box($post)
     <div class="dc-admin-wrapper">
         <div class="dc-main-header">
             <div style="display:flex; align-items:center; gap:15px;">
-                <h2>Chart Editor</h2>
-                <button type="button" class="button button-primary" data-pid="<?php echo $post->ID; ?>" onclick="dearcharts_quick_save(this)">Save Chart</button>
-                <span id="dc-save-status" style="font-size:13px; font-weight:500;"></span>
-            </div>
-            <div class="dc-type-selector-inline">
-                <label for="dearcharts_type">Chart Type:</label>
+                <h2>Chart Type</h2>
                 <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
                     <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
                     <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
                     <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
                     <option value="line" <?php selected($chart_type, 'line'); ?>>Line</option>
                 </select>
+            </div>
+            <div class="dc-type-selector-inline">
+                <button type="button" class="button button-primary" data-pid="<?php echo $post->ID; ?>" onclick="dearcharts_quick_save(this)">Save Chart</button>
+                <span id="dc-save-status" style="font-size:13px; font-weight:500;"></span>
             </div>
         </div>
 
