@@ -53,6 +53,23 @@ function dearcharts_register_cpt()
 add_action('init', 'dearcharts_register_cpt');
 
 /**
+ * Force 1-column layout for dearcharts admin screen
+ */
+add_filter('get_user_option_screen_layout_dearcharts', function ($columns) {
+    return 1;
+});
+
+/**
+ * Hide Screen Options tab for dearcharts admin screen
+ */
+add_filter('screen_options_show_screen', function ($show_screen, $screen) {
+    if ($screen->post_type === 'dearcharts') {
+        return false;
+    }
+    return $show_screen;
+}, 10, 2);
+
+/**
  * Include Module Files
  */
 // REQUIRE admin settings module (meta boxes, admin UI, data persistence)
