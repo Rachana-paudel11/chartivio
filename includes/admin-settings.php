@@ -341,8 +341,8 @@ function dearcharts_render_main_box($post)
             /* Offset card padding */
             z-index: 20 !important;
             width: calc(100% + 30px) !important;
-            margin: 12px -15px -15px -15px !important;
-            padding: 12px 15px !important;
+            margin: 0 -15px -15px -15px !important;
+            padding: 10px 15px !important;
             border-top: 1px solid #e2e8f0 !important;
             display: flex !important;
             gap: 10px !important;
@@ -362,7 +362,7 @@ function dearcharts_render_main_box($post)
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
-            flex: 1;
+            flex: 0 1 auto; /* Allow it to be small if content is small */
             height: auto !important;
             max-height: none !important;
             min-height: 100px !important;
@@ -416,11 +416,13 @@ function dearcharts_render_main_box($post)
         }
 
         table.dc-table {
-            width: 100%;
-            border-collapse: collapse;
+            width: 100% !important;
+            min-width: 100% !important;
+            border-collapse: collapse !important;
             table-layout: auto;
             margin: 0;
             border-spacing: 0;
+            border: none !important;
         }
 
         table.dc-table thead th {
@@ -428,27 +430,49 @@ function dearcharts_render_main_box($post)
             top: 0;
             z-index: 10;
             background: #f8fafc;
-            box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 1px 0 #cbd5e1;
+            /* Sharp clean line instead of shadow */
         }
 
         table.dc-table th,
         table.dc-table td {
-            padding: 8px;
+            padding: 8px 10px;
             box-sizing: border-box;
             min-width: 160px;
             vertical-align: middle;
             white-space: nowrap;
             border: 1px solid #e2e8f0;
+            background-clip: padding-box;
+            /* Better border rendering */
         }
 
         table.dc-table th {
             font-weight: 600;
             color: #475569;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             background: #f8fafc;
             text-align: left;
-            border-bottom: 2px solid #cbd5e1;
+            letter-spacing: 0.05em;
+        }
+
+        /* Remove outer borders that touch the wrapper to prevent "gaps" or double borders */
+        table.dc-table tr th:first-child,
+        table.dc-table tr td:first-child {
+            border-left: none !important;
+        }
+
+        table.dc-table tr th:last-child,
+        table.dc-table tr td:last-child {
+            border-right: none !important;
+        }
+
+        table.dc-table thead tr th {
+            border-top: none !important;
+        }
+
+        table.dc-table tbody tr:last-child td {
+            border-bottom: none !important;
         }
 
         #dc-manual-table th:last-child,
@@ -714,7 +738,7 @@ function dearcharts_render_main_box($post)
                                 }
 
                                 #dc-manual-body .dc-table-wrapper {
-                                    flex: 1 !important;
+                                    flex: 0 1 auto !important;
                                 }
                             </style>
                             <div class="dc-table-wrapper">
