@@ -103,14 +103,29 @@ function dearcharts_populate_admin_columns($column, $post_id)
 {
     switch ($column) {
         case 'dearcharts_shortcode':
-            echo '<code style="user-select:all;">[dearchart id="' . $post_id . '"]</code>';
+            $sc = '[dearchart id="' . absint($post_id) . '"]';
+            echo '<div class="dc-shortcode-pill" onclick="dcCopyList(this, \'' . esc_js($sc) . '\')" title="' . esc_attr__('Click to copy', 'dearcharts') . '">';
+            echo '<code>' . esc_html($sc) . '</code>';
+            echo '<span class="dashicons dashicons-admin-page dc-copy-icon"></span>';
+            echo '</div>';
             break;
         case 'dearcharts_id':
-            echo $post_id;
+            echo '<span style="color:#64748b; font-weight:600;">' . absint($post_id) . '</span>';
             break;
         case 'dearcharts_type':
-            $type = get_post_meta($post_id, '_dearcharts_type', true);
-            echo ucfirst($type ?: 'Default');
+            $type = get_post_meta($post_id, '_dearcharts_type', true) ?: 'pie';
+            $icon = 'dashicons-chart-pie';
+            if ($type === 'bar')
+                $icon = 'dashicons-chart-bar';
+            if ($type === 'line')
+                $icon = 'dashicons-chart-line';
+            if ($type === 'doughnut')
+                $icon = 'dashicons-chart-pie';
+
+            echo '<div class="dc-type-badge">';
+            echo '<span class="dashicons ' . esc_attr($icon) . '"></span> ';
+            echo '<span>' . esc_html(ucfirst($type)) . '</span>';
+            echo '</div>';
             break;
     }
 }
