@@ -111,6 +111,13 @@ function dearcharts_render_main_box($post)
             border-bottom: 2px solid #f1f5f9;
         }
 
+        .dc-main-header h2 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--dc-text);
+        }
+
         .dc-main-header .dc-main-type {
             display: flex;
             align-items: center;
@@ -142,13 +149,13 @@ function dearcharts_render_main_box($post)
 
         .dc-split-container {
             display: flex;
-            height: 480px;
+            height: 650px;
             background: #fff;
             overflow: hidden;
         }
 
         .dc-preview-panel {
-            flex: 0 0 450px;
+            flex: 0 0 550px;
             padding: 20px;
             background: var(--dc-bg);
             border-right: 1px solid var(--dc-border);
@@ -181,8 +188,8 @@ function dearcharts_render_main_box($post)
 
         .dc-chart-container {
             width: 100%;
-            max-width: 400px;
-            height: 400px;
+            max-width: 500px;
+            height: 500px;
             background: #fff;
             padding: 15px;
             border-radius: 12px;
@@ -244,7 +251,7 @@ function dearcharts_render_main_box($post)
             display: none;
             padding: 15px 20px;
             flex: 1;
-            overflow: visible;
+            overflow-y: auto;
             min-height: 0;
         }
 
@@ -336,9 +343,9 @@ function dearcharts_render_main_box($post)
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
-            height: 150px !important;
-            max-height: 150px !important;
-            min-height: 150px !important;
+            height: auto !important;
+            max-height: 350px !important;
+            min-height: 60px !important;
             margin-bottom: 15px;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
@@ -406,11 +413,12 @@ function dearcharts_render_main_box($post)
 
         table.dc-table th,
         table.dc-table td {
-            padding: 10px 8px;
+            padding: 8px;
             box-sizing: border-box;
             min-width: 100px;
             vertical-align: middle;
             white-space: nowrap;
+            border: 1px solid #e2e8f0;
         }
 
         table.dc-table th {
@@ -419,10 +427,12 @@ function dearcharts_render_main_box($post)
             font-size: 12px;
             text-transform: uppercase;
             background: #f8fafc;
+            text-align: left;
+            border-bottom: 2px solid #cbd5e1;
         }
 
-        table.dc-table th:last-child,
-        table.dc-table td:last-child {
+        #dc-manual-table th:last-child,
+        #dc-manual-table td:last-child {
             width: 45px;
             min-width: 45px;
             max-width: 45px;
@@ -647,11 +657,21 @@ function dearcharts_render_main_box($post)
                             <span>Import from CSV</span>
                         </div>
                         <div class="dc-card-body" id="dc-csv-body">
-                            <div style="display:flex; gap:8px;">
+                            <div style="display:flex; gap:8px; margin-bottom: 12px;">
                                 <input type="text" name="dearcharts_csv_url" id="dearcharts_csv_url" class="dc-input-text"
                                     style="flex:1;" value="<?php echo esc_url($csv_url); ?>"
                                     oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();">
                                 <button type="button" class="button" onclick="dcBrowseCSV()">Media</button>
+                            </div>
+                            <!-- CSV Data Preview Table -->
+                            <div id="dc-csv-preview-label"
+                                style="font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; display: none;">
+                                CSV Data Preview</div>
+                            <div id="dc-csv-preview-container" class="dc-table-wrapper" style="display: none;">
+                                <table class="dc-table" id="dc-csv-preview-table">
+                                    <thead></thead>
+                                    <tbody></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -663,39 +683,14 @@ function dearcharts_render_main_box($post)
                         </div>
                         <div class="dc-card-body" id="dc-manual-body">
                             <style>
-                                /* Ensure everything is visible when manual is active */
+                                /* Ensure manual data specific behaviors */
                                 #dc-manual-body {
-                                    display: block !important;
-                                }
-
-                                #dc-manual-body .dc-table-wrapper,
-                                #dc-manual-body table,
-                                #dc-manual-body th,
-                                #dc-manual-body td,
-                                #dc-manual-body .dc-delete-row,
-                                #dc-manual-body .dc-delete-col,
-                                #dc-manual-body .dc-table-actions,
-                                #dc-manual-body button {
-                                    visibility: visible !important;
-                                    display: block !important;
-                                    opacity: 1 !important;
-                                }
-
-                                #dc-manual-body table {
-                                    display: table !important;
-                                }
-
-                                #dc-manual-body th,
-                                #dc-manual-body td {
-                                    display: table-cell !important;
-                                }
-
-                                #dc-manual-body .dc-table-actions {
                                     display: flex !important;
+                                    flex-direction: column !important;
                                 }
 
-                                #dc-manual-body button {
-                                    display: inline-block !important;
+                                #dc-manual-body .dc-table-wrapper {
+                                    flex: 0 0 auto !important;
                                 }
                             </style>
                             <div class="dc-table-wrapper">
@@ -884,6 +879,46 @@ function dearcharts_render_main_box($post)
                 arr[row][col] += cc;
             }
             return arr;
+        }
+
+        function dearcharts_update_csv_preview_table(rows) {
+            var $label = jQuery('#dc-csv-preview-label');
+            var $container = jQuery('#dc-csv-preview-container');
+            var $thead = jQuery('#dc-csv-preview-table thead');
+            var $tbody = jQuery('#dc-csv-preview-table tbody');
+
+            $thead.empty();
+            $tbody.empty();
+
+            if (!rows || rows.length === 0) {
+                $label.hide();
+                $container.hide();
+                return;
+            }
+
+            // Headers
+            var headHtml = '<tr>';
+            if (rows[0]) {
+                rows[0].forEach(function (h) {
+                    headHtml += '<th>' + jQuery('<div/>').text(h || '').html() + '</th>';
+                });
+            }
+            headHtml += '</tr>';
+            $thead.append(headHtml);
+
+            // Body
+            for (var i = 1; i < rows.length; i++) {
+                if (!rows[i]) continue;
+                var rowHtml = '<tr>';
+                rows[i].forEach(function (c) {
+                    rowHtml += '<td>' + jQuery('<div/>').text(c || '').html() + '</td>';
+                });
+                rowHtml += '</tr>';
+                $tbody.append(rowHtml);
+            }
+
+            $label.show();
+            $container.show();
         }
 
         function dcTab(el, id) { jQuery('.dc-tab').removeClass('active'); jQuery('.dc-tab-content').removeClass('active'); jQuery(el).addClass('active'); jQuery('#' + id).addClass('active'); }
@@ -1178,6 +1213,8 @@ function dearcharts_render_main_box($post)
                 if (currentSource === 'csv') {
                     if (!currentUrl || currentUrl.trim() === '') {
                         jQuery('#dc-status').show().text('No CSV URL provided').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
+                        jQuery('#dc-csv-preview-label').hide();
+                        jQuery('#dc-csv-preview-container').hide();
                         // Show empty chart state
                         var cWidth = canvas.width || 400;
                         var cHeight = canvas.height || 400;
@@ -1206,6 +1243,9 @@ function dearcharts_render_main_box($post)
                         if (!rows || rows.length < 2) {
                             throw new Error('Invalid CSV format - need at least header and one data row');
                         }
+
+                        // Update CSV Preview Table
+                        dearcharts_update_csv_preview_table(rows);
 
                         const heads = rows[0];
                         if (!heads || heads.length < 2) {
@@ -1239,6 +1279,8 @@ function dearcharts_render_main_box($post)
                         if (jQuery('#dearcharts_active_source').val() !== 'csv') return;
                         console.error('CSV Fetch Error:', e);
                         jQuery('#dc-status').show().text('Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fef2f2' });
+                        jQuery('#dc-csv-preview-label').hide();
+                        jQuery('#dc-csv-preview-container').hide();
                         // Clear canvas and show error
                         var cWidth = canvas.width || 400;
                         var cHeight = canvas.height || 400;
@@ -1252,6 +1294,8 @@ function dearcharts_render_main_box($post)
                 } else {
                     // Manual data entry
                     jQuery('#dc-status').hide();
+                    jQuery('#dc-csv-preview-label').hide();
+                    jQuery('#dc-csv-preview-container').hide();
                     var headerCount = 0;
                     jQuery('#dc-manual-table thead th').each(function (i) {
                         // Skip the last column (delete button column)
