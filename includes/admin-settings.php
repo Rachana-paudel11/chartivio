@@ -415,7 +415,7 @@ function dearcharts_render_main_box($post)
         table.dc-table td {
             padding: 8px;
             box-sizing: border-box;
-            min-width: 100px;
+            min-width: 160px;
             vertical-align: middle;
             white-space: nowrap;
             border: 1px solid #e2e8f0;
@@ -487,7 +487,7 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-col-control input {
-            padding-right: 28px !important;
+            padding-right: 32px !important;
             /* Space for X */
         }
 
@@ -499,7 +499,7 @@ function dearcharts_render_main_box($post)
 
         .dc-delete-col {
             position: absolute !important;
-            right: 4px !important;
+            right: 6px !important;
             top: 50% !important;
             transform: translateY(-50%) !important;
             color: #ef4444 !important;
