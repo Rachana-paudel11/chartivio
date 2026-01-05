@@ -118,27 +118,63 @@ function dearcharts_render_main_box($post)
             color: var(--dc-text);
         }
 
-        .dc-main-header .dc-main-type {
+        .dc-main-header .dc-chart-type-container {
             display: flex;
             align-items: center;
-            gap: 8px;
-        }
-
-        .dc-main-header .dc-main-type label {
-            margin: 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--dc-muted);
-        }
-
-        .dc-main-header .dc-main-type select,
-        .dc-main-header select {
-            padding: 4px 26px 4px 8px;
-            border-radius: 6px;
-            font-size: 13px;
+            gap: 12px;
+            background: #eff6ff;
+            padding: 6px 14px;
+            border-radius: 10px;
+            border: 1px solid #bfdbfe;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
-            z-index: 3;
-            box-sizing: border-box;
+        }
+
+        .dc-main-header .dc-chart-type-container:hover {
+            border-color: #3b82f6;
+            background: #fff;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .dc-main-header .dc-chart-type-container label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #2563eb;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 0;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .dc-main-header .dc-chart-type-container label::after {
+            content: "";
+            width: 1px;
+            height: 14px;
+            background: #bfdbfe;
+            display: inline-block;
+        }
+
+        .dc-main-header .dc-chart-type-container select {
+            border: none !important;
+            background: transparent !important;
+            padding: 0 24px 0 0 !important;
+            font-weight: 700 !important;
+            color: #1e3a8a !important;
+            font-size: 14px !important;
+            cursor: pointer;
+            box-shadow: none !important;
+            margin: 0 !important;
+            min-width: 110px;
+            height: auto !important;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") !important;
+            background-repeat: no-repeat !important;
+            background-position: right center !important;
+            background-size: 14px !important;
         }
 
         /* ensure the inline badge and icons sit behind or beside the select */
@@ -666,13 +702,20 @@ function dearcharts_render_main_box($post)
 
     <div class="dc-admin-wrapper">
         <div class="dc-main-header">
-            <div style="display:flex; align-items:center; gap:15px;">
-                <h2>Chart Type</h2>
+            <div class="dc-chart-type-container">
+                <label for="dearcharts_type">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path>
+                        <path d="M22 12A10 10 0 0 0 12 2v10z"></path>
+                    </svg>
+                    Chart Type
+                </label>
                 <select name="dearcharts_type" id="dearcharts_type" onchange="dearcharts_update_live_preview()">
-                    <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie</option>
+                    <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie Chart</option>
                     <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
-                    <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar</option>
-                    <option value="line" <?php selected($chart_type, 'line'); ?>>Line</option>
+                    <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar Chart</option>
+                    <option value="line" <?php selected($chart_type, 'line'); ?>>Line Chart</option>
                 </select>
             </div>
             <div class="dc-type-selector-inline">
@@ -1575,194 +1618,194 @@ function dearcharts_render_main_box($post)
             // Try immediately, then also on window load as fallback
             initPreview();
             dearcharts_update_palette_preview();
-                        jQuery(window).on('load', function () {
-                            if (typeof Chart !== 'undefined' && !dcLiveChart) {
-                                dearcharts_update_live_preview();
-                            }
-                        });
+            jQuery(window).on('load', function () {
+                if (typeof Chart !== 'undefined' && !dcLiveChart) {
+                    dearcharts_update_live_preview();
+                }
+            });
 
-                        // Restore from local storage if different from saved
-                        var key = 'dearcharts_autosave_' + dc_post_id;
-                        var raw = localStorage.getItem(key);
-                        if (raw) {
-                            try {
-                                var local_snapshot = JSON.parse(raw);
-                                if (!snapshotsEqual(local_snapshot, dc_saved_snapshot)) {
-                                    // restore from local
-                                    jQuery('#dearcharts_active_source').val(local_snapshot.active_source);
-                                    dcSetSource(local_snapshot.active_source);
-                                    jQuery('#dearcharts_csv_url').val(local_snapshot.csv_url);
-                                    jQuery('#dearcharts_type').val(local_snapshot.type);
-                                    jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
-                                    jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
-                                    jQuery('#dearcharts_palette').val(local_snapshot.palette);
-                                    if (local_snapshot.xaxis_label !== undefined) jQuery('#dearcharts_xaxis_label').val(local_snapshot.xaxis_label);
-                                    if (local_snapshot.yaxis_label !== undefined) jQuery('#dearcharts_yaxis_label').val(local_snapshot.yaxis_label);
-                                    if (local_snapshot.active_source === 'manual') {
-                                        // clear table
-                                        jQuery('#dc-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>');
-                                        jQuery('#dc-manual-table tbody').html('');
-                                        // add headers
-                                        local_snapshot.manual.headers.forEach(function (h) {
-                                            jQuery('<th><input type="text" name="dearcharts_manual_data[0][]" value="' + h.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>').insertBefore(jQuery('#dc-manual-table thead th:last'));
-                                        });
-                                        // add rows
-                                        local_snapshot.manual.rows.forEach(function (row, idx) {
-                                            var html = '<tr>';
-                                            row.forEach(function (cell) {
-                                                html += '<td><input type="text" name="dearcharts_manual_data[' + (idx + 1) + '][]" value="' + cell.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
-                                            });
-                                            html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
-                                            jQuery('#dc-manual-table tbody').append(html);
-                                        });
-                                        dearcharts_add_delete_col_controls();
-                                    }
-                                    dearcharts_update_live_preview();
-                                    updateSaveButtonState();
-                                }
-                            } catch (e) { }
-                        }
-                        // Initialize autosave (no restore UI)
-                        dearcharts_local_autosave();
-                    });
-
-                    function dearcharts_get_snapshot() {
-                        var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#dearcharts_csv_url').val() || '', active_source: jQuery('#dearcharts_active_source').val() || 'manual', type: jQuery('#dearcharts_type').val() || '', legend_pos: jQuery('#dearcharts_legend_pos').val() || '', palette: jQuery('#dearcharts_palette').val() || '', xaxis_label: jQuery('#dearcharts_xaxis_label').val() || '', yaxis_label: jQuery('#dearcharts_yaxis_label').val() || '' };
-                        // headers (skip only add button i=last)
-                        jQuery('#dc-manual-table thead th').each(function (i) { if (i === jQuery('#dc-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
-                        // rows
-                        jQuery('#dc-manual-table tbody tr').each(function () { var row = []; jQuery(this).find('td').each(function (i) { if (i === jQuery(this).closest('tr').find('td').length - 1) return; var v = jQuery(this).find('input').val() || ''; row.push(v); }); snapshot.manual.rows.push(row); });
-                        return snapshot;
-                    }
-
-                    function snapshotsEqual(a, b) { try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; } }
-
-
-
-                    function dearcharts_local_autosave(init) {
-                        var key = 'dearcharts_autosave_' + dc_post_id;
-                        var curr = dearcharts_get_snapshot();
-                        var raw = JSON.stringify(curr);
-                        localStorage.setItem(key, raw);
-                        // show restore button only when there's a local snapshot different from saved
-                        try {
-                            var savedRaw = JSON && dc_saved_snapshot ? JSON.stringify(dc_saved_snapshot) : '';
-                            var hasDiff = savedRaw !== raw;
-                            /* don't show a restore button; we keep a local snapshot for safety but do not expose restore UI */
-                            // no restore UI; just update button disability state below
-                            updateSaveButtonState();
-                        } catch (e) { }
-                    }
-
-                    function updateSaveButtonState() { /* Button state management removed to allow Publish action at all times */ }
-
-                    function dcCopyShortcode() {
-                        var shortcode = document.getElementById('dc-shortcode').textContent;
-                        navigator.clipboard.writeText(shortcode).then(function () {
-                            document.getElementById('dc-copy-status').textContent = 'Copied!';
-                            setTimeout(function () {
-                                document.getElementById('dc-copy-status').textContent = '';
-                            }, 2000);
-                        }).catch(function (err) {
-                            console.error('Failed to copy: ', err);
-                            document.getElementById('dc-copy-status').textContent = 'Copy failed';
-                            setTimeout(function () {
-                                document.getElementById('dc-copy-status').textContent = '';
-                            }, 2000);
-                        });
-                    }
-
-                    function dearcharts_quick_save(btn) {
-                        // Validation: Ensure Title is present
-                        // Validation: Ensure Title is present
-                        var $titleInput = jQuery('input[name="post_title"]'); // Support standard post title input
-                        if ($titleInput.length === 0) {
-                            // Fallback if not found by name, try ID
-                            $titleInput = jQuery('#title');
-                        }
-
-                        var title = $titleInput.val();
-                        if (!title || title.trim() === '') {
-                            // Instead of alert, show inline error
-                            var originalPlaceholder = $titleInput.attr('placeholder');
-
-                            // Hide WordPress default prompt label if it exists
-                            jQuery('#title-prompt-text').addClass('screen-reader-text');
-
-                            $titleInput.css('border', '2px solid #ef4444');
-                            $titleInput.attr('placeholder', 'Please enter a title');
-                            $titleInput.focus();
-
-                            // Revert style on input
-                            $titleInput.one('input', function () {
-                                jQuery(this).css('border', '');
-                                // Restore prompt text visibility if empty and needed (standard WP behavior)
-                                if (jQuery(this).val().trim() === '') {
-                                    jQuery('#title-prompt-text').removeClass('screen-reader-text');
-                                }
-                                if (originalPlaceholder) {
-                                    jQuery(this).attr('placeholder', originalPlaceholder);
-                                } else {
-                                    jQuery(this).removeAttr('placeholder');
-                                }
+            // Restore from local storage if different from saved
+            var key = 'dearcharts_autosave_' + dc_post_id;
+            var raw = localStorage.getItem(key);
+            if (raw) {
+                try {
+                    var local_snapshot = JSON.parse(raw);
+                    if (!snapshotsEqual(local_snapshot, dc_saved_snapshot)) {
+                        // restore from local
+                        jQuery('#dearcharts_active_source').val(local_snapshot.active_source);
+                        dcSetSource(local_snapshot.active_source);
+                        jQuery('#dearcharts_csv_url').val(local_snapshot.csv_url);
+                        jQuery('#dearcharts_type').val(local_snapshot.type);
+                        jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
+                        jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
+                        jQuery('#dearcharts_palette').val(local_snapshot.palette);
+                        if (local_snapshot.xaxis_label !== undefined) jQuery('#dearcharts_xaxis_label').val(local_snapshot.xaxis_label);
+                        if (local_snapshot.yaxis_label !== undefined) jQuery('#dearcharts_yaxis_label').val(local_snapshot.yaxis_label);
+                        if (local_snapshot.active_source === 'manual') {
+                            // clear table
+                            jQuery('#dc-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>');
+                            jQuery('#dc-manual-table tbody').html('');
+                            // add headers
+                            local_snapshot.manual.headers.forEach(function (h) {
+                                jQuery('<th><input type="text" name="dearcharts_manual_data[0][]" value="' + h.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>').insertBefore(jQuery('#dc-manual-table thead th:last'));
                             });
-                            return;
+                            // add rows
+                            local_snapshot.manual.rows.forEach(function (row, idx) {
+                                var html = '<tr>';
+                                row.forEach(function (cell) {
+                                    html += '<td><input type="text" name="dearcharts_manual_data[' + (idx + 1) + '][]" value="' + cell.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
+                                });
+                                html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
+                                jQuery('#dc-manual-table tbody').append(html);
+                            });
+                            dearcharts_add_delete_col_controls();
                         }
-
-                        var $btn = jQuery(btn);
-                        var originalText = $btn.text();
-                        $btn.text('Saving...').prop('disabled', true);
-
-                        var headers = [];
-                        jQuery('#dc-manual-table thead th input').each(function () { headers.push(jQuery(this).val()); });
-
-                        var rows = [];
-                        jQuery('#dc-manual-table tbody tr').each(function () {
-                            var row = [];
-                            jQuery(this).find('td input').each(function () { row.push(jQuery(this).val()); });
-                            if (row.length > 0) rows.push(row);
-                        });
-
-                        var data = {
-                            action: 'dearcharts_save_chart',
-                            nonce: jQuery('#dearcharts_nonce').val(),
-                            post_id: $btn.data('pid'),
-                            manual_json: JSON.stringify({ headers: headers, rows: rows }),
-                            post_title: title,
-                            dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
-                            dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
-                            dearcharts_type: jQuery('#dearcharts_type').val(),
-                            dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
-                            dearcharts_palette: jQuery('#dearcharts_palette').val(),
-                            dearcharts_xaxis_label: jQuery('#dearcharts_xaxis_label').val(),
-                            dearcharts_yaxis_label: jQuery('#dearcharts_yaxis_label').val()
-                        };
-
-                        jQuery.post(ajaxurl, data, function (res) {
-                            $btn.text(originalText).prop('disabled', false);
-                            if (res.success) {
-                                jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
-
-                                // Mark post as NOT dirty to prevent browser "Leave site" warnings
-                                if (typeof wp !== 'undefined' && wp.autosave && wp.autosave.server) {
-                                    wp.autosave.server.postChanged = false;
-                                }
-                                // Reset the "initial" state for the Heartbeat API if needed
-                                if (window.onbeforeunload) {
-                                    // Suppress warning for this navigation if navigating immediately
-                                    // But usually marking postChanged = false is enough for WP
-                                }
-
-                                if (res.data.shortcode_html) {
-                                    jQuery('#dearcharts_usage_box .inside').html(res.data.shortcode_html);
-                                }
-                            } else {
-                                alert('Save Failed');
-                            }
-                        });
+                        dearcharts_update_live_preview();
+                        updateSaveButtonState();
                     }
-                </script>
-                <?php
+                } catch (e) { }
+            }
+            // Initialize autosave (no restore UI)
+            dearcharts_local_autosave();
+        });
+
+        function dearcharts_get_snapshot() {
+            var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#dearcharts_csv_url').val() || '', active_source: jQuery('#dearcharts_active_source').val() || 'manual', type: jQuery('#dearcharts_type').val() || '', legend_pos: jQuery('#dearcharts_legend_pos').val() || '', palette: jQuery('#dearcharts_palette').val() || '', xaxis_label: jQuery('#dearcharts_xaxis_label').val() || '', yaxis_label: jQuery('#dearcharts_yaxis_label').val() || '' };
+            // headers (skip only add button i=last)
+            jQuery('#dc-manual-table thead th').each(function (i) { if (i === jQuery('#dc-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
+            // rows
+            jQuery('#dc-manual-table tbody tr').each(function () { var row = []; jQuery(this).find('td').each(function (i) { if (i === jQuery(this).closest('tr').find('td').length - 1) return; var v = jQuery(this).find('input').val() || ''; row.push(v); }); snapshot.manual.rows.push(row); });
+            return snapshot;
+        }
+
+        function snapshotsEqual(a, b) { try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; } }
+
+
+
+        function dearcharts_local_autosave(init) {
+            var key = 'dearcharts_autosave_' + dc_post_id;
+            var curr = dearcharts_get_snapshot();
+            var raw = JSON.stringify(curr);
+            localStorage.setItem(key, raw);
+            // show restore button only when there's a local snapshot different from saved
+            try {
+                var savedRaw = JSON && dc_saved_snapshot ? JSON.stringify(dc_saved_snapshot) : '';
+                var hasDiff = savedRaw !== raw;
+                /* don't show a restore button; we keep a local snapshot for safety but do not expose restore UI */
+                // no restore UI; just update button disability state below
+                updateSaveButtonState();
+            } catch (e) { }
+        }
+
+        function updateSaveButtonState() { /* Button state management removed to allow Publish action at all times */ }
+
+        function dcCopyShortcode() {
+            var shortcode = document.getElementById('dc-shortcode').textContent;
+            navigator.clipboard.writeText(shortcode).then(function () {
+                document.getElementById('dc-copy-status').textContent = 'Copied!';
+                setTimeout(function () {
+                    document.getElementById('dc-copy-status').textContent = '';
+                }, 2000);
+            }).catch(function (err) {
+                console.error('Failed to copy: ', err);
+                document.getElementById('dc-copy-status').textContent = 'Copy failed';
+                setTimeout(function () {
+                    document.getElementById('dc-copy-status').textContent = '';
+                }, 2000);
+            });
+        }
+
+        function dearcharts_quick_save(btn) {
+            // Validation: Ensure Title is present
+            // Validation: Ensure Title is present
+            var $titleInput = jQuery('input[name="post_title"]'); // Support standard post title input
+            if ($titleInput.length === 0) {
+                // Fallback if not found by name, try ID
+                $titleInput = jQuery('#title');
+            }
+
+            var title = $titleInput.val();
+            if (!title || title.trim() === '') {
+                // Instead of alert, show inline error
+                var originalPlaceholder = $titleInput.attr('placeholder');
+
+                // Hide WordPress default prompt label if it exists
+                jQuery('#title-prompt-text').addClass('screen-reader-text');
+
+                $titleInput.css('border', '2px solid #ef4444');
+                $titleInput.attr('placeholder', 'Please enter a title');
+                $titleInput.focus();
+
+                // Revert style on input
+                $titleInput.one('input', function () {
+                    jQuery(this).css('border', '');
+                    // Restore prompt text visibility if empty and needed (standard WP behavior)
+                    if (jQuery(this).val().trim() === '') {
+                        jQuery('#title-prompt-text').removeClass('screen-reader-text');
+                    }
+                    if (originalPlaceholder) {
+                        jQuery(this).attr('placeholder', originalPlaceholder);
+                    } else {
+                        jQuery(this).removeAttr('placeholder');
+                    }
+                });
+                return;
+            }
+
+            var $btn = jQuery(btn);
+            var originalText = $btn.text();
+            $btn.text('Saving...').prop('disabled', true);
+
+            var headers = [];
+            jQuery('#dc-manual-table thead th input').each(function () { headers.push(jQuery(this).val()); });
+
+            var rows = [];
+            jQuery('#dc-manual-table tbody tr').each(function () {
+                var row = [];
+                jQuery(this).find('td input').each(function () { row.push(jQuery(this).val()); });
+                if (row.length > 0) rows.push(row);
+            });
+
+            var data = {
+                action: 'dearcharts_save_chart',
+                nonce: jQuery('#dearcharts_nonce').val(),
+                post_id: $btn.data('pid'),
+                manual_json: JSON.stringify({ headers: headers, rows: rows }),
+                post_title: title,
+                dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
+                dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
+                dearcharts_type: jQuery('#dearcharts_type').val(),
+                dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
+                dearcharts_palette: jQuery('#dearcharts_palette').val(),
+                dearcharts_xaxis_label: jQuery('#dearcharts_xaxis_label').val(),
+                dearcharts_yaxis_label: jQuery('#dearcharts_yaxis_label').val()
+            };
+
+            jQuery.post(ajaxurl, data, function (res) {
+                $btn.text(originalText).prop('disabled', false);
+                if (res.success) {
+                    jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+
+                    // Mark post as NOT dirty to prevent browser "Leave site" warnings
+                    if (typeof wp !== 'undefined' && wp.autosave && wp.autosave.server) {
+                        wp.autosave.server.postChanged = false;
+                    }
+                    // Reset the "initial" state for the Heartbeat API if needed
+                    if (window.onbeforeunload) {
+                        // Suppress warning for this navigation if navigating immediately
+                        // But usually marking postChanged = false is enough for WP
+                    }
+
+                    if (res.data.shortcode_html) {
+                        jQuery('#dearcharts_usage_box .inside').html(res.data.shortcode_html);
+                    }
+                } else {
+                    alert('Save Failed');
+                }
+            });
+        }
+    </script>
+    <?php
 }
 
 /**
