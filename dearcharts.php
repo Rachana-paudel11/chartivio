@@ -1,18 +1,13 @@
 <?php
 /**
  * Plugin Name: DearCharts
- * Plugin URI:  https://example.com/dearcharts
- * Description: Professional Data Visualization for WordPress with Zero-Latency Previews.
- * Version:     1.0.0
- * Author:      Rachana Paudel
- * Author URI:  https://example.com
- * License:     GPLv2 or later
- * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: dearcharts
+ * Description: A custom post type for managing charts with a tabbed meta box interface.
+ * Version: 1.0
+ * Author: Rachana Paudel
  */
 
 if (!defined('ABSPATH')) {
-    exit; // Exit if accessed directly.
+    exit;
 }
 
 // Define Plugin Constants
@@ -192,14 +187,11 @@ function dearcharts_populate_admin_columns($column, $post_id)
 {
     switch ($column) {
         case 'dearcharts_shortcode':
-            $sc = '[dearchart id="' . absint($post_id) . '"]';
-            echo '<div class="dc-shortcode-pill" onclick="dcCopyList(this, \'' . esc_js($sc) . '\')" title="' . esc_attr__('Click to copy', 'dearcharts') . '">';
+            $sc = '[dearchart id="' . $post_id . '"]';
+            echo '<div class="dc-shortcode-pill" onclick="dcCopyList(this, \'' . esc_js($sc) . '\')" title="Click to copy">';
             echo '<code>' . esc_html($sc) . '</code>';
             echo '<span class="dashicons dashicons-admin-page dc-copy-icon"></span>';
             echo '</div>';
-            break;
-        case 'dearcharts_id':
-            echo '<span style="color:#64748b; font-weight:600;">' . absint($post_id) . '</span>';
             break;
         case 'dearcharts_type':
             $type = get_post_meta($post_id, '_dearcharts_type', true) ?: 'pie';
@@ -213,7 +205,7 @@ function dearcharts_populate_admin_columns($column, $post_id)
 
             echo '<div class="dc-type-badge">';
             echo '<span class="dashicons ' . esc_attr($icon) . '"></span> ';
-            echo '<span>' . esc_html(ucfirst($type)) . '</span>';
+            echo '<span>' . ucfirst(esc_html($type)) . '</span>';
             echo '</div>';
             break;
     }
