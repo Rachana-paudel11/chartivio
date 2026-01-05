@@ -362,7 +362,8 @@ function dearcharts_render_main_box($post)
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
-            flex: 0 1 auto; /* Allow it to be small if content is small */
+            flex: 0 1 auto;
+            /* Allow it to be small if content is small */
             height: auto !important;
             max-height: none !important;
             min-height: 100px !important;
@@ -416,7 +417,8 @@ function dearcharts_render_main_box($post)
         }
 
         table.dc-table {
-            width: 100% !important;
+            width: max-content !important;
+            /* Allow table to expand naturally for horizontal scroll */
             min-width: 100% !important;
             border-collapse: collapse !important;
             table-layout: auto;
@@ -714,7 +716,8 @@ function dearcharts_render_main_box($post)
                             <div id="dc-csv-preview-label"
                                 style="font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; margin-bottom: 8px; display: none;">
                                 CSV Data Preview</div>
-                            <div id="dc-csv-preview-container" class="dc-table-wrapper" style="display: none;">
+                            <div id="dc-csv-preview-container" class="dc-table-wrapper"
+                                style="display: none; max-height: 350px !important;">
                                 <table class="dc-table" id="dc-csv-preview-table">
                                     <thead></thead>
                                     <tbody></tbody>
