@@ -803,13 +803,13 @@ function dearcharts_render_main_box($post)
                                     <option value="forest" <?php selected($palette_key, 'forest'); ?>>Forest</option>
                                 </select>
                             </div>
-                            <div class="dc-setting-row">
+                            <div class="dc-setting-row dc-axis-setting">
                                 <span class="dc-setting-label">X-Axis Title</span>
                                 <input type="text" name="dearcharts_xaxis_label" id="dearcharts_xaxis_label"
                                     value="<?php echo esc_attr($xaxis_label); ?>" style="width: 50% !important;"
                                     oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();">
                             </div>
-                            <div class="dc-setting-row">
+                            <div class="dc-setting-row dc-axis-setting">
                                 <span class="dc-setting-label">Y-Axis Title</span>
                                 <input type="text" name="dearcharts_yaxis_label" id="dearcharts_yaxis_label"
                                     value="<?php echo esc_attr($yaxis_label); ?>" style="width: 50% !important;"
@@ -1206,6 +1206,13 @@ function dearcharts_render_main_box($post)
                 let palette = (typeof dc_palettes !== 'undefined' && dc_palettes[paletteKey]) ? dc_palettes[paletteKey] : ((typeof dc_palettes !== 'undefined') ? dc_palettes['default'] : ['#3b82f6']);
                 let xaxisLabel = jQuery('#dearcharts_xaxis_label').val() || '';
                 let yaxisLabel = jQuery('#dearcharts_yaxis_label').val() || '';
+
+                // Toggle axis settings visibility based on chart type
+                if (chartType === 'bar' || chartType === 'line') {
+                    jQuery('.dc-axis-setting').show();
+                } else {
+                    jQuery('.dc-axis-setting').hide();
+                }
 
                 // Capture current state to handle race conditions
                 var currentSource = jQuery('input[name="dc_source_selector"]:checked').val() || jQuery('#dearcharts_active_source').val() || 'manual';
