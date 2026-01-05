@@ -199,7 +199,8 @@ function dearcharts_render_main_box($post)
         .dc-source-panel {
             flex: 1;
             min-height: 0;
-            flex-shrink: 1 !important; /* This is the only box allowed to grow/shrink */
+            flex-shrink: 1 !important;
+            /* This is the only box allowed to grow/shrink */
         }
 
         .dc-settings-panel {
@@ -284,7 +285,8 @@ function dearcharts_render_main_box($post)
             background: #fff;
             display: flex;
             flex-direction: column;
-            flex-shrink: 0; /* Prevent boxes from compressing themselves */
+            flex-shrink: 0;
+            /* Prevent boxes from compressing themselves */
         }
 
         .dc-card-header {
@@ -970,9 +972,12 @@ function dearcharts_render_main_box($post)
             jQuery('#dc-manual-table tbody').append($newRow);
             dearcharts_update_live_preview();
             dearcharts_local_autosave();
-            var $wrapper = jQuery('.dc-table-wrapper');
-            $wrapper.animate({ scrollTop: $wrapper.prop("scrollHeight") }, 500, function () {
-                $newRow.find('input:first').focus();
+            var $wrapper = jQuery('#dc-manual-body .dc-table-wrapper');
+            $wrapper.animate({ scrollTop: $wrapper.prop("scrollHeight") }, 300, function () {
+                var $target = $newRow.find('input:first');
+                $target.focus();
+                // Ensure it's fully visible even with sticky headers/footers
+                $target[0].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             });
         }
         /**
@@ -1030,10 +1035,13 @@ function dearcharts_render_main_box($post)
             // add delete controls for columns and update preview
             dearcharts_add_delete_col_controls();
             dearcharts_update_live_preview();
-            var $wrapper = jQuery('.dc-table-wrapper');
-            $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 500, function () {
+            var $wrapper = jQuery('#dc-manual-body .dc-table-wrapper');
+            $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 300, function () {
                 var newColIdx = jQuery('#dc-manual-table thead th').length - 2;
-                jQuery('#dc-manual-table thead th').eq(newColIdx).find('input').focus();
+                var $target = jQuery('#dc-manual-table thead th').eq(newColIdx).find('input');
+                $target.focus();
+                // Ensure horizontal visibility
+                $target[0].scrollIntoView({ behavior: 'smooth', inline: 'nearest' });
             });
         }
 
