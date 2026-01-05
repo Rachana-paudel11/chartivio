@@ -12,7 +12,6 @@ if (!defined('ABSPATH')) {
 
 // Define Plugin Constants
 define('DEARCHARTS_PATH', plugin_dir_path(__FILE__));
-define('DEARCHARTS_URL', plugin_dir_url(__FILE__));
 
 /**
  * Register Custom Post Type 'dearcharts'
