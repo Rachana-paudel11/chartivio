@@ -15,13 +15,9 @@ define('DEARCHARTS_PATH', plugin_dir_path(__FILE__));
 
 /**
  * Register Custom Post Type 'dearcharts'
- * PSEUDOCODE: Create a data structure to store chart title, data, and settings.
  */
 function dearcharts_register_cpt()
 {
-    // PSEUDO CODE:
-    // DEFINE labels for the custom post type (Name: DearCharts, Singular: DearChart)
-    // DEFINE arguments: public, show UI, show in menu, icon, supports title
     $args = array(
         'labels' => array(
             'name' => 'DearCharts',
@@ -39,17 +35,12 @@ function dearcharts_register_cpt()
         'menu_icon' => 'dashicons-chart-area',
         'supports' => array('title'),
         'has_archive' => false,
-
     );
 
-    // IF register_post_type function exists THEN
-    //     REGISTER 'dearcharts' post type with arguments
-    // END IF
     if (function_exists('register_post_type')) {
         register_post_type('dearcharts', $args);
     }
 }
-// HOOK dearcharts_register_cpt to 'init' action
 add_action('init', 'dearcharts_register_cpt');
 
 /**
@@ -138,7 +129,6 @@ function dearcharts_admin_list_styles()
                 line-height: 16px;
             }
 
-            /* Custom Row Styling */
             .wp-list-table tr:hover {
                 background-color: #f8fafc !important;
             }
@@ -171,11 +161,8 @@ add_action('admin_head', 'dearcharts_admin_list_styles');
 /**
  * Include Module Files
  */
-// REQUIRE admin settings module (meta boxes, admin UI, data persistence)
-require_once plugin_dir_path(__FILE__) . 'includes/admin-settings.php';
-
-// REQUIRE shortcodes module (frontend shortcode and chart rendering)
-require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
+require_once DEARCHARTS_PATH . 'includes/admin-settings.php';
+require_once DEARCHARTS_PATH . 'includes/shortcodes.php';
 
 /**
  * Add Custom Columns to Admin List
@@ -183,7 +170,6 @@ require_once plugin_dir_path(__FILE__) . 'includes/shortcodes.php';
 add_filter('manage_edit-dearcharts_columns', 'dearcharts_add_admin_columns');
 function dearcharts_add_admin_columns($columns)
 {
-    // Insert new columns after the checkbox
     $new_columns = array();
     $new_columns['cb'] = $columns['cb'];
     $new_columns['title'] = $columns['title'];
