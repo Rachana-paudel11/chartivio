@@ -1,13 +1,18 @@
 <?php
 /**
  * Plugin Name: DearCharts
- * Description: A custom post type for managing charts with a tabbed meta box interface.
- * Version: 1.0
- * Author: Rachana Paudel
+ * Plugin URI:  https://example.com/dearcharts
+ * Description: Professional Data Visualization for WordPress with Zero-Latency Previews.
+ * Version:     1.0.0
+ * Author:      Rachana Paudel
+ * Author URI:  https://example.com
+ * License:     GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
+ * Text Domain: dearcharts
  */
 
 if (!defined('ABSPATH')) {
-    exit;
+    exit; // Exit if accessed directly.
 }
 
 // Define Plugin Constants
