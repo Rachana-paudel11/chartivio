@@ -196,6 +196,12 @@ function dearcharts_render_main_box($post)
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
+        .dc-source-panel {
+            flex: 1;
+            min-height: 0;
+            flex-shrink: 1 !important; /* This is the only box allowed to grow/shrink */
+        }
+
         .dc-settings-panel {
             flex: 1;
             padding: 0;
@@ -278,6 +284,7 @@ function dearcharts_render_main_box($post)
             background: #fff;
             display: flex;
             flex-direction: column;
+            flex-shrink: 0; /* Prevent boxes from compressing themselves */
         }
 
         .dc-card-header {
@@ -651,7 +658,7 @@ function dearcharts_render_main_box($post)
                     <input type="hidden" name="dearcharts_active_source" id="dearcharts_active_source"
                         value="<?php echo esc_attr($active_source); ?>">
 
-                    <div class="dc-card" style="margin-bottom: 20px;">
+                    <div class="dc-card" style="margin-bottom: 20px; flex-shrink: 0;">
                         <div class="dc-card-header">
                             <span>Select Data Source</span>
                         </div>
