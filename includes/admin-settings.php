@@ -486,8 +486,8 @@ function dearcharts_render_main_box($post)
             display: block !important;
         }
 
-        .dc-col-control input {
-            padding-right: 32px !important;
+        table.dc-table th .dc-col-control input {
+            padding-right: 36px !important;
             /* Space for X */
         }
 
@@ -506,9 +506,12 @@ function dearcharts_render_main_box($post)
             cursor: pointer !important;
             font-size: 16px !important;
             font-weight: bold !important;
-            background: none !important;
+            background: rgba(255, 255, 255, 0.9) !important;
             border: none !important;
-            padding: 4px !important;
+            border-radius: 4px !important;
+            padding: 2px !important;
+            width: 20px !important;
+            height: 20px !important;
             line-height: 1 !important;
             z-index: 5 !important;
             display: flex !important;
@@ -519,8 +522,8 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-delete-col:hover {
-            background: #fee2e2;
-            border-radius: 4px;
+            background: #fee2e2 !important;
+            color: #dc2626 !important;
         }
 
         .dc-setting-row {
