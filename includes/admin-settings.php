@@ -584,6 +584,25 @@ function dearcharts_render_main_box($post)
             border-bottom: none;
         }
 
+        .dc-palette-preview {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+            padding: 4px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+            width: fit-content;
+        }
+
+        .dc-swatch {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
         .dc-setting-label {
             font-weight: 600;
             color: #475569;
@@ -839,17 +858,22 @@ function dearcharts_render_main_box($post)
                                     <option value="none" <?php selected($legend_pos, 'none'); ?>>None</option>
                                 </select>
                             </div>
-                            <div class="dc-setting-row">
-                                <span class="dc-setting-label">Color Palette</span>
-                                <select name="dearcharts_palette" id="dearcharts_palette"
-                                    onchange="dearcharts_update_live_preview(); dearcharts_local_autosave();">
-                                    <option value="default" <?php selected($palette_key, 'default'); ?>>Standard</option>
-                                    <option value="pastel" <?php selected($palette_key, 'pastel'); ?>>Pastel</option>
-                                    <option value="ocean" <?php selected($palette_key, 'ocean'); ?>>Ocean</option>
-                                    <option value="sunset" <?php selected($palette_key, 'sunset'); ?>>Sunset</option>
-                                    <option value="neon" <?php selected($palette_key, 'neon'); ?>>Neon</option>
-                                    <option value="forest" <?php selected($palette_key, 'forest'); ?>>Forest</option>
-                                </select>
+                            <div class="dc-setting-row" style="flex-direction: column; align-items: flex-start;">
+                                <div
+                                    style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                                    <span class="dc-setting-label">Color Palette</span>
+                                    <select name="dearcharts_palette" id="dearcharts_palette"
+                                        onchange="dearcharts_update_palette_preview(); dearcharts_update_live_preview(); dearcharts_local_autosave();">
+                                        <option value="default" <?php selected($palette_key, 'default'); ?>>Standard
+                                        </option>
+                                        <option value="pastel" <?php selected($palette_key, 'pastel'); ?>>Pastel</option>
+                                        <option value="ocean" <?php selected($palette_key, 'ocean'); ?>>Ocean</option>
+                                        <option value="sunset" <?php selected($palette_key, 'sunset'); ?>>Sunset</option>
+                                        <option value="neon" <?php selected($palette_key, 'neon'); ?>>Neon</option>
+                                        <option value="forest" <?php selected($palette_key, 'forest'); ?>>Forest</option>
+                                    </select>
+                                </div>
+                                <div id="dc-palette-preview" class="dc-palette-preview"></div>
                             </div>
                             <div class="dc-setting-row dc-axis-setting">
                                 <span class="dc-setting-label">X-Axis Title</span>
@@ -913,6 +937,16 @@ function dearcharts_render_main_box($post)
         echo wp_json_encode($saved_snapshot);
         ?>;
         var dc_palettes = { 'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
+
+        function dearcharts_update_palette_preview() {
+            const key = jQuery('#dearcharts_palette').val();
+            const colors = dc_palettes[key] || dc_palettes['default'];
+            const $container = jQuery('#dc-palette-preview');
+            $container.empty();
+            colors.forEach(color => {
+                $container.append('<div class="dc-swatch" style="background:' + color + '" title="' + color + '"></div>');
+            });
+        }
 
         function dc_parse_csv(str) {
             var arr = [];
@@ -1540,194 +1574,195 @@ function dearcharts_render_main_box($post)
 
             // Try immediately, then also on window load as fallback
             initPreview();
-            jQuery(window).on('load', function () {
-                if (typeof Chart !== 'undefined' && !dcLiveChart) {
-                    dearcharts_update_live_preview();
-                }
-            });
+            dearcharts_update_palette_preview();
+                        jQuery(window).on('load', function () {
+                            if (typeof Chart !== 'undefined' && !dcLiveChart) {
+                                dearcharts_update_live_preview();
+                            }
+                        });
 
-            // Restore from local storage if different from saved
-            var key = 'dearcharts_autosave_' + dc_post_id;
-            var raw = localStorage.getItem(key);
-            if (raw) {
-                try {
-                    var local_snapshot = JSON.parse(raw);
-                    if (!snapshotsEqual(local_snapshot, dc_saved_snapshot)) {
-                        // restore from local
-                        jQuery('#dearcharts_active_source').val(local_snapshot.active_source);
-                        dcSetSource(local_snapshot.active_source);
-                        jQuery('#dearcharts_csv_url').val(local_snapshot.csv_url);
-                        jQuery('#dearcharts_type').val(local_snapshot.type);
-                        jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
-                        jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
-                        jQuery('#dearcharts_palette').val(local_snapshot.palette);
-                        if (local_snapshot.xaxis_label !== undefined) jQuery('#dearcharts_xaxis_label').val(local_snapshot.xaxis_label);
-                        if (local_snapshot.yaxis_label !== undefined) jQuery('#dearcharts_yaxis_label').val(local_snapshot.yaxis_label);
-                        if (local_snapshot.active_source === 'manual') {
-                            // clear table
-                            jQuery('#dc-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>');
-                            jQuery('#dc-manual-table tbody').html('');
-                            // add headers
-                            local_snapshot.manual.headers.forEach(function (h) {
-                                jQuery('<th><input type="text" name="dearcharts_manual_data[0][]" value="' + h.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>').insertBefore(jQuery('#dc-manual-table thead th:last'));
-                            });
-                            // add rows
-                            local_snapshot.manual.rows.forEach(function (row, idx) {
-                                var html = '<tr>';
-                                row.forEach(function (cell) {
-                                    html += '<td><input type="text" name="dearcharts_manual_data[' + (idx + 1) + '][]" value="' + cell.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
-                                });
-                                html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
-                                jQuery('#dc-manual-table tbody').append(html);
-                            });
-                            dearcharts_add_delete_col_controls();
+                        // Restore from local storage if different from saved
+                        var key = 'dearcharts_autosave_' + dc_post_id;
+                        var raw = localStorage.getItem(key);
+                        if (raw) {
+                            try {
+                                var local_snapshot = JSON.parse(raw);
+                                if (!snapshotsEqual(local_snapshot, dc_saved_snapshot)) {
+                                    // restore from local
+                                    jQuery('#dearcharts_active_source').val(local_snapshot.active_source);
+                                    dcSetSource(local_snapshot.active_source);
+                                    jQuery('#dearcharts_csv_url').val(local_snapshot.csv_url);
+                                    jQuery('#dearcharts_type').val(local_snapshot.type);
+                                    jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
+                                    jQuery('#dearcharts_legend_pos').val(local_snapshot.legend_pos);
+                                    jQuery('#dearcharts_palette').val(local_snapshot.palette);
+                                    if (local_snapshot.xaxis_label !== undefined) jQuery('#dearcharts_xaxis_label').val(local_snapshot.xaxis_label);
+                                    if (local_snapshot.yaxis_label !== undefined) jQuery('#dearcharts_yaxis_label').val(local_snapshot.yaxis_label);
+                                    if (local_snapshot.active_source === 'manual') {
+                                        // clear table
+                                        jQuery('#dc-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="dearcharts_add_column()">+</th>');
+                                        jQuery('#dc-manual-table tbody').html('');
+                                        // add headers
+                                        local_snapshot.manual.headers.forEach(function (h) {
+                                            jQuery('<th><input type="text" name="dearcharts_manual_data[0][]" value="' + h.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>').insertBefore(jQuery('#dc-manual-table thead th:last'));
+                                        });
+                                        // add rows
+                                        local_snapshot.manual.rows.forEach(function (row, idx) {
+                                            var html = '<tr>';
+                                            row.forEach(function (cell) {
+                                                html += '<td><input type="text" name="dearcharts_manual_data[' + (idx + 1) + '][]" value="' + cell.replace(/"/g, '"') + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
+                                            });
+                                            html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
+                                            jQuery('#dc-manual-table tbody').append(html);
+                                        });
+                                        dearcharts_add_delete_col_controls();
+                                    }
+                                    dearcharts_update_live_preview();
+                                    updateSaveButtonState();
+                                }
+                            } catch (e) { }
                         }
-                        dearcharts_update_live_preview();
-                        updateSaveButtonState();
-                    }
-                } catch (e) { }
-            }
-            // Initialize autosave (no restore UI)
-            dearcharts_local_autosave();
-        });
+                        // Initialize autosave (no restore UI)
+                        dearcharts_local_autosave();
+                    });
 
-        function dearcharts_get_snapshot() {
-            var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#dearcharts_csv_url').val() || '', active_source: jQuery('#dearcharts_active_source').val() || 'manual', type: jQuery('#dearcharts_type').val() || '', legend_pos: jQuery('#dearcharts_legend_pos').val() || '', palette: jQuery('#dearcharts_palette').val() || '', xaxis_label: jQuery('#dearcharts_xaxis_label').val() || '', yaxis_label: jQuery('#dearcharts_yaxis_label').val() || '' };
-            // headers (skip only add button i=last)
-            jQuery('#dc-manual-table thead th').each(function (i) { if (i === jQuery('#dc-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
-            // rows
-            jQuery('#dc-manual-table tbody tr').each(function () { var row = []; jQuery(this).find('td').each(function (i) { if (i === jQuery(this).closest('tr').find('td').length - 1) return; var v = jQuery(this).find('input').val() || ''; row.push(v); }); snapshot.manual.rows.push(row); });
-            return snapshot;
-        }
-
-        function snapshotsEqual(a, b) { try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; } }
-
-
-
-        function dearcharts_local_autosave(init) {
-            var key = 'dearcharts_autosave_' + dc_post_id;
-            var curr = dearcharts_get_snapshot();
-            var raw = JSON.stringify(curr);
-            localStorage.setItem(key, raw);
-            // show restore button only when there's a local snapshot different from saved
-            try {
-                var savedRaw = JSON && dc_saved_snapshot ? JSON.stringify(dc_saved_snapshot) : '';
-                var hasDiff = savedRaw !== raw;
-                /* don't show a restore button; we keep a local snapshot for safety but do not expose restore UI */
-                // no restore UI; just update button disability state below
-                updateSaveButtonState();
-            } catch (e) { }
-        }
-
-        function updateSaveButtonState() { /* Button state management removed to allow Publish action at all times */ }
-
-        function dcCopyShortcode() {
-            var shortcode = document.getElementById('dc-shortcode').textContent;
-            navigator.clipboard.writeText(shortcode).then(function () {
-                document.getElementById('dc-copy-status').textContent = 'Copied!';
-                setTimeout(function () {
-                    document.getElementById('dc-copy-status').textContent = '';
-                }, 2000);
-            }).catch(function (err) {
-                console.error('Failed to copy: ', err);
-                document.getElementById('dc-copy-status').textContent = 'Copy failed';
-                setTimeout(function () {
-                    document.getElementById('dc-copy-status').textContent = '';
-                }, 2000);
-            });
-        }
-
-        function dearcharts_quick_save(btn) {
-            // Validation: Ensure Title is present
-            // Validation: Ensure Title is present
-            var $titleInput = jQuery('input[name="post_title"]'); // Support standard post title input
-            if ($titleInput.length === 0) {
-                // Fallback if not found by name, try ID
-                $titleInput = jQuery('#title');
-            }
-
-            var title = $titleInput.val();
-            if (!title || title.trim() === '') {
-                // Instead of alert, show inline error
-                var originalPlaceholder = $titleInput.attr('placeholder');
-
-                // Hide WordPress default prompt label if it exists
-                jQuery('#title-prompt-text').addClass('screen-reader-text');
-
-                $titleInput.css('border', '2px solid #ef4444');
-                $titleInput.attr('placeholder', 'Please enter a title');
-                $titleInput.focus();
-
-                // Revert style on input
-                $titleInput.one('input', function () {
-                    jQuery(this).css('border', '');
-                    // Restore prompt text visibility if empty and needed (standard WP behavior)
-                    if (jQuery(this).val().trim() === '') {
-                        jQuery('#title-prompt-text').removeClass('screen-reader-text');
-                    }
-                    if (originalPlaceholder) {
-                        jQuery(this).attr('placeholder', originalPlaceholder);
-                    } else {
-                        jQuery(this).removeAttr('placeholder');
-                    }
-                });
-                return;
-            }
-
-            var $btn = jQuery(btn);
-            var originalText = $btn.text();
-            $btn.text('Saving...').prop('disabled', true);
-
-            var headers = [];
-            jQuery('#dc-manual-table thead th input').each(function () { headers.push(jQuery(this).val()); });
-
-            var rows = [];
-            jQuery('#dc-manual-table tbody tr').each(function () {
-                var row = [];
-                jQuery(this).find('td input').each(function () { row.push(jQuery(this).val()); });
-                if (row.length > 0) rows.push(row);
-            });
-
-            var data = {
-                action: 'dearcharts_save_chart',
-                nonce: jQuery('#dearcharts_nonce').val(),
-                post_id: $btn.data('pid'),
-                manual_json: JSON.stringify({ headers: headers, rows: rows }),
-                post_title: title,
-                dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
-                dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
-                dearcharts_type: jQuery('#dearcharts_type').val(),
-                dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
-                dearcharts_palette: jQuery('#dearcharts_palette').val(),
-                dearcharts_xaxis_label: jQuery('#dearcharts_xaxis_label').val(),
-                dearcharts_yaxis_label: jQuery('#dearcharts_yaxis_label').val()
-            };
-
-            jQuery.post(ajaxurl, data, function (res) {
-                $btn.text(originalText).prop('disabled', false);
-                if (res.success) {
-                    jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
-
-                    // Mark post as NOT dirty to prevent browser "Leave site" warnings
-                    if (typeof wp !== 'undefined' && wp.autosave && wp.autosave.server) {
-                        wp.autosave.server.postChanged = false;
-                    }
-                    // Reset the "initial" state for the Heartbeat API if needed
-                    if (window.onbeforeunload) {
-                        // Suppress warning for this navigation if navigating immediately
-                        // But usually marking postChanged = false is enough for WP
+                    function dearcharts_get_snapshot() {
+                        var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#dearcharts_csv_url').val() || '', active_source: jQuery('#dearcharts_active_source').val() || 'manual', type: jQuery('#dearcharts_type').val() || '', legend_pos: jQuery('#dearcharts_legend_pos').val() || '', palette: jQuery('#dearcharts_palette').val() || '', xaxis_label: jQuery('#dearcharts_xaxis_label').val() || '', yaxis_label: jQuery('#dearcharts_yaxis_label').val() || '' };
+                        // headers (skip only add button i=last)
+                        jQuery('#dc-manual-table thead th').each(function (i) { if (i === jQuery('#dc-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
+                        // rows
+                        jQuery('#dc-manual-table tbody tr').each(function () { var row = []; jQuery(this).find('td').each(function (i) { if (i === jQuery(this).closest('tr').find('td').length - 1) return; var v = jQuery(this).find('input').val() || ''; row.push(v); }); snapshot.manual.rows.push(row); });
+                        return snapshot;
                     }
 
-                    if (res.data.shortcode_html) {
-                        jQuery('#dearcharts_usage_box .inside').html(res.data.shortcode_html);
+                    function snapshotsEqual(a, b) { try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; } }
+
+
+
+                    function dearcharts_local_autosave(init) {
+                        var key = 'dearcharts_autosave_' + dc_post_id;
+                        var curr = dearcharts_get_snapshot();
+                        var raw = JSON.stringify(curr);
+                        localStorage.setItem(key, raw);
+                        // show restore button only when there's a local snapshot different from saved
+                        try {
+                            var savedRaw = JSON && dc_saved_snapshot ? JSON.stringify(dc_saved_snapshot) : '';
+                            var hasDiff = savedRaw !== raw;
+                            /* don't show a restore button; we keep a local snapshot for safety but do not expose restore UI */
+                            // no restore UI; just update button disability state below
+                            updateSaveButtonState();
+                        } catch (e) { }
                     }
-                } else {
-                    alert('Save Failed');
-                }
-            });
-        }
-    </script>
-    <?php
+
+                    function updateSaveButtonState() { /* Button state management removed to allow Publish action at all times */ }
+
+                    function dcCopyShortcode() {
+                        var shortcode = document.getElementById('dc-shortcode').textContent;
+                        navigator.clipboard.writeText(shortcode).then(function () {
+                            document.getElementById('dc-copy-status').textContent = 'Copied!';
+                            setTimeout(function () {
+                                document.getElementById('dc-copy-status').textContent = '';
+                            }, 2000);
+                        }).catch(function (err) {
+                            console.error('Failed to copy: ', err);
+                            document.getElementById('dc-copy-status').textContent = 'Copy failed';
+                            setTimeout(function () {
+                                document.getElementById('dc-copy-status').textContent = '';
+                            }, 2000);
+                        });
+                    }
+
+                    function dearcharts_quick_save(btn) {
+                        // Validation: Ensure Title is present
+                        // Validation: Ensure Title is present
+                        var $titleInput = jQuery('input[name="post_title"]'); // Support standard post title input
+                        if ($titleInput.length === 0) {
+                            // Fallback if not found by name, try ID
+                            $titleInput = jQuery('#title');
+                        }
+
+                        var title = $titleInput.val();
+                        if (!title || title.trim() === '') {
+                            // Instead of alert, show inline error
+                            var originalPlaceholder = $titleInput.attr('placeholder');
+
+                            // Hide WordPress default prompt label if it exists
+                            jQuery('#title-prompt-text').addClass('screen-reader-text');
+
+                            $titleInput.css('border', '2px solid #ef4444');
+                            $titleInput.attr('placeholder', 'Please enter a title');
+                            $titleInput.focus();
+
+                            // Revert style on input
+                            $titleInput.one('input', function () {
+                                jQuery(this).css('border', '');
+                                // Restore prompt text visibility if empty and needed (standard WP behavior)
+                                if (jQuery(this).val().trim() === '') {
+                                    jQuery('#title-prompt-text').removeClass('screen-reader-text');
+                                }
+                                if (originalPlaceholder) {
+                                    jQuery(this).attr('placeholder', originalPlaceholder);
+                                } else {
+                                    jQuery(this).removeAttr('placeholder');
+                                }
+                            });
+                            return;
+                        }
+
+                        var $btn = jQuery(btn);
+                        var originalText = $btn.text();
+                        $btn.text('Saving...').prop('disabled', true);
+
+                        var headers = [];
+                        jQuery('#dc-manual-table thead th input').each(function () { headers.push(jQuery(this).val()); });
+
+                        var rows = [];
+                        jQuery('#dc-manual-table tbody tr').each(function () {
+                            var row = [];
+                            jQuery(this).find('td input').each(function () { row.push(jQuery(this).val()); });
+                            if (row.length > 0) rows.push(row);
+                        });
+
+                        var data = {
+                            action: 'dearcharts_save_chart',
+                            nonce: jQuery('#dearcharts_nonce').val(),
+                            post_id: $btn.data('pid'),
+                            manual_json: JSON.stringify({ headers: headers, rows: rows }),
+                            post_title: title,
+                            dearcharts_csv_url: jQuery('#dearcharts_csv_url').val(),
+                            dearcharts_active_source: jQuery('#dearcharts_active_source').val(),
+                            dearcharts_type: jQuery('#dearcharts_type').val(),
+                            dearcharts_legend_pos: jQuery('#dearcharts_legend_pos').val(),
+                            dearcharts_palette: jQuery('#dearcharts_palette').val(),
+                            dearcharts_xaxis_label: jQuery('#dearcharts_xaxis_label').val(),
+                            dearcharts_yaxis_label: jQuery('#dearcharts_yaxis_label').val()
+                        };
+
+                        jQuery.post(ajaxurl, data, function (res) {
+                            $btn.text(originalText).prop('disabled', false);
+                            if (res.success) {
+                                jQuery('#dc-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+
+                                // Mark post as NOT dirty to prevent browser "Leave site" warnings
+                                if (typeof wp !== 'undefined' && wp.autosave && wp.autosave.server) {
+                                    wp.autosave.server.postChanged = false;
+                                }
+                                // Reset the "initial" state for the Heartbeat API if needed
+                                if (window.onbeforeunload) {
+                                    // Suppress warning for this navigation if navigating immediately
+                                    // But usually marking postChanged = false is enough for WP
+                                }
+
+                                if (res.data.shortcode_html) {
+                                    jQuery('#dearcharts_usage_box .inside').html(res.data.shortcode_html);
+                                }
+                            } else {
+                                alert('Save Failed');
+                            }
+                        });
+                    }
+                </script>
+                <?php
 }
 
 /**
