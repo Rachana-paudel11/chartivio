@@ -89,7 +89,6 @@ function dearcharts_add_admin_columns($columns)
     $new_columns['cb'] = $columns['cb'];
     $new_columns['title'] = $columns['title'];
     $new_columns['dearcharts_shortcode'] = 'Shortcode';
-    $new_columns['dearcharts_id'] = 'ID';
     $new_columns['dearcharts_type'] = 'Type';
     $new_columns['date'] = $columns['date'];
     return $new_columns;
@@ -104,9 +103,6 @@ function dearcharts_populate_admin_columns($column, $post_id)
     switch ($column) {
         case 'dearcharts_shortcode':
             echo '<code style="user-select:all;">[dearchart id="' . $post_id . '"]</code>';
-            break;
-        case 'dearcharts_id':
-            echo $post_id;
             break;
         case 'dearcharts_type':
             $type = get_post_meta($post_id, '_dearcharts_type', true);
