@@ -105,8 +105,17 @@ function dearcharts_populate_admin_columns($column, $post_id)
             echo '<code style="user-select:all;">[dearchart id="' . $post_id . '"]</code>';
             break;
         case 'dearcharts_type':
-            $type = get_post_meta($post_id, '_dearcharts_type', true);
-            echo ucfirst($type ?: 'Default');
+            $type = get_post_meta($post_id, '_dearcharts_type', true) ?: 'pie';
+            $icon = 'dashicons-chart-pie'; // Default
+            if ($type === 'bar')
+                $icon = 'dashicons-chart-bar';
+            if ($type === 'line')
+                $icon = 'dashicons-chart-line';
+            if ($type === 'doughnut')
+                $icon = 'dashicons-chart-pie'; // Doughnut uses pie-like icon
+
+            echo '<span class="dashicons ' . esc_attr($icon) . '" style="color:var(--dc-primary, #3b82f6); margin-right:5px; vertical-align:text-bottom;"></span> ';
+            echo '<strong>' . ucfirst(esc_html($type)) . '</strong>';
             break;
     }
 }
