@@ -266,15 +266,18 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-tab-content.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .dc-card {
             border: 1px solid var(--dc-border);
             border-radius: 8px;
-            margin-bottom: 15px;
             overflow: hidden;
             background: #fff;
+            display: flex;
+            flex-direction: column;
         }
 
         .dc-card-header {
@@ -295,6 +298,10 @@ function dearcharts_render_main_box($post)
         .dc-card-body {
             padding: 15px;
             overflow: visible;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
         #dc-manual-body {
@@ -320,17 +327,19 @@ function dearcharts_render_main_box($post)
         .dc-table-actions {
             flex-shrink: 0 !important;
             background: #fff !important;
-            position: relative !important;
-            z-index: 10 !important;
-            width: 100% !important;
-            margin-top: 12px !important;
-            padding-top: 12px !important;
+            position: sticky !important;
+            bottom: -15px !important; /* Offset card padding */
+            z-index: 20 !important;
+            width: calc(100% + 30px) !important;
+            margin: 12px -15px -15px -15px !important;
+            padding: 12px 15px !important;
             border-top: 1px solid #e2e8f0 !important;
             display: flex !important;
             gap: 10px !important;
             flex-wrap: wrap !important;
             visibility: visible !important;
             opacity: 1 !important;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.02);
         }
 
         .dc-table-actions button {
@@ -343,10 +352,11 @@ function dearcharts_render_main_box($post)
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
+            flex: 1;
             height: auto !important;
-            max-height: 350px !important;
-            min-height: 60px !important;
-            margin-bottom: 15px;
+            max-height: none !important;
+            min-height: 100px !important;
+            margin-bottom: 0px;
             border: 1px solid #e2e8f0;
             border-radius: 4px;
             padding: 0;
@@ -655,7 +665,7 @@ function dearcharts_render_main_box($post)
                     </div>
 
                     <div class="dc-card dc-source-panel" id="dc-csv-panel"
-                        style="<?php echo ($active_source === 'csv') ? 'display:block;' : 'display:none;'; ?>">
+                        style="<?php echo ($active_source === 'csv') ? 'display:flex;' : 'display:none;'; ?>">
                         <div class="dc-card-header">
                             <span>Import from CSV</span>
                         </div>
@@ -680,7 +690,7 @@ function dearcharts_render_main_box($post)
                     </div>
 
                     <div class="dc-card dc-source-panel" id="dc-manual-panel"
-                        style="<?php echo ($active_source === 'manual') ? 'display:block;' : 'display:none;'; ?>">
+                        style="<?php echo ($active_source === 'manual') ? 'display:flex;' : 'display:none;'; ?>">
                         <div class="dc-card-header">
                             <span>Manual Data Entry</span>
                         </div>
@@ -688,12 +698,13 @@ function dearcharts_render_main_box($post)
                             <style>
                                 /* Ensure manual data specific behaviors */
                                 #dc-manual-body {
+                                    flex: 1;
                                     display: flex !important;
                                     flex-direction: column !important;
                                 }
 
                                 #dc-manual-body .dc-table-wrapper {
-                                    flex: 0 0 auto !important;
+                                    flex: 1 !important;
                                 }
                             </style>
                             <div class="dc-table-wrapper">
@@ -928,7 +939,7 @@ function dearcharts_render_main_box($post)
         function dcSetSource(src) {
             jQuery('#dearcharts_active_source').val(src);
             jQuery('.dc-source-panel').hide();
-            jQuery('#dc-' + src + '-panel').show();
+            jQuery('#dc-' + src + '-panel').css('display', 'flex');
             if (src === 'manual') {
                 // Re-initialize column delete controls when switching to manual
                 setTimeout(function () {
