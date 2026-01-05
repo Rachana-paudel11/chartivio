@@ -138,6 +138,7 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-main-header .dc-chart-type-container label {
+            font-family: inherit !important;
             font-size: 11px;
             font-weight: 800;
             color: #2563eb;
@@ -159,6 +160,7 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-main-header .dc-chart-type-container select {
+            font-family: inherit !important;
             border: none !important;
             background: transparent !important;
             padding: 0 24px 0 0 !important;
