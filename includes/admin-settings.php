@@ -485,14 +485,32 @@ function dearcharts_render_main_box($post)
             border-bottom: none !important;
         }
 
-        #dc-manual-table th:last-child,
-        #dc-manual-table td:last-child {
+        /* Sticky Add Column Button */
+        #dc-manual-table th:last-child {
+            position: sticky !important;
+            right: 0 !important;
+            top: 0 !important;
+            z-index: 15 !important;
             width: 45px;
             min-width: 45px;
             max-width: 45px;
             text-align: center;
             border-right: none;
             padding: 4px;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
+            /* Shadow to separate from data */
+        }
+
+        #dc-manual-table td:last-child {
+            position: sticky !important;
+            right: 0 !important;
+            z-index: 5 !important;
+            background: #fff !important;
+            width: 45px;
+            min-width: 45px;
+            max-width: 45px;
+            text-align: center;
+            border-right: none;
         }
 
         table.dc-table input {
@@ -1030,11 +1048,18 @@ function dearcharts_render_main_box($post)
                         html += '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
                     }
                     html += '<td class="dc-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); dearcharts_update_live_preview(); dearcharts_local_autosave();">×</td></tr>';
-                    jQuery('#dc-manual-table tbody').append(html);
+
+                    var $newRow = jQuery(html);
+                    jQuery('#dc-manual-table tbody').append($newRow);
+
                     dearcharts_update_live_preview();
                     dearcharts_local_autosave();
+
                     var $wrapper = jQuery('.dc-table-wrapper');
                     $wrapper.animate({ scrollTop: $wrapper.prop("scrollHeight") }, 500);
+
+                    // Smart Focus: Auto-focus the first field of the new row
+                    $newRow.find('input:first').focus();
                 }
                 /**
                  * Transpose Table Data (Swap Rows and Columns)
@@ -1081,18 +1106,25 @@ function dearcharts_render_main_box($post)
                 function dearcharts_add_column() {
                     var colIdx = jQuery('#dc-manual-table thead th').length - 1;
                     var headHtml = '<th><input type="text" name="dearcharts_manual_data[0][]" value="Series ' + colIdx + '" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></th>';
-                    jQuery(headHtml).insertBefore(jQuery('#dc-manual-table thead th').last());
+                    var $newTh = jQuery(headHtml);
+                    $newTh.insertBefore(jQuery('#dc-manual-table thead th').last());
+
                     jQuery('#dc-manual-table tbody tr').each(function () {
                         var rowKeyMatch = jQuery(this).find('td:first input').attr('name').match(/\[(.*?)\]/);
                         var rowKey = rowKeyMatch ? rowKeyMatch[1] : Date.now();
                         var cellHtml = '<td><input type="text" name="dearcharts_manual_data[' + rowKey + '][]" oninput="dearcharts_update_live_preview(); dearcharts_local_autosave();"></td>';
                         jQuery(cellHtml).insertBefore(jQuery(this).find('td').last());
                     });
+
                     // add delete controls for columns and update preview
                     dearcharts_add_delete_col_controls();
                     dearcharts_update_live_preview();
+
                     var $wrapper = jQuery('.dc-table-wrapper');
                     $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 500);
+
+                    // Smart Focus: Auto-focus the new column header
+                    $newTh.find('input').focus();
                 }
 
                 function dearcharts_add_delete_col_controls() {
