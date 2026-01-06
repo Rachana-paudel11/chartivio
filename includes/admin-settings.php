@@ -111,30 +111,49 @@ function dearcharts_render_main_box($post)
             border-bottom: 2px solid #f1f5f9;
         }
 
-        .dc-main-header .dc-main-type {
+        /* Chart Type Highlighter */
+        .dc-chart-type-container {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
+            background: #eff6ff;
+            /* Soft blue background */
+            padding: 6px 16px;
+            border-radius: 50px;
+            border: 1px solid #bfdbfe;
+            box-shadow: 0 2px 5px rgba(59, 130, 246, 0.08);
+            transition: all 0.3s ease;
         }
 
-        .dc-main-header .dc-main-type label {
+        .dc-chart-type-container:hover {
+            border-color: var(--dc-primary);
+            background: #fff;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+        }
+
+        .dc-chart-type-container label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            color: var(--dc-primary);
+            font-size: 13px;
             margin: 0;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--dc-muted);
+            white-space: nowrap;
         }
 
-        .dc-main-header .dc-main-type select,
-        .dc-main-header select {
-            padding: 4px 26px 4px 8px;
-            border-radius: 6px;
-            font-size: 13px;
-            position: relative;
-            z-index: 3;
-            box-sizing: border-box;
+        .dc-chart-type-container select {
+            border: none !important;
+            background: transparent !important;
+            font-weight: 600 !important;
+            color: var(--dc-text) !important;
+            cursor: pointer !important;
+            padding: 4px 0 !important;
+            font-size: 13px !important;
+            outline: none !important;
+            box-shadow: none !important;
         }
 
-        /* ensure the inline badge and icons sit behind or beside the select */
         .dc-delete-col {
             position: relative;
             z-index: 1;
@@ -269,7 +288,8 @@ function dearcharts_render_main_box($post)
             border: 1px solid var(--dc-border);
             border-radius: 8px;
             margin-bottom: 15px;
-            overflow: hidden;
+            overflow: visible;
+            /* Changed from hidden to allow sticky buttons to work correctly */
             background: #fff;
         }
 
@@ -321,20 +341,22 @@ function dearcharts_render_main_box($post)
             flex-shrink: 0 !important;
             background: #fff !important;
             position: sticky !important;
-            bottom: -15px !important;
+            bottom: -20px !important;
+            /* Offset for better visibility at panel bottom */
             /* Stick to the card's bottom edge, offsetting body padding */
-            z-index: 21 !important;
+            z-index: 22 !important;
             width: calc(100% + 30px) !important;
             margin: 0 -15px -15px -15px !important;
-            padding: 12px 15px !important;
+            padding: 14px 20px !important;
             border-top: 1px solid #e2e8f0 !important;
             display: flex !important;
-            gap: 10px !important;
+            gap: 12px !important;
             flex-wrap: wrap !important;
             visibility: visible !important;
             opacity: 1 !important;
-            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
-            /* Added shadow for elevation when sticky */
+            box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.04);
+            /* More pronounced shadow for elevation */
+            border-radius: 0 0 8px 8px;
         }
 
         .dc-table-actions button {
@@ -714,13 +736,24 @@ function dearcharts_render_main_box($post)
 
         .dc-data-source-selector select {
             flex: 1;
-            padding: 8px 12px;
-            border-radius: 6px;
+            padding: 10px 32px 10px 14px;
+            border-radius: 8px;
             border: 1px solid #cbd5e1;
-            background: #fff;
-            font-weight: 500;
+            background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23475569%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E') no-repeat right 10px center;
+            background-size: 16px;
+            appearance: none;
+            -webkit-appearance: none;
+            font-weight: 600;
             color: var(--dc-text);
             cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .dc-data-source-selector select:focus {
+            outline: none;
+            border-color: var(--dc-primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
     </style>
 
