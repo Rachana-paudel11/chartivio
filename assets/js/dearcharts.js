@@ -8,13 +8,28 @@ var dc_palettes = {
 };
 
 /**
- * PSEUDOCODE: dearcharts_init_frontend
- * 1. Get the 2D drawing context of the target canvas.
- * 2. Select the color palette based on user configuration.
- * 3. Define a helper function 'drawChart' to abstract Chart.js instantiation.
- * 4. If source is CSV: Fetch data via AJAX, parse CSV rows, and map columns to Chart.js datasets.
- * 5. If source is Manual: Parse stored nested array/object and map to Chart.js datasets.
- * 6. Finalize: Call Chart.js constructor with mapped labels and datasets.
+ * Robust CSV Parser (Supports quotes and newlines)
+ */
+function dc_parse_csv(str) {
+    var arr = [];
+    var quote = false;
+    for (var row = 0, col = 0, c = 0; c < str.length; c++) {
+        var cc = str[c], nc = str[c + 1];
+        arr[row] = arr[row] || [];
+        arr[row][col] = arr[row][col] || '';
+        if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
+        if (cc == '"') { quote = !quote; continue; }
+        if (cc == ',' && !quote) { ++col; continue; }
+        if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
+        if (cc == '\n' && !quote) { ++row; col = 0; continue; }
+        if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+        arr[row][col] += cc;
+    }
+    return arr;
+}
+
+/**
+ * Frontend Initialization for DearCharts
  */
 function dearcharts_init_frontend(config) {
     var canvas = document.getElementById(config.id);
@@ -31,18 +46,34 @@ function dearcharts_init_frontend(config) {
             indexAxis = 'y';
         }
 
-        // PSEUDOCODE: Assign colors from palette to each dataset or each data point.
+        // Apply colors and performance optimizations to datasets
         ds.forEach((set, i) => {
             let colors = (ds.length > 1) ? palette[i % palette.length] : l.map((_, j) => palette[j % palette.length]);
-            if (realType === 'bar' || realType === 'line') {
-                set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : palette;
-                set.borderColor = (ds.length > 1) ? palette[i % palette.length] : palette;
-            } else {
+
+            // Optimization for large data
+            set.normalized = true;
+            set.spanGaps = false;
+
+            if (realType === 'pie' || realType === 'doughnut') {
                 set.backgroundColor = colors;
-                set.borderColor = colors;
+                set.borderColor = '#ffffff';
+                set.borderWidth = 2;
+            } else if (realType === 'bar') {
+                set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : colors;
+                set.borderColor = (ds.length > 1) ? palette[i % palette.length] : colors;
+                set.borderWidth = 1;
+            } else if (realType === 'line') {
+                set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : palette[0];
+                set.borderColor = (ds.length > 1) ? palette[i % palette.length] : palette[0];
+                set.borderWidth = 2;
+                set.fill = false;
+                set.pointBackgroundColor = '#fff';
+                // Performance: disable points for large datasets
+                if (l.length > 200) {
+                    set.pointRadius = 0;
+                    set.pointHoverRadius = 0;
+                }
             }
-            set.borderWidth = (realType === 'line') ? 2 : 1;
-            set.fill = (realType === 'line') ? false : true;
         });
 
         new Chart(ctx, {
@@ -52,58 +83,73 @@ function dearcharts_init_frontend(config) {
                 indexAxis: indexAxis,
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: l.length > 500 ? false : { duration: 800 },
                 scales: (realType === 'bar' || realType === 'line') ? {
                     y: {
                         beginAtZero: true,
                         title: { display: !!config.yaxisLabel, text: config.yaxisLabel }
                     },
                     x: {
+                        ticks: {
+                            autoSkip: true,
+                            maxRotation: 0,
+                            minRotation: 0
+                        },
                         title: { display: !!config.xaxisLabel, text: config.xaxisLabel }
                     }
                 } : {},
-                plugins: { legend: { display: config.legendPos !== 'none' && (ds.length > 1 || ['pie', 'doughnut'].includes(realType)), position: config.legendPos } }
+                plugins: {
+                    legend: {
+                        display: config.legendPos !== 'none' && (ds.length > 1 || ['pie', 'doughnut'].includes(realType)),
+                        position: config.legendPos
+                    },
+                    tooltip: {
+                        enabled: true,
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
             }
         });
     };
 
     if (config.source === 'csv' && config.csvUrl) {
-        // PSEUDOCODE: Fetch raw CSV text from the stored URL.
         fetch(config.csvUrl).then(res => res.text()).then(text => {
-            const lines = text.trim().split(/\r\n|\n/);
+            const rows = dc_parse_csv(text.trim());
+            if (!rows || rows.length < 2) return;
+
             let labels = [], datasets = [];
-            const headParts = lines[0].split(',');
-            // PSEUDOCODE: Identify multiple datasets (columns) based on the first row header.
-            for (let i = 1; i < headParts.length; i++) datasets.push({ label: headParts[i].trim(), data: [] });
-            // PSEUDOCODE: Map subsequent rows to labels (Col 1) and data points (Col 2+).
-            for (let r = 1; r < lines.length; r++) {
-                const rowParts = lines[r].split(',');
-                labels.push(rowParts[0].trim());
-                for (let c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(rowParts[c + 1]) || 0);
+            const heads = rows[0];
+
+            for (let i = 1; i < heads.length; i++) {
+                datasets.push({ label: (heads[i] || 'Series ' + i).trim(), data: [] });
+            }
+
+            for (let r = 1; r < rows.length; r++) {
+                const row = rows[r];
+                if (!row || row.length < 2) continue;
+                labels.push((row[0] || '').trim());
+                for (let c = 0; c < datasets.length; c++) {
+                    datasets[c].data.push(parseFloat((row[c + 1] || '0').replace(/,/g, '')) || 0);
+                }
             }
             drawChart(labels, datasets);
-        });
+        }).catch(err => console.error('DearCharts Load Error:', err));
     } else {
         let labels = [], datasets = [];
         let raw = config.manualData;
         if (raw) {
-            // PSEUDOCODE: Convert storage format (array or object) into a sequential list of rows.
             let rows = Array.isArray(raw) ? raw : Object.keys(raw).sort((a, b) => a - b).map(k => raw[k]);
-
             if (rows.length > 0) {
-                // PSEUDOCODE: Check if data is in 'Legacy' (label/value) or 'Multi-Series' (columnar) format.
                 if (rows[0] && rows[0].label !== undefined) {
-                    // Legacy Format Handling
                     datasets.push({ label: 'Value', data: [] });
                     rows.forEach((row) => {
                         labels.push(row.label || '');
                         datasets[0].data.push(parseFloat(row.value) || 0);
                     });
                 } else {
-                    // Multi-Series Columnar Format Handling
                     const headers = rows[0];
-                    // Extract series names from the header row.
                     for (let i = 1; i < headers.length; i++) datasets.push({ label: headers[i], data: [] });
-                    // Extract labels and values from subsequent rows.
                     for (let r = 1; r < rows.length; r++) {
                         labels.push(rows[r][0]);
                         for (let c = 0; c < datasets.length; c++) datasets[c].data.push(parseFloat(rows[r][c + 1]) || 0);
