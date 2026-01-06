@@ -161,14 +161,16 @@ function dearcharts_render_main_box($post)
 
         .dc-split-container {
             display: flex;
-            height: 480px;
+            height: 620px;
+            /* Increased from 480px to give more vertical space */
             background: #fff;
             overflow: hidden;
         }
 
         .dc-preview-panel {
-            flex: 0 0 450px;
-            padding: 20px;
+            flex: 0 0 520px;
+            /* Increased width to accommodate a larger chart */
+            padding: 25px;
             background: var(--dc-bg);
             border-right: 1px solid var(--dc-border);
             display: flex;
@@ -200,12 +202,14 @@ function dearcharts_render_main_box($post)
 
         .dc-chart-container {
             width: 100%;
-            max-width: 400px;
-            height: 400px;
+            max-width: 480px;
+            /* Increased from 400px */
+            height: 480px;
+            /* Increased from 400px */
             background: #fff;
-            padding: 15px;
+            padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
 
         .dc-settings-panel {
@@ -213,7 +217,8 @@ function dearcharts_render_main_box($post)
             padding: 0;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Lock the panel height to the container */
+            overflow: hidden;
+            /* Lock the panel height to the container */
             min-height: 0;
         }
 
@@ -263,9 +268,11 @@ function dearcharts_render_main_box($post)
             display: none;
             padding: 15px 20px;
             flex: 1;
-            overflow: hidden; /* Remove whole-tab scrollbar */
+            overflow: hidden;
+            /* Remove whole-tab scrollbar */
             min-height: 0;
-            flex-direction: column; /* Enable flex-based layout for children */
+            flex-direction: column;
+            /* Enable flex-based layout for children */
         }
 
         /* Ensure manual data entry table wrapper is the only scrollable element */
@@ -279,7 +286,8 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-tab-content.active {
-            display: flex; /* Flex instead of block to support internal scrolling */
+            display: flex;
+            /* Flex instead of block to support internal scrolling */
         }
 
         .dc-card {
@@ -308,7 +316,8 @@ function dearcharts_render_main_box($post)
 
         .dc-card-body {
             padding: 15px;
-            overflow: visible; /* Allow sticky/flex children to manifest */
+            overflow: visible;
+            /* Allow sticky/flex children to manifest */
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -318,7 +327,8 @@ function dearcharts_render_main_box($post)
         .dc-source-panel {
             display: none;
             flex-direction: column;
-            flex: 1; /* Make the panel grow into available space */
+            flex: 1;
+            /* Make the panel grow into available space */
             min-height: 0;
             animation: dcFadeIn 0.3s ease;
         }
@@ -351,7 +361,8 @@ function dearcharts_render_main_box($post)
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
-            flex: 1; /* Grow to fill all available card space */
+            flex: 1;
+            /* Grow to fill all available card space */
             /* Constraints will be naturally handled by the parent flex container */
             height: auto !important;
             max-height: none !important;
@@ -1326,6 +1337,7 @@ function dearcharts_render_main_box($post)
                                 return;
                             }
                             try {
+                                jQuery('#dc-status').show().text('Loading CSV...').css({ 'color': '#3b82f6', 'background': '#eff6ff' });
                                 const response = await fetch(currentUrl);
                                 // Race condition check: Ensure source and URL haven't changed during fetch
                                 if (jQuery('#dearcharts_active_source').val() !== 'csv' || jQuery('#dearcharts_csv_url').val() !== currentUrl) return;
@@ -1371,7 +1383,7 @@ function dearcharts_render_main_box($post)
                                     throw new Error('No valid data rows found in CSV');
                                 }
 
-                                jQuery('#dc-status').show().text('CSV Loaded').css({ 'color': '#10b981', 'background': '#f0fdf4' });
+                                jQuery('#dc-status').show().text('CSV Loaded (' + (rows.length - 1) + ' rows)').css({ 'color': '#10b981', 'background': '#f0fdf4' });
 
                                 // Populate CSV Preview Table
                                 var $previewTable = jQuery('#dc-csv-preview-table');
@@ -1379,6 +1391,7 @@ function dearcharts_render_main_box($post)
                                 var $previewLabel = jQuery('#dc-csv-preview-label');
 
                                 if ($previewTable.length) {
+                                    $previewLabel.text('CSV Data Preview (Showing 10 of ' + (rows.length - 1) + ' rows)');
                                     var headHtml = '<tr>';
                                     heads.forEach(h => headHtml += '<th>' + (h || '').trim() + '</th>');
                                     headHtml += '</tr>';
@@ -1479,10 +1492,14 @@ function dearcharts_render_main_box($post)
                             jQuery('#dc-status').show().text('All values are zero').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
                         }
 
-                        // Apply colors to datasets
+                        // Apply colors and performance optimizations to datasets
                         datasets.forEach((ds, i) => {
                             const colorArray = labels.map((_, j) => palette[j % palette.length] || '#ccc');
                             const singleColor = palette[i % palette.length] || '#ccc';
+
+                            // Optimization for large data
+                            ds.normalized = true;
+                            ds.spanGaps = false;
 
                             if (chartType === 'pie' || chartType === 'doughnut') {
                                 ds.backgroundColor = colorArray;
@@ -1504,6 +1521,11 @@ function dearcharts_render_main_box($post)
                                 ds.fill = false;
                                 ds.pointBackgroundColor = '#fff';
                                 ds.pointBorderColor = singleColor;
+                                // Performance: disable points for large datasets
+                                if (labels.length > 200) {
+                                    ds.pointRadius = 0;
+                                    ds.pointHoverRadius = 0;
+                                }
                             }
                         });
 
@@ -1514,6 +1536,7 @@ function dearcharts_render_main_box($post)
                             options: {
                                 responsive: true,
                                 maintainAspectRatio: false,
+                                animation: labels.length > 500 ? false : { duration: 800 }, // Disable animation for very large data
                                 scales: (chartType === 'bar' || chartType === 'line') ? {
                                     y: {
                                         beginAtZero: true,
@@ -1523,6 +1546,11 @@ function dearcharts_render_main_box($post)
                                         }
                                     },
                                     x: {
+                                        ticks: {
+                                            autoSkip: true,
+                                            maxRotation: 0,
+                                            minRotation: 0
+                                        },
                                         title: {
                                             display: !!xaxisLabel,
                                             text: xaxisLabel
@@ -1533,6 +1561,11 @@ function dearcharts_render_main_box($post)
                                     legend: {
                                         display: legendPos !== 'none' && (datasets.length > 1 || ['pie', 'doughnut'].includes(chartType)),
                                         position: legendPos || 'top'
+                                    },
+                                    tooltip: {
+                                        enabled: true,
+                                        intersect: false,
+                                        mode: 'index'
                                     }
                                 }
                             }
