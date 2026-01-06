@@ -213,8 +213,7 @@ function dearcharts_render_main_box($post)
             padding: 0;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
-            /* Keep tabs fixed at top */
+            overflow: hidden; /* Lock the panel height to the container */
             min-height: 0;
         }
 
@@ -264,10 +263,9 @@ function dearcharts_render_main_box($post)
             display: none;
             padding: 15px 20px;
             flex: 1;
-            overflow-y: auto;
-            /* Enable scrolling for settings content */
+            overflow: hidden; /* Remove whole-tab scrollbar */
             min-height: 0;
-            scrollbar-width: thin;
+            flex-direction: column; /* Enable flex-based layout for children */
         }
 
         /* Ensure manual data entry table wrapper is the only scrollable element */
@@ -281,7 +279,7 @@ function dearcharts_render_main_box($post)
         }
 
         .dc-tab-content.active {
-            display: block;
+            display: flex; /* Flex instead of block to support internal scrolling */
         }
 
         .dc-card {
@@ -310,40 +308,25 @@ function dearcharts_render_main_box($post)
 
         .dc-card-body {
             padding: 15px;
-            overflow: visible;
+            overflow: visible; /* Allow sticky/flex children to manifest */
             flex: 1;
             display: flex;
             flex-direction: column;
             min-height: 0;
         }
 
-        #dc-manual-body {
-            transition: opacity 0.3s ease;
-            overflow: visible;
-            display: block !important;
-            visibility: visible !important;
+        .dc-source-panel {
+            display: none;
+            flex-direction: column;
+            flex: 1; /* Make the panel grow into available space */
+            min-height: 0;
+            animation: dcFadeIn 0.3s ease;
         }
 
-        #dc-manual-body * {
-            visibility: visible !important;
-        }
-
-        #dc-manual-body table,
-        #dc-manual-body .dc-table-wrapper,
-        #dc-manual-body .dc-table-actions {
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        }
-
-        /* Ensure buttons are always visible below the table */
+        /* Ensure buttons are held at the bottom of the card */
         .dc-table-actions {
             flex-shrink: 0 !important;
             background: #fff !important;
-            position: sticky !important;
-            bottom: -20px !important;
-            /* Offset for better visibility at panel bottom */
-            /* Stick to the card's bottom edge, offsetting body padding */
             z-index: 22 !important;
             width: calc(100% + 30px) !important;
             margin: 0 -15px -15px -15px !important;
@@ -354,8 +337,7 @@ function dearcharts_render_main_box($post)
             flex-wrap: wrap !important;
             visibility: visible !important;
             opacity: 1 !important;
-            box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.04);
-            /* More pronounced shadow for elevation */
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
             border-radius: 0 0 8px 8px;
         }
 
@@ -369,11 +351,10 @@ function dearcharts_render_main_box($post)
             overflow-x: auto;
             overflow-y: auto;
             width: 100%;
-            flex: 0 1 auto;
-            /* Allow it to be small if content is small */
+            flex: 1; /* Grow to fill all available card space */
+            /* Constraints will be naturally handled by the parent flex container */
             height: auto !important;
-            max-height: 320px !important;
-            /* Force internal scroll for large tables */
+            max-height: none !important;
             min-height: 100px !important;
             margin-bottom: 0px;
             border: 1px solid #e2e8f0;
@@ -385,7 +366,6 @@ function dearcharts_render_main_box($post)
             box-sizing: border-box;
             position: relative;
             -webkit-overflow-scrolling: touch;
-            flex-shrink: 0;
         }
 
         table.dc-table {
