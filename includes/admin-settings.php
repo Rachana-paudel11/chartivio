@@ -1058,8 +1058,10 @@ function dearcharts_render_main_box($post)
                     var $wrapper = jQuery('.dc-table-wrapper');
                     $wrapper.animate({ scrollTop: $wrapper.prop("scrollHeight") }, 500);
 
-                    // Smart Focus: Auto-focus the first field of the new row
-                    $newRow.find('input:first').focus();
+                    // Smart Focus: Auto-focus the first field of the new row after scroll
+                    setTimeout(function () {
+                        $newRow.find('input:first').focus();
+                    }, 50);
                 }
                 /**
                  * Transpose Table Data (Swap Rows and Columns)
@@ -1123,8 +1125,10 @@ function dearcharts_render_main_box($post)
                     var $wrapper = jQuery('.dc-table-wrapper');
                     $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 500);
 
-                    // Smart Focus: Auto-focus the new column header
-                    $newTh.find('input').focus();
+                    // Smart Focus: Auto-focus and select text in the new column header for easy renaming
+                    setTimeout(function () {
+                        $newTh.find('input').focus().select();
+                    }, 50);
                 }
 
                 function dearcharts_add_delete_col_controls() {
