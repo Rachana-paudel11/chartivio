@@ -45,6 +45,14 @@ Absolutely. The charts use Chart.js which is responsive by default, and the plug
 2. Manual Data Entry table with multi-series support.
 3. Appearance settings with color palette selection and preview.
 
+== Third-Party Libraries ==
+
+This plugin includes the following third-party library:
+
+* Chart.js v4.4.1 - Licensed under MIT License
+* Source: https://www.chartjs.org/
+* Used for rendering interactive charts
+
 == Changelog ==
 
 = 1.0 =
