@@ -4,6 +4,8 @@
  * Description: A custom post type for managing charts with a tabbed meta box interface.
  * Version: 1.0
  * Author: Rachana Paudel
+ * License: GPLv2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
 
 if (!defined('ABSPATH')) {
@@ -205,7 +207,7 @@ function dearcharts_populate_admin_columns($column, $post_id)
 
             echo '<div class="dc-type-badge">';
             echo '<span class="dashicons ' . esc_attr($icon) . '"></span> ';
-            echo '<span>' . ucfirst(esc_html($type)) . '</span>';
+            echo '<span>' . esc_html(ucfirst($type)) . '</span>';
             echo '</div>';
             break;
     }
