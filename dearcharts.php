@@ -4,8 +4,12 @@
  * Description: A custom post type for managing charts with a tabbed meta box interface.
  * Version: 1.0
  * Author: Rachana Paudel
+ * Plugin URI: 
+ * Author URI: 
  * Text Domain: dearcharts
  * Domain Path: /language
+ * Requires at least: 5.0
+ * Requires PHP: 7.4
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
