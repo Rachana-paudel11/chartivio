@@ -1954,7 +1954,7 @@ function dearcharts_sanitize_manual_data($data)
  */
 function dearcharts_save_meta_box_data($post_id)
 {
-    if (!isset($_POST['dearcharts_nonce']) || !wp_verify_nonce($_POST['dearcharts_nonce'], 'dearcharts_save_meta'))
+    if (!isset($_POST['dearcharts_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['dearcharts_nonce'])), 'dearcharts_save_meta'))
         return;
     if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE)
         return;
@@ -1962,25 +1962,25 @@ function dearcharts_save_meta_box_data($post_id)
         return;
 
     if (isset($_POST['dearcharts_manual_data'])) {
-        $manual = dearcharts_sanitize_manual_data($_POST['dearcharts_manual_data']);
+        $manual = dearcharts_sanitize_manual_data(map_deep(wp_unslash($_POST['dearcharts_manual_data']), 'sanitize_text_field'));
         update_post_meta($post_id, '_dearcharts_manual_data', $manual);
     }
     if (isset($_POST['dearcharts_csv_url']))
-        update_post_meta($post_id, '_dearcharts_csv_url', esc_url_raw($_POST['dearcharts_csv_url']));
+        update_post_meta($post_id, '_dearcharts_csv_url', esc_url_raw(wp_unslash($_POST['dearcharts_csv_url'])));
     if (isset($_POST['dearcharts_active_source']))
-        update_post_meta($post_id, '_dearcharts_active_source', sanitize_text_field($_POST['dearcharts_active_source']));
+        update_post_meta($post_id, '_dearcharts_active_source', sanitize_text_field(wp_unslash($_POST['dearcharts_active_source'])));
 
     if (isset($_POST['dearcharts_type']))
-        update_post_meta($post_id, '_dearcharts_type', sanitize_text_field($_POST['dearcharts_type']));
+        update_post_meta($post_id, '_dearcharts_type', sanitize_text_field(wp_unslash($_POST['dearcharts_type'])));
     if (isset($_POST['dearcharts_legend_pos']))
-        update_post_meta($post_id, '_dearcharts_legend_pos', sanitize_text_field($_POST['dearcharts_legend_pos']));
+        update_post_meta($post_id, '_dearcharts_legend_pos', sanitize_text_field(wp_unslash($_POST['dearcharts_legend_pos'])));
     if (isset($_POST['dearcharts_palette']))
-        update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field($_POST['dearcharts_palette']));
+        update_post_meta($post_id, '_dearcharts_palette', sanitize_text_field(wp_unslash($_POST['dearcharts_palette'])));
 
     if (isset($_POST['dearcharts_xaxis_label']))
-        update_post_meta($post_id, '_dearcharts_xaxis_label', sanitize_text_field($_POST['dearcharts_xaxis_label']));
+        update_post_meta($post_id, '_dearcharts_xaxis_label', sanitize_text_field(wp_unslash($_POST['dearcharts_xaxis_label'])));
     if (isset($_POST['dearcharts_yaxis_label']))
-        update_post_meta($post_id, '_dearcharts_yaxis_label', sanitize_text_field($_POST['dearcharts_yaxis_label']));
+        update_post_meta($post_id, '_dearcharts_yaxis_label', sanitize_text_field(wp_unslash($_POST['dearcharts_yaxis_label'])));
 }
 add_action('save_post', 'dearcharts_save_meta_box_data');
 
@@ -1991,18 +1991,20 @@ function dearcharts_ajax_save_chart()
 {
     check_ajax_referer('dearcharts_save_meta', 'nonce');
 
-    $post_id = intval($_POST['post_id']);
+    $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
     if (!current_user_can('edit_post', $post_id)) {
         wp_send_json_error();
     }
 
     // Save Manual Data
-    $json = json_decode(stripslashes($_POST['manual_json']), true);
     $manual_data = array();
-    if (!empty($json['headers'])) {
-        $manual_data[] = array_map('sanitize_text_field', $json['headers']);
-        foreach ($json['rows'] as $row) {
-            $manual_data[] = array_map('sanitize_text_field', $row);
+    if (isset($_POST['manual_json'])) {
+        $json = json_decode(sanitize_text_field(wp_unslash($_POST['manual_json'])), true);
+        if (!empty($json['headers'])) {
+            $manual_data[] = array_map('sanitize_text_field', $json['headers']);
+            foreach ($json['rows'] as $row) {
+                $manual_data[] = array_map('sanitize_text_field', $row);
+            }
         }
     }
     update_post_meta($post_id, '_dearcharts_manual_data', $manual_data);
