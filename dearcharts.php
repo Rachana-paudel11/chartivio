@@ -4,6 +4,8 @@
  * Description: A custom post type for managing charts with a tabbed meta box interface.
  * Version: 1.0
  * Author: Rachana Paudel
+ * Text Domain: dearcharts
+ * Domain Path: /language
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  */
