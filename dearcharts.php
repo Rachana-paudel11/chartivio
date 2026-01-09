@@ -2,7 +2,7 @@
 /**
  * Plugin Name: DearCharts
  * Description: A custom post type for managing charts with a tabbed meta box interface.
- * Version: 1.0
+ * Version: 1.0.1
  * Author: Rachana Paudel
  * Plugin URI: 
  * Author URI: 
@@ -50,6 +50,22 @@ function dearcharts_register_cpt()
     }
 }
 add_action('init', 'dearcharts_register_cpt');
+
+/**
+ * Register Submenu Page
+ */
+add_action('admin_menu', 'dearcharts_register_how_to_use_page');
+function dearcharts_register_how_to_use_page()
+{
+    add_submenu_page(
+        'edit.php?post_type=dearcharts', // Parent slug (CPT URL)
+        'How to Use',
+        'How to Use',
+        'manage_options',
+        'dearcharts-how-to-use',
+        'dearcharts_render_how_to_use_page'
+    );
+}
 
 /**
  * Force 1-column layout for dearcharts admin screen
@@ -160,6 +176,13 @@ function dearcharts_admin_list_styles()
                     }, 2000);
                 });
             }
+
+            jQuery(document).ready(function($) {
+                // Add "How to Use" button to the post list header
+                if($('body').hasClass('post-type-dearcharts') && $('body').hasClass('edit-php')) {
+                    $('.page-title-action').after(' <a href="<?php echo admin_url('edit.php?post_type=dearcharts&page=dearcharts-how-to-use'); ?>" class="page-title-action">How to Use</a>');
+                }
+            });
         </script>
         <?php
     }
@@ -171,6 +194,7 @@ add_action('admin_head', 'dearcharts_admin_list_styles');
  */
 require_once DEARCHARTS_PATH . 'includes/admin-settings.php';
 require_once DEARCHARTS_PATH . 'includes/shortcodes.php';
+require_once DEARCHARTS_PATH . 'includes/how-to-use.php';
 
 /**
  * Add Custom Columns to Admin List

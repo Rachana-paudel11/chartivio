@@ -795,6 +795,8 @@ function dearcharts_render_main_box($post)
                 </select>
             </div>
             <div class="dc-type-selector-inline">
+                <a href="<?php echo admin_url('edit.php?post_type=dearcharts&page=dearcharts-how-to-use'); ?>"
+                    target="_blank" class="button" style="margin-right:10px;">How to Use</a>
                 <button type="button" class="button button-primary" data-pid="<?php echo esc_attr($post->ID); ?>"
                     onclick="dearcharts_quick_save(this)">Save Chart</button>
                 <span id="dc-save-status" style="font-size:13px; font-weight:500;"></span>
