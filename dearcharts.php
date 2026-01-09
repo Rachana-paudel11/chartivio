@@ -177,10 +177,10 @@ function dearcharts_admin_list_styles()
                 });
             }
 
-            jQuery(document).ready(function($) {
-                // Add "How to Use" button to the post list header
-                if($('body').hasClass('post-type-dearcharts') && $('body').hasClass('edit-php')) {
-                    $('.page-title-action').after(' <a href="<?php echo admin_url('edit.php?post_type=dearcharts&page=dearcharts-how-to-use'); ?>" class="page-title-action">How to Use</a>');
+            jQuery(document).ready(function ($) {
+                // Add "How to Use" link above the title
+                if ($('body').hasClass('post-type-dearcharts') && $('body').hasClass('edit-php')) {
+                    $('.wp-heading-inline').before('<div style="margin-bottom: 10px;"><a href="<?php echo admin_url('edit.php?post_type=dearcharts&page=dearcharts-how-to-use'); ?>" style="text-decoration: none; font-weight: 600; font-size: 14px; color: #2271b1; display: inline-flex; align-items: center;"><span class="dashicons dashicons-editor-help" style="font-size: 20px; width: 20px; height: 20px; margin-right: 5px;"></span>How to Use Guide</a></div>');
                 }
             });
         </script>
