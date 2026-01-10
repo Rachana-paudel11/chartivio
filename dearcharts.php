@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name: DearCharts
- * Description: A custom post type for managing charts with a tabbed meta box interface.
+ * Description: High-performance data visualization with zero-latency live previews. Features a split-screen editor, multi-series manual entry, and universal CSV support.
  * Version: 1.0.1
  * Author: Rachana Paudel
  * Plugin URI: https://wordpress.org/plugins/dearcharts/
