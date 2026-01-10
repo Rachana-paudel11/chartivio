@@ -802,7 +802,7 @@ function dearcharts_render_main_box($post)
                     How to Use
                 </a>
                 <button type="button" class="button button-primary" data-pid="<?php echo esc_attr($post->ID); ?>"
-                    onclick="dearcharts_quick_save(this)">Save Chart</button>
+                    onclick="dearcharts_quick_save(this)"><?php echo ($post->post_status === 'auto-draft') ? 'Save Chart' : 'Update Chart'; ?></button>
                 <span id="dc-save-status" style="font-size:13px; font-weight:500;"></span>
             </div>
         </div>
