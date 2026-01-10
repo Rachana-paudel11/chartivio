@@ -1,0 +1,9 @@
+DearCharts - Credits
+
+This plugin bundles the following third-party libraries:
+
+1. Chart.js
+   - Version: 4.4.1
+   - License: MIT (https://opensource.org/licenses/MIT)
+   - Source: https://www.chartjs.org/
+   - Description: Used for rendering interactive and responsive charts on the frontend and admin preview.
