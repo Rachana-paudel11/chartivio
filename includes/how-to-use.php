@@ -10,10 +10,6 @@ function dearcharts_render_how_to_use_page()
 {
     ?>
     <div class="wrap dearcharts-how-to-use">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
         <h1 class="dc-page-title">How to Use DearCharts</h1>
 
         <div class="dc-guide-container">
@@ -79,7 +75,7 @@ function dearcharts_render_how_to_use_page()
             </div>
 
             <div class="dc-action-area">
-                <a href="<?php echo admin_url('post-new.php?post_type=dearcharts'); ?>"
+                <a href="<?php echo esc_url(admin_url('post-new.php?post_type=dearcharts')); ?>"
                     class="button button-primary dc-big-btn">Create Your First Chart</a>
             </div>
         </div>

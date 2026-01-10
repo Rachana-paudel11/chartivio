@@ -104,7 +104,7 @@ function dearcharts_render_main_box($post)
                 </select>
             </div>
             <div class="dc-type-selector-inline">
-                <a href="<?php echo admin_url('edit.php?post_type=dearcharts&page=dearcharts-how-to-use'); ?>"
+                <a href="<?php echo esc_url(admin_url('edit.php?post_type=dearcharts&page=dearcharts-how-to-use')); ?>"
                     target="_blank"
                     style="margin-right:15px; text-decoration:none; font-weight:600; font-size:13px; color:#2271b1; display:flex; align-items:center; gap:4px;">
                     <span class="dashicons dashicons-editor-help" style="font-size:18px; width:18px; height:18px;"></span>
