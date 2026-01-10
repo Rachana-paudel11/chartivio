@@ -92,7 +92,7 @@ function dearcharts_admin_list_assets($hook)
     $screen = get_current_screen();
     if ($screen && ($screen->id === 'edit-dearcharts' || $screen->id === 'dearcharts_page_dearcharts-how-to-use')) {
         // Enqueue Google Fonts
-        wp_enqueue_style('dearcharts-google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', array(), null);
+        wp_enqueue_style('dearcharts-google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', array(), '1.0.1');
 
         wp_enqueue_style('dearcharts-admin-style', plugins_url('assets/css/admin-style.css', __FILE__), array(), '1.0.1');
         wp_enqueue_script('dearcharts-admin-list', plugins_url('assets/js/admin-list.js', __FILE__), array('jquery'), '1.0.1', true);
