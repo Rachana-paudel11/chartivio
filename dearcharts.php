@@ -4,7 +4,7 @@
  * Description: A custom post type for managing charts with a tabbed meta box interface.
  * Version: 1.0.1
  * Author: Rachana Paudel
- * Plugin URI: 
+ * Plugin URI: https://wordpress.org/plugins/dearcharts/
  * Author URI: 
  * Text Domain: dearcharts
  * Domain Path: /language
@@ -85,109 +85,20 @@ add_filter('screen_options_show_screen', function ($show_screen, $screen) {
 }, 10, 2);
 
 /**
- * Premium Styling for Post List
+ * Enqueue Assets for Post List
  */
-function dearcharts_admin_list_styles()
+function dearcharts_admin_list_assets($hook)
 {
     $screen = get_current_screen();
-    if ($screen && $screen->id === 'edit-dearcharts') {
-        ?>
-        <style>
-            .wp-list-table th#dearcharts_shortcode {
-                width: 300px;
-            }
-
-            .wp-list-table th#dearcharts_type {
-                width: 120px;
-            }
-
-            .dc-shortcode-pill {
-                display: flex;
-                align-items: center;
-                background: #f1f5f9;
-                border: 1px solid #e2e8f0;
-                border-radius: 6px;
-                padding: 4px 8px;
-                max-width: fit-content;
-                cursor: pointer;
-                transition: all 0.2s;
-            }
-
-            .dc-shortcode-pill:hover {
-                background: #e2e8f0;
-                border-color: #cbd5e1;
-            }
-
-            .dc-shortcode-pill code {
-                background: transparent !important;
-                border: none !important;
-                padding: 0 !important;
-                color: #1e293b !important;
-                font-weight: 600 !important;
-                font-family: inherit !important;
-                margin-right: 8px !important;
-            }
-
-            .dc-copy-icon {
-                color: #64748b;
-                font-size: 16px;
-            }
-
-            .dc-type-badge {
-                display: inline-flex;
-                align-items: center;
-                gap: 6px;
-                padding: 4px 10px;
-                border-radius: 20px;
-                font-weight: 600;
-                font-size: 12px;
-                background: #eff6ff;
-                color: #2563eb;
-                border: 1px solid #dbeafe;
-            }
-
-            .dc-type-badge .dashicons {
-                font-size: 16px;
-                width: 16px;
-                height: 16px;
-                line-height: 16px;
-            }
-
-            .wp-list-table tr:hover {
-                background-color: #f8fafc !important;
-            }
-
-            .wp-list-table .column-title strong a {
-                color: #1e293b !important;
-                font-size: 14px;
-            }
-        </style>
-        <script>
-            function dcCopyList(btn, text) {
-                navigator.clipboard.writeText(text).then(function () {
-                    const original = btn.innerHTML;
-                    btn.innerHTML = '<span>Copied!</span>';
-                    btn.style.background = '#dcfce7';
-                    btn.style.borderColor = '#86efac';
-                    setTimeout(() => {
-                        btn.innerHTML = original;
-                        btn.style.background = '';
-                        btn.style.borderColor = '';
-                    }, 2000);
-                });
-            }
-
-            jQuery(document).ready(function ($) {
-                // Add "How to Use" link above the title
-                if ($('body').hasClass('post-type-dearcharts') && $('body').hasClass('edit-php')) {
-                    $('.wp-heading-inline').before('<div style="margin-bottom: 10px;"><a href="<?php echo admin_url('edit.php?post_type=dearcharts&page=dearcharts-how-to-use'); ?>" style="text-decoration: none; font-weight: 600; font-size: 14px; color: #2271b1; display: inline-flex; align-items: center;"><span class="dashicons dashicons-editor-help" style="font-size: 20px; width: 20px; height: 20px; margin-right: 5px;"></span>How to Use Guide</a></div>');
-                }
-            });
-        </script>
-        <?php
+    if ($screen && ($screen->id === 'edit-dearcharts' || $screen->id === 'dearcharts_page_dearcharts-how-to-use')) {
+        wp_enqueue_style('dearcharts-admin-style', plugins_url('assets/css/admin-style.css', __FILE__), array(), '1.0.1');
+        wp_enqueue_script('dearcharts-admin-list', plugins_url('assets/js/admin-list.js', __FILE__), array('jquery'), '1.0.1', true);
+        wp_localize_script('dearcharts-admin-list', 'dc_admin_vars', array(
+            'how_to_use_url' => admin_url('edit.php?post_type=dearcharts&page=dearcharts-how-to-use')
+        ));
     }
 }
-add_action('admin_head', 'dearcharts_admin_list_styles');
+add_action('admin_enqueue_scripts', 'dearcharts_admin_list_assets');
 
 /**
  * Include Module Files
