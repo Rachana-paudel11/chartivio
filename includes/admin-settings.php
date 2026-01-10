@@ -84,7 +84,6 @@ function dearcharts_render_main_box($post)
 
     wp_nonce_field('dearcharts_save_meta', 'dearcharts_nonce');
     ?>
-    ?>
     <div class="dc-admin-wrapper">
         <div class="dc-main-header">
             <div class="dc-chart-type-container">
