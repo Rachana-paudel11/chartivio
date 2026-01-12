@@ -1,4 +1,4 @@
-DearCharts - Credits
+Chartivio - Credits
 
 This plugin bundles the following third-party libraries:
 

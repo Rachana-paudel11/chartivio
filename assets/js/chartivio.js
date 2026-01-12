@@ -1,4 +1,4 @@
-var dc_palettes = {
+var cvio_palettes = {
     'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
     'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'],
     'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'],
@@ -10,7 +10,7 @@ var dc_palettes = {
 /**
  * Robust CSV Parser (Supports quotes and newlines)
  */
-function dc_parse_csv(str) {
+function cvio_parse_csv(str) {
     var arr = [];
     var quote = false;
     for (var row = 0, col = 0, c = 0; c < str.length; c++) {
@@ -29,13 +29,13 @@ function dc_parse_csv(str) {
 }
 
 /**
- * Frontend Initialization for DearCharts
+ * Frontend Initialization for chartivio
  */
-function dearcharts_init_frontend(config) {
+function chartivio_init_frontend(config) {
     var canvas = document.getElementById(config.id);
     if (!canvas) return;
     var ctx = canvas.getContext('2d');
-    var palette = dc_palettes[config.palette] || dc_palettes['default'];
+    var palette = cvio_palettes[config.palette] || cvio_palettes['default'];
 
     var drawChart = (l, ds) => {
         let realType = config.type;
@@ -115,7 +115,7 @@ function dearcharts_init_frontend(config) {
 
     if (config.source === 'csv' && config.csvUrl) {
         fetch(config.csvUrl).then(res => res.text()).then(text => {
-            const rows = dc_parse_csv(text.trim());
+            const rows = cvio_parse_csv(text.trim());
             if (!rows || rows.length < 2) return;
 
             let labels = [], datasets = [];
@@ -134,7 +134,7 @@ function dearcharts_init_frontend(config) {
                 }
             }
             drawChart(labels, datasets);
-        }).catch(err => console.error('DearCharts Load Error:', err));
+        }).catch(err => console.error('chartivio Load Error:', err));
     } else {
         let labels = [], datasets = [];
         let raw = config.manualData;
@@ -160,3 +160,5 @@ function dearcharts_init_frontend(config) {
         drawChart(labels, datasets);
     }
 }
+
+

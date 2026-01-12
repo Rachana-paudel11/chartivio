@@ -6,40 +6,40 @@ if (!defined('ABSPATH')) {
 /**
  * Render the How to Use Page
  */
-function dearcharts_render_how_to_use_page()
+function chartivio_render_how_to_use_page()
 {
     ?>
-    <div class="wrap dearcharts-how-to-use">
-        <h1 class="dc-page-title">How to Use DearCharts</h1>
+    <div class="wrap chartivio-how-to-use">
+        <h1 class="cvio-page-title">How to Use chartivio</h1>
 
-        <div class="dc-guide-container">
+        <div class="cvio-guide-container">
             <!-- Introduction -->
-            <div class="dc-guide-section dc-intro">
-                <h2>Welcome to DearCharts</h2>
+            <div class="cvio-guide-section cvio-intro">
+                <h2>Welcome to chartivio</h2>
                 <p>Create beautiful, responsive, and animated charts for your WordPress site in minutes. This guide will
                     walk you through the basics.</p>
             </div>
 
-            <div class="dc-guide-grid">
+            <div class="cvio-guide-grid">
                 <!-- Step 1: Create -->
-                <div class="dc-guide-card">
-                    <div class="dc-step-icon">1</div>
+                <div class="cvio-guide-card">
+                    <div class="cvio-step-icon">1</div>
                     <h3>Create a Chart</h3>
-                    <p>Navigate to <strong>DearCharts > Add New Chart</strong>. Give your chart a title to get started.
+                    <p>Navigate to <strong>chartivio > Add New Chart</strong>. Give your chart a title to get started.
                         You'll immediately see the live preview.</p>
                 </div>
 
                 <!-- Step 2: Select Type -->
-                <div class="dc-guide-card">
-                    <div class="dc-step-icon">2</div>
+                <div class="cvio-guide-card">
+                    <div class="cvio-step-icon">2</div>
                     <h3>Choose Chart Type</h3>
                     <p>Use the <strong>Chart Type</strong> selector in the top-left corner to switch between Pie, Doughnut,
                         Bar, and Line charts instantly.</p>
                 </div>
 
                 <!-- Step 3: Data Source -->
-                <div class="dc-guide-card">
-                    <div class="dc-step-icon">3</div>
+                <div class="cvio-guide-card">
+                    <div class="cvio-step-icon">3</div>
                     <h3>Add Your Data</h3>
                     <p>Select your data source:</p>
                     <ul>
@@ -50,8 +50,8 @@ function dearcharts_render_how_to_use_page()
                 </div>
 
                 <!-- Step 4: Shortcode -->
-                <div class="dc-guide-card">
-                    <div class="dc-step-icon">4</div>
+                <div class="cvio-guide-card">
+                    <div class="cvio-step-icon">4</div>
                     <h3>Publish & Embed</h3>
                     <p>Once you're happy, click <strong>Publish</strong>. Copy the shortcode from the sidebar or the chart
                         list and paste it into any page or post.</p>
@@ -59,27 +59,29 @@ function dearcharts_render_how_to_use_page()
             </div>
 
             <!-- Detailed Instructions -->
-            <div class="dc-guide-details">
-                <div class="dc-detail-box">
+            <div class="cvio-guide-details">
+                <div class="cvio-detail-box">
                     <h3><span class="dashicons dashicons-editor-table"></span> formatting CSV Data</h3>
                     <p>If you are importing CSV data, ensure your first row contains the specific labels (like "Year",
                         "Month") and the subsequent rows contain the data. The plugin automatically detects the structure.
                     </p>
                 </div>
 
-                <div class="dc-detail-box">
+                <div class="cvio-detail-box">
                     <h3><span class="dashicons dashicons-admin-appearance"></span> Customization</h3>
                     <p>On the right side panel, use the <strong>Chart Settings</strong> tab to customize colors, toggle
                         legends, and adjust the position of chart elements.</p>
                 </div>
             </div>
 
-            <div class="dc-action-area">
-                <a href="<?php echo esc_url(admin_url('post-new.php?post_type=dearcharts')); ?>"
-                    class="button button-primary dc-big-btn">Create Your First Chart</a>
+            <div class="cvio-action-area">
+                <a href="<?php echo esc_url(admin_url('post-new.php?post_type=chartivio')); ?>"
+                    class="button button-primary cvio-big-btn">Create Your First Chart</a>
             </div>
         </div>
     </div>
 
     <?php
 }
+
+

@@ -1,4 +1,4 @@
-=== DearCharts ===
+=== Chartivio ===
 Contributors: Rachana-paudel11
 Tags: charts, chartjs, data visualization, pie chart, bar chart
 Requires at least: 5.0
@@ -12,7 +12,7 @@ Professional, interactive data visualization for WordPress. Create stunning char
 
 == Description ==
 
-DearCharts is a powerful yet simple WordPress plugin that allows you to create and manage professional charts using a custom post type interface. Featuring a modern, split-screen admin UI, you can see your changes in real-time as you configure your data and styling.
+Chartivio is a powerful yet simple WordPress plugin that allows you to create and manage professional charts using a custom post type interface. Featuring a modern, split-screen admin UI, you can see your changes in real-time as you configure your data and styling.
 
 = Key Features =
 * **Live Preview Engine**: See your chart update instantly as you change data or settings.
@@ -20,19 +20,19 @@ DearCharts is a powerful yet simple WordPress plugin that allows you to create a
 * **Multiple Chart Types**: Supports Pie, Doughnut, Bar, and Line charts out of the box.
 * **Responsive Design**: Charts are automatically responsive and look great on all devices.
 * **Aesthetic Customization**: Choose from curated color palettes (Pastel, Ocean, Sunset, Neon, Forest) and customize axes and legends.
-* **Shortcode Integration**: Easily embed charts anywhere using the generated [dearchart id="XX"] shortcode.
+* **Shortcode Integration**: Easily embed charts anywhere using the generated [chartivio id="XX"] shortcode.
 
 == Installation ==
 
-1. Upload the `dearcharts` folder to the `/wp-content/plugins/` directory.
+1. Upload the `chartivio` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Go to the 'DearCharts' menu in your dashboard to start creating charts.
+3. Go to the 'Chartivio' menu in your dashboard to start creating charts.
 4. Add a new chart, configure your data, and copy the provided shortcode into any page or post.
 
 == Frequently Asked Questions ==
 
 = How do I display a chart on my site? =
-After publishing a chart, a shortcode like `[dearchart id="123"]` will be provided in the 'Chart Shortcodes' sidebar. Copy and paste this shortcode into any page, post, or widget area.
+After publishing a chart, a shortcode like `[chartivio id="123"]` will be provided in the 'Chart Shortcodes' sidebar. Copy and paste this shortcode into any page, post, or widget area.
 
 = Can I import data from Excel? =
 Yes! Save your Excel sheet as a CSV file, upload it to your Media Library, and paste the URL into the 'Import from CSV' field in the plugin editor.
