@@ -1,10 +1,10 @@
 === Chartivio ===
-Contributors: Rachana-paudel11
-Tags: charts, chartjs, data visualization, pie chart, bar chart
+Contributors: rachanapaudel26
+Tags: chart, charts, data visualization, pie chart, bar chart
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,9 +56,12 @@ This plugin includes the following third-party library:
 
 == Changelog ==
 
-= 1.0 =
+= 1.0.0 =
 * Initial release.
 * Added support for Pie, Doughnut, Bar, and Line charts.
 * Implemented professional split-screen Admin UI with Live Preview.
 * Added support for Manual Data Entry and CSV Import.
 * Integrated curated color palettes and aesthetic settings.
+
+== Upgrade Notice ==
+
