@@ -1,8 +1,7 @@
 <?php
 /**
  * Plugin Name: Chartivio
- * Description: High-performance data visualization with zero-latency live previews. Features a split-screen editor, multi-series manual entry, and universal CSV support.
- * Version: 1.0.0
+ * Description: A plugin to create charts and bars for data visualization.
  * Author: Rachana Paudel
  * Plugin URI: https://wordpress.org/plugins/chartivio/
  * Author URI: https://profiles.wordpress.org/rachanapaudel26/
