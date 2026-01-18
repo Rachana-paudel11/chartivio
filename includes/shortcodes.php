@@ -56,7 +56,6 @@ function chartivio_render_shortcode($atts)
 
     // Enqueue assets only when shortcode is used
     wp_enqueue_script('chartivio-frontend');
-    wp_enqueue_style('chartivio-style');
 
     // Prepare Config for JS
     $config = array(
@@ -84,9 +83,8 @@ function chartivio_render_shortcode($atts)
     $output .= '</div>';
     $output .= '</div>';
 
-    // Inline Script to Init via wp_add_inline_script
-    $init_script = 'document.addEventListener("DOMContentLoaded", function() { if(typeof chartivio_init_frontend === "function") { chartivio_init_frontend(' . wp_json_encode($config) . '); } });';
-    wp_add_inline_script('chartivio-frontend', $init_script);
+    // Inline Script to Init
+    $output .= '<script>document.addEventListener("DOMContentLoaded", function() { if(typeof chartivio_init_frontend === "function") { chartivio_init_frontend(' . wp_json_encode($config) . '); } });</script>';
 
     return $output;
 }
@@ -102,17 +100,16 @@ function chartivio_frontend_assets()
 
     // Register plugin frontend logic, dependent on Chart.js
     wp_register_script('chartivio-frontend', plugins_url('../assets/js/chartivio.js', __FILE__), array('chartjs'), '1.0.0', true);
-
-    // Register Frontend Style
-    wp_register_style('chartivio-style', plugins_url('../assets/css/chartivio-frontend.css', __FILE__), array(), '1.0.0');
-
-    // Conditionally enqueue style and adding inline style for singular post
-    if (is_singular('chartivio')) {
-        wp_enqueue_style('chartivio-style');
-        $custom_css = ".entry-meta, .byline, .cat-links, .post-author, .post-date { display: none !important; }";
-        wp_add_inline_style('chartivio-style', $custom_css);
-    }
 }
 add_action('wp_enqueue_scripts', 'chartivio_frontend_assets');
+
+/**
+ * Add CSS to hide post-metadata on Frontend Single View
+ */
+add_action('wp_head', function () {
+    if (is_singular('chartivio')) {
+        echo '<style>.entry-meta, .byline, .cat-links, .post-author, .post-date { display: none !important; }</style>';
+    }
+});
 
 
