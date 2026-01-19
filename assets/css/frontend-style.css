@@ -1,0 +1,42 @@
+.entry-meta,
+.byline,
+.cat-links,
+.post-author,
+.post-date {
+    display: none !important;
+}
+
+/* Chartivio Frontend Styles */
+.cvio-shortcode-wrapper {
+    margin-bottom: 30px;
+}
+
+.cvio-inner {
+    margin: 0 auto;
+    text-align: left;
+}
+
+.cvio-title {
+    margin: 0 0 15px 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.cvio-container {
+    position: relative;
+    width: 100%;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.cvio-container canvas {
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+    max-width: 100%;
+    margin: 0 auto;
+}

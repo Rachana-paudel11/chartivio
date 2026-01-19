@@ -54,7 +54,8 @@ function chartivio_render_shortcode($atts)
     $chartivio_instance_counter++;
     $unique_id = 'chartivio-' . $post_id . '-' . $chartivio_instance_counter;
 
-    // Enqueue assets only when shortcode is used
+    // Enqueue Chart.js and plugin frontend scripts
+    wp_enqueue_script('chartjs');
     wp_enqueue_script('chartivio-frontend');
 
     // Prepare Config for JS
@@ -78,13 +79,60 @@ function chartivio_render_shortcode($atts)
     $output .= '<div class="cvio-inner" style="' . $inner_style . '">';
     $output .= '<h3 class="cvio-title" style="margin: 0 0 15px 0; font-size: 1.25rem; font-weight: 600; color: #1e293b;">' . esc_html($post->post_title) . '</h3>';
     $output .= '<div class="cvio-container" style="' . $chart_container_style . '">';
-    $output .= '<canvas id="' . esc_attr($unique_id) . '" style="width: 100%; height: 100%;"></canvas>';
+    $output .= '<canvas id="' . esc_attr($unique_id) . '" data-config="' . esc_attr(wp_json_encode($config)) . '" style="display: block; max-width: 100%; max-height: 100%;"></canvas>';
     $output .= '</div>';
     $output .= '</div>';
     $output .= '</div>';
 
-    // Inline Script to Init
-    $output .= '<script>document.addEventListener("DOMContentLoaded", function() { if(typeof chartivio_init_frontend === "function") { chartivio_init_frontend(' . wp_json_encode($config) . '); } });</script>';
+    // Inline Script to Init - placed directly in output for immediate execution
+    $output .= '<script type="text/javascript">(function(){
+        var init = function() {
+            var canvas = document.getElementById("' . esc_js($unique_id) . '");
+            if (!canvas) {
+                console.error("Canvas element not found: ' . esc_js($unique_id) . '");
+                return;
+            }
+            console.log("Canvas found, initializing...");
+            
+            // Set canvas dimensions from container
+            var container = canvas.parentElement;
+            if (container) {
+                var rect = container.getBoundingClientRect();
+                canvas.width = rect.width || 800;
+                canvas.height = rect.height || 400;
+                console.log("Canvas dimensions set:", canvas.width, "x", canvas.height);
+            } else {
+                // Fallback
+                canvas.width = 800;
+                canvas.height = 400;
+                console.log("No container found, using fallback dimensions");
+            }
+            
+            // Debug: Check if data is available
+            var config = ' . wp_json_encode($config) . ';
+            console.log("Chart config:", config);
+            
+            if(typeof chartivio_init_frontend === "function") { 
+                console.log("Calling chartivio_init_frontend with config", config);
+                chartivio_init_frontend(config); 
+            } else {
+                console.error("chartivio_init_frontend is not defined yet, retrying in 200ms");
+                setTimeout(function() {
+                    if(typeof chartivio_init_frontend === "function") {
+                        console.log("Retrying chartivio_init_frontend");
+                        chartivio_init_frontend(config);
+                    } else {
+                        console.error("chartivio_init_frontend still not available");
+                    }
+                }, 200);
+            }
+        };
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", init);
+        } else {
+            setTimeout(init, 50);
+        }
+    })();</script>';
 
     return $output;
 }
@@ -96,20 +144,17 @@ add_shortcode('chartivio', 'chartivio_render_shortcode');
 function chartivio_frontend_assets()
 {
     // Register local Chart.js for on-demand loading
-    wp_register_script('chartjs', plugins_url('../assets/js/chartjs/chart.umd.min.js', __FILE__), array(), '4.4.1', true);
+    wp_register_script('chartjs', CHARTIVIO_URL . 'assets/js/chartjs/chart.umd.min.js', array(), '4.4.1', true);
 
     // Register plugin frontend logic, dependent on Chart.js
-    wp_register_script('chartivio-frontend', plugins_url('../assets/js/chartivio.js', __FILE__), array('chartjs'), '1.0.0', true);
+    wp_register_script('chartivio-frontend', CHARTIVIO_URL . 'assets/js/chartivio.js', array('chartjs'), '1.0.1', true);
+
+    // Register Frontend CSS
+    wp_register_style('chartivio-frontend-style', CHARTIVIO_URL . 'assets/css/frontend-style.css', array(), '1.0.0');
+
+    // Always enqueue CSS so it's available whenever shortcode is used
+    wp_enqueue_style('chartivio-frontend-style');
 }
 add_action('wp_enqueue_scripts', 'chartivio_frontend_assets');
-
-/**
- * Add CSS to hide post-metadata on Frontend Single View
- */
-add_action('wp_head', function () {
-    if (is_singular('chartivio')) {
-        echo '<style>.entry-meta, .byline, .cat-links, .post-author, .post-date { display: none !important; }</style>';
-    }
-});
 
 
