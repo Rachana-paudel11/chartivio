@@ -50,11 +50,22 @@ Absolutely. The charts use Chart.js which is responsive by default, and the plug
 
 This plugin includes the following third-party library:
 
-* Chart.js v4.4.1 - Licensed under MIT License
+* Chart.js v4.4.7 - Licensed under MIT License
 * Source: https://www.chartjs.org/
+* Bundled locally in: assets/js/chartjs/chart.umd.min.js
 * Used for rendering interactive charts
 
 == Changelog ==
+
+= 1.0.1 =
+* Security: Fixed XSS vulnerability in shortcode callback (added proper JSON escaping)
+* Updated: Chart.js upgraded from v4.4.1 to v4.4.7 (latest stable)
+* Fixed: Charts now properly render on frontend after creating new posts
+* Fixed: Post status automatically set to 'publish' when saving via AJAX
+* Enhanced: Canvas dimension handling for better Chart.js initialization
+* Enhanced: Data format detection and parsing robustness
+* Improved: Comprehensive console logging for debugging
+* Added: CDN delivery for Chart.js with security attributes
 
 = 1.0.0 =
 * Initial release.

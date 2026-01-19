@@ -36,7 +36,8 @@ function chartivio_admin_assets($hook)
     if ($hook == 'post-new.php' || $hook == 'post.php') {
         if ($post && $post->post_type === 'chartivio') {
             wp_enqueue_media();
-            wp_enqueue_script('chartjs', CHARTIVIO_URL . 'assets/js/chartjs/chart.umd.min.js', array(), '4.4.1', true);
+            // Enqueue Chart.js v4.4.7 from local files
+            wp_enqueue_script('chartjs', CHARTIVIO_URL . 'assets/js/chartjs/chart.umd.min.js', array(), '4.4.7', true);
             wp_enqueue_style('chartivio-admin-style', CHARTIVIO_URL . 'assets/css/admin-style.css', array(), '1.0.1');
 
             wp_enqueue_script('chartivio-admin-settings', CHARTIVIO_URL . 'assets/js/admin-settings.js', array('jquery', 'chartjs'), '1.0.1', true);
