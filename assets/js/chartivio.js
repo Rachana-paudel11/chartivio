@@ -1,4 +1,58 @@
-var cvio_palettes = {
+/**
+ * Chart Initialization Function for Shortcode Instances
+ * Called via wp_add_inline_script with dynamic config and canvas ID
+ * This ensures proper WordPress enqueue queue management while handling dynamic data
+ */
+function chartivio_init_chart(config, canvasId) {
+    console.log('chartivio_init_chart called with config:', config);
+    
+    var init = function() {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) {
+            console.error('Canvas element not found:', canvasId);
+            return;
+        }
+        console.log('Canvas found, initializing...');
+        
+        var container = canvas.parentElement;
+        if (container) {
+            var rect = container.getBoundingClientRect();
+            canvas.width = rect.width || 800;
+            canvas.height = rect.height || 400;
+            console.log('Canvas dimensions set:', canvas.width, 'x', canvas.height);
+        } else {
+            canvas.width = 800;
+            canvas.height = 400;
+            console.log('No container found, using fallback dimensions');
+        }
+        
+        config.id = canvasId;
+        console.log('Chart config:', config);
+        
+        if(typeof chartivio_init_frontend === 'function') { 
+            console.log('Calling chartivio_init_frontend with config', config);
+            chartivio_init_frontend(config); 
+        } else {
+            console.error('chartivio_init_frontend is not defined yet, retrying in 200ms');
+            setTimeout(function() {
+                if(typeof chartivio_init_frontend === 'function') {
+                    console.log('Retrying chartivio_init_frontend');
+                    chartivio_init_frontend(config);
+                } else {
+                    console.error('chartivio_init_frontend still not available');
+                }
+            }, 200);
+        }
+    };
+    
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        setTimeout(init, 50);
+    }
+}
+
+var chartivio_palettes = {
     'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
     'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'],
     'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'],
@@ -74,7 +128,7 @@ function chartivio_init_frontend(config) {
         return;
     }
     
-    var palette = cvio_palettes[config.palette] || cvio_palettes['default'];
+    var palette = chartivio_palettes[config.palette] || chartivio_palettes['default'];
 
     var drawChart = (l, ds) => {
         console.log('Draw Chart called with labels:', l, 'and datasets:', ds);
@@ -259,4 +313,32 @@ function chartivio_init_frontend(config) {
     }
 }
 
+
+
+// Auto-init fallback: initialize any canvas with data-config if inline init missing
+(function(){
+    var boot = function(){
+        var nodes = document.querySelectorAll('canvas[data-config]');
+        nodes.forEach(function(node){
+            if (node.dataset.chartivioInitialized) return;
+            var raw = node.getAttribute('data-config');
+            if (!raw) return;
+            try {
+                var cfg = JSON.parse(raw);
+                var id = node.id;
+                if (!id && cfg.id) { node.id = cfg.id; id = cfg.id; }
+                if (!id) return;
+                node.dataset.chartivioInitialized = '1';
+                chartivio_init_chart(cfg, id);
+            } catch(e){
+                console.error('chartivio auto-init parse error', e);
+            }
+        });
+    };
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', boot);
+    } else {
+        boot();
+    }
+})();
 

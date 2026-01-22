@@ -5,7 +5,7 @@
  * Author: Rachana Paudel
  * Plugin URI: https://wordpress.org/plugins/chartivio/
  * Author URI: https://profiles.wordpress.org/rachanapaudel26/
- * Version: 1.0.1
+ * Version: 1.0.2
  * Text Domain: chartivio
  * Domain Path: /language
  * Requires at least: 5.0
@@ -97,7 +97,7 @@ function chartivio_admin_list_assets($hook)
 
         wp_enqueue_style('chartivio-admin-style', plugins_url('assets/css/admin-style.css', __FILE__), array(), '1.0.1');
         wp_enqueue_script('chartivio-admin-list', plugins_url('assets/js/admin-list.js', __FILE__), array('jquery'), '1.0.1', true);
-        wp_localize_script('chartivio-admin-list', 'cvio_admin_vars', array(
+        wp_localize_script('chartivio-admin-list', 'chartivio_admin_vars', array(
             'how_to_use_url' => esc_url(admin_url('edit.php?post_type=chartivio&page=chartivio-how-to-use'))
         ));
     }
@@ -135,9 +135,9 @@ function chartivio_populate_admin_columns($column, $post_id)
     switch ($column) {
         case 'chartivio_shortcode':
             $sc = '[chartivio id="' . $post_id . '"]';
-            echo '<div class="cvio-shortcode-pill" onclick="cvioCopyList(this, \'' . esc_js($sc) . '\')" title="Click to copy">';
+            echo '<div class="chartivio-shortcode-pill" onclick="chartivio_copy_list(this, \'' . esc_js($sc) . '\')" title="Click to copy">';
             echo '<code>' . esc_html($sc) . '</code>';
-            echo '<span class="dashicons dashicons-admin-page cvio-copy-icon"></span>';
+            echo '<span class="dashicons dashicons-admin-page chartivio-copy-icon"></span>';
             echo '</div>';
             break;
         case 'chartivio_type':
@@ -150,7 +150,7 @@ function chartivio_populate_admin_columns($column, $post_id)
             if ($type === 'doughnut')
                 $icon = 'dashicons-chart-pie';
 
-            echo '<div class="cvio-type-badge">';
+            echo '<div class="chartivio-type-badge">';
             echo '<span class="dashicons ' . esc_attr($icon) . '"></span> ';
             echo '<span>' . esc_html(ucfirst($type)) . '</span>';
             echo '</div>';

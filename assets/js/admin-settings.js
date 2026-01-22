@@ -1,8 +1,8 @@
-var cvioLiveChart = null;
-var cvio_post_id = chartivio_admin_vars.post_id;
-var cvio_admin_nonce = chartivio_admin_vars.nonce;
-var cvio_current_csv_data = null; // Store parsed CSV data for snapshot comparison
-var cvio_is_updating_preview = false; // Flag to prevent concurrent updates
+var chartivio_LiveChart = null;
+var chartivio_post_id = chartivio_admin_vars.post_id;
+var chartivio_admin_nonce = chartivio_admin_vars.nonce;
+var chartivio_current_csv_data = null; // Store parsed CSV data for snapshot comparison
+var chartivio_is_updating_preview = false; // Flag to prevent concurrent updates
 
 /**
  * Toggle X-Axis and Y-Axis title fields visibility based on chart type
@@ -13,11 +13,11 @@ function chartivio_toggle_axis_fields() {
     var showAxisFields = (chartType === 'bar' || chartType === 'line');
 
     if (showAxisFields) {
-        jQuery('#cvio-xaxis-row').show();
-        jQuery('#cvio-yaxis-row').show();
+        jQuery('.chartivio-xaxis-row').show();
+        jQuery('.chartivio-yaxis-row').show();
     } else {
-        jQuery('#cvio-xaxis-row').hide();
-        jQuery('#cvio-yaxis-row').hide();
+        jQuery('.chartivio-xaxis-row').hide();
+        jQuery('.chartivio-yaxis-row').hide();
     }
 }
 
@@ -27,10 +27,10 @@ jQuery(document).ready(function () {
 });
 
 // Normalized snapshot of saved post meta for client-side comparisons
-var cvio_saved_snapshot = chartivio_admin_vars.saved_snapshot;
-var cvio_palettes = { 'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
+var chartivio_saved_snapshot = chartivio_admin_vars.saved_snapshot;
+var chartivio_palettes = { 'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
 
-function cvio_parse_csv(str) {
+function chartivio_parse_csv(str) {
     var arr = [];
     var quote = false;
     for (var row = 0, col = 0, c = 0; c < str.length; c++) {
@@ -48,11 +48,11 @@ function cvio_parse_csv(str) {
     return arr;
 }
 
-function cvioTab(el, id) { jQuery('.cvio-tab').removeClass('active'); jQuery('.cvio-tab-content').removeClass('active'); jQuery(el).addClass('active'); jQuery('#' + id).addClass('active'); }
-function cvioSetSource(src) {
+function chartivio_Tab(el, id) { jQuery('.chartivio-tab').removeClass('active'); jQuery('.chartivio-tab-content').removeClass('active'); jQuery(el).addClass('active'); jQuery('#' + id).addClass('active'); }
+function chartivio_SetSource(src) {
     jQuery('#chartivio_active_source').val(src);
-    jQuery('.cvio-source-panel').hide();
-    jQuery('#cvio-' + src + '-panel').show();
+    jQuery('.chartivio-source-panel').hide();
+    jQuery('.chartivio-' + src + '-panel').show();
     if (src === 'manual') {
         setTimeout(function () {
             chartivio_add_delete_col_controls();
@@ -61,12 +61,12 @@ function cvioSetSource(src) {
     chartivio_update_live_preview();
     chartivio_local_autosave();
 }
-function cvioBrowseCSV() { var media = wp.media({ title: 'Select CSV', multiple: false }).open().on('select', function () { var url = media.state().get('selection').first().toJSON().url; jQuery('#chartivio_csv_url').val(url); chartivio_update_live_preview(); chartivio_local_autosave(); }); }
-function cvioToggleCSVViewAll() {
-    var $btn = jQuery('#cvio-csv-view-all-btn');
-    var $table = jQuery('#cvio-csv-preview-table');
-    var $container = jQuery('#cvio-csv-preview-container');
-    var $label = jQuery('#cvio-csv-preview-label');
+function chartivio_BrowseCSV() { var media = wp.media({ title: 'Select CSV', multiple: false }).open().on('select', function () { var url = media.state().get('selection').first().toJSON().url; jQuery('#chartivio_csv_url').val(url); chartivio_update_live_preview(); chartivio_local_autosave(); }); }
+function chartivio_ToggleCSVViewAll() {
+    var $btn = jQuery('.chartivio-csv-view-all-btn');
+    var $table = jQuery('.chartivio-csv-preview-table');
+    var $container = jQuery('.chartivio-csv-preview-container');
+    var $label = jQuery('.chartivio-csv-preview-label');
     var isExpanded = $btn.data('expanded');
     var fullRows = $table.data('fullCSVRows');
 
@@ -102,21 +102,21 @@ function cvioToggleCSVViewAll() {
     }
 }
 function chartivio_add_row() {
-    var colCount = jQuery('#cvio-manual-table thead th').length - 1;
+    var colCount = jQuery('.chartivio-manual-table thead th').length - 1;
     var rowKey = Date.now();
     var html = '<tr>';
     for (var i = 0; i < colCount; i++) {
         html += '<td><input type="text" name="chartivio_manual_data[' + rowKey + '][]" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></td>';
     }
-    html += '<td class="cvio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
+    html += '<td class="chartivio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
 
     var $newRow = jQuery(html);
-    jQuery('#cvio-manual-table tbody').append($newRow);
+    jQuery('.chartivio-manual-table tbody').append($newRow);
 
     chartivio_update_live_preview();
     chartivio_local_autosave();
 
-    var $wrapper = jQuery('.cvio-table-wrapper');
+    var $wrapper = jQuery('.chartivio-table-wrapper');
     $wrapper.animate({ scrollTop: $wrapper.prop("scrollHeight") }, 500);
 
     // Smart Focus: Auto-focus the first field of the new row after scroll
@@ -140,18 +140,18 @@ function chartivio_transpose_table() {
     var newMatrix = matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex] || ''));
 
     // Clear table
-    jQuery('#cvio-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="chartivio_add_column()">+</th>');
-    jQuery('#cvio-manual-table tbody').html('');
+    jQuery('.chartivio-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="chartivio_add_column()">+</th>');
+    jQuery('.chartivio-manual-table tbody').html('');
 
     // Rebuild Headers
-    newMatrix[0].forEach(h => jQuery('<th><input type="text" name="chartivio_manual_data[0][]" value="' + (h || '').replace(/"/g, '&quot;') + '" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></th>').insertBefore(jQuery('#cvio-manual-table thead th').last()));
+    newMatrix[0].forEach(h => jQuery('<th><input type="text" name="chartivio_manual_data[0][]" value="' + (h || '').replace(/"/g, '&quot;') + '" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></th>').insertBefore(jQuery('.chartivio-manual-table thead th').last()));
 
     // Rebuild Rows
     newMatrix.slice(1).forEach((row, idx) => {
         var html = '<tr>';
         row.forEach(cell => html += '<td><input type="text" name="chartivio_manual_data[' + (Date.now() + idx) + '][]" value="' + (cell || '').replace(/"/g, '&quot;') + '" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></td>');
-        html += '<td class="cvio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
-        jQuery('#cvio-manual-table tbody').append(html);
+        html += '<td class="chartivio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
+        jQuery('.chartivio-manual-table tbody').append(html);
     });
 
     chartivio_add_delete_col_controls();
@@ -167,12 +167,12 @@ function chartivio_transpose_table() {
  * 4. Auto-scroll the table to the right to focus on the new column.
  */
 function chartivio_add_column() {
-    var colIdx = jQuery('#cvio-manual-table thead th').length - 1;
+    var colIdx = jQuery('.chartivio-manual-table thead th').length - 1;
     var headHtml = '<th><input type="text" name="chartivio_manual_data[0][]" value="Series ' + colIdx + '" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></th>';
     var $newTh = jQuery(headHtml);
-    $newTh.insertBefore(jQuery('#cvio-manual-table thead th').last());
+    $newTh.insertBefore(jQuery('.chartivio-manual-table thead th').last());
 
-    jQuery('#cvio-manual-table tbody tr').each(function () {
+    jQuery('.chartivio-manual-table tbody tr').each(function () {
         var rowKeyMatch = jQuery(this).find('td:first input').attr('name').match(/\[(.*?)\]/);
         var rowKey = rowKeyMatch ? rowKeyMatch[1] : Date.now();
         var cellHtml = '<td><input type="text" name="chartivio_manual_data[' + rowKey + '][]" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></td>';
@@ -183,7 +183,7 @@ function chartivio_add_column() {
     chartivio_add_delete_col_controls();
     chartivio_update_live_preview();
 
-    var $wrapper = jQuery('.cvio-table-wrapper');
+    var $wrapper = jQuery('.chartivio-table-wrapper');
     $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 500);
 
     // Smart Focus: Auto-focus and select text in the new column header for easy renaming
@@ -193,57 +193,57 @@ function chartivio_add_column() {
 }
 
 function chartivio_add_delete_col_controls() {
-    var $ths = jQuery('#cvio-manual-table thead th');
+    var $ths = jQuery('.chartivio-manual-table thead th');
     var lastIdx = $ths.length - 1;
     $ths.each(function (i) {
         if (i > 0 && i < lastIdx) {
             var $th = jQuery(this);
             var $input = $th.find('input');
-            // wrap input in .cvio-col-control if not already
+            // wrap input in .chartivio-col-control if not already
             if ($input.length) {
-                if (!$input.parent().hasClass('cvio-col-control')) {
-                    $input.wrap('<span class="cvio-col-control"></span>');
+                if (!$input.parent().hasClass('chartivio-col-control')) {
+                    $input.wrap('<span class="chartivio-col-control"></span>');
                 }
                 var $control = $input.parent();
                 // ensure delete icon exists inside the control, immediately after input
-                if ($control.find('.cvio-delete-col').length === 0) {
-                    $control.append('<button type="button" class="cvio-delete-col" data-col-idx="' + i + '" aria-label="Delete column" title="Delete column">×</button>');
+                if ($control.find('.chartivio-delete-col').length === 0) {
+                    $control.append('<button type="button" class="chartivio-delete-col" data-col-idx="' + i + '" aria-label="Delete column" title="Delete column">×</button>');
                 } else {
-                    $control.find('.cvio-delete-col').attr('data-col-idx', i);
+                    $control.find('.chartivio-delete-col').attr('data-col-idx', i);
                 }
             } else {
                 // fallback: append to th
-                if ($th.find('.cvio-delete-col').length === 0) {
-                    $th.append('<button type="button" class="cvio-delete-col" data-col-idx="' + i + '" aria-label="Delete column" title="Delete column">×</button>');
+                if ($th.find('.chartivio-delete-col').length === 0) {
+                    $th.append('<button type="button" class="chartivio-delete-col" data-col-idx="' + i + '" aria-label="Delete column" title="Delete column">×</button>');
                 } else {
-                    $th.find('.cvio-delete-col').attr('data-col-idx', i);
+                    $th.find('.chartivio-delete-col').attr('data-col-idx', i);
                 }
             }
         } else {
             // remove delete controls from non-deletable headers
-            jQuery(this).find('.cvio-delete-col').remove();
-            // unwrap cvio-col-control if it exists and has only the input
-            var $wrap = jQuery(this).find('.cvio-col-control');
-            if ($wrap.length && $wrap.find('input').length && $wrap.find('.cvio-delete-col').length === 0) {
+            jQuery(this).find('.chartivio-delete-col').remove();
+            // unwrap.chartivio-col-control if it exists and has only the input
+            var $wrap = jQuery(this).find('.chartivio-col-control');
+            if ($wrap.length && $wrap.find('input').length && $wrap.find('.chartivio-delete-col').length === 0) {
                 $wrap.replaceWith($wrap.find('input'));
             }
         }
     });
     // delegated handlers for click and keyboard
-    jQuery('#cvio-manual-table').off('click', '.cvio-delete-col').on('click', '.cvio-delete-col', function () {
+    jQuery('.chartivio-manual-table').off('click', '.chartivio-delete-col').on('click', '.chartivio-delete-col', function () {
         var idx = parseInt(jQuery(this).attr('data-col-idx'), 10);
         chartivio_delete_column(idx);
     });
-    jQuery('#cvio-manual-table').off('keydown', '.cvio-delete-col').on('keydown', '.cvio-delete-col', function (e) {
+    jQuery('.chartivio-manual-table').off('keydown', '.chartivio-delete-col').on('keydown', '.chartivio-delete-col', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); var idx = parseInt(jQuery(this).attr('data-col-idx'), 10); chartivio_delete_column(idx); }
     });
 }
 function chartivio_delete_column(idx) {
-    var $ths = jQuery('#cvio-manual-table thead th');
+    var $ths = jQuery('.chartivio-manual-table thead th');
     var lastIdx = $ths.length - 1;
     if (idx <= 0 || idx >= lastIdx) return; // don't delete label column or the add button
-    jQuery('#cvio-manual-table thead th').eq(idx).remove();
-    jQuery('#cvio-manual-table tbody tr').each(function () {
+    jQuery('.chartivio-manual-table thead th').eq(idx).remove();
+    jQuery('.chartivio-manual-table tbody tr').each(function () {
         jQuery(this).find('td').eq(idx).remove();
     });
     // refresh controls and preview
@@ -271,15 +271,15 @@ jQuery(function () {
  * 2. Read the source (CSV vs Manual).
  * 3. If CSV: Fetch URL, parse lines, and map to Chart.js datasets.
  * 4. If Manual: Scrape table TBODY for data and THEAD for labels.
- * 5. Apply selected color palette from the cvio_palettes dictionary.
+ * 5. Apply selected color palette from the chartivio_palettes dictionary.
  * 6. Re-draw the Chart using the Chart.js API.
  */
 async function chartivio_update_live_preview() {
     // Prevent concurrent calls
-    if (cvio_is_updating_preview) {
+    if (chartivio_is_updating_preview) {
         return;
     }
-    cvio_is_updating_preview = true;
+    chartivio_is_updating_preview = true;
 
     try {
         // Wait for Chart.js to be available
@@ -287,17 +287,17 @@ async function chartivio_update_live_preview() {
             // Retry after a short delay if Chart.js is still loading
             setTimeout(function () {
                 if (typeof Chart !== 'undefined') {
-                    cvio_is_updating_preview = false;
+                    chartivio_is_updating_preview = false;
                     chartivio_update_live_preview();
                 }
             }, 100);
-            cvio_is_updating_preview = false;
+            chartivio_is_updating_preview = false;
             return;
         }
 
-        var canvas = document.getElementById('cvio-live-chart');
+        var canvas = document.getElementById('chartivio-live-chart');
         if (!canvas) {
-            cvio_is_updating_preview = false;
+            chartivio_is_updating_preview = false;
             return;
         }
 
@@ -321,22 +321,22 @@ async function chartivio_update_live_preview() {
         // Destroy in order: global reference first, then Chart.js registry
 
         // First, destroy the global chart reference if it exists
-        if (cvioLiveChart) {
+        if (chartivio_LiveChart) {
             try {
-                if (typeof cvioLiveChart.destroy === 'function') {
-                    cvioLiveChart.destroy();
+                if (typeof chartivio_LiveChart.destroy === 'function') {
+                    chartivio_LiveChart.destroy();
                 }
             } catch (e) {
-                console.warn('Error destroying cvioLiveChart:', e);
+                console.warn('Error destroying chartivio_LiveChart:', e);
             }
-            cvioLiveChart = null;
+            chartivio_LiveChart = null;
         }
 
         // Then check Chart.js registry for any chart on this canvas
         try {
             if (typeof Chart !== 'undefined' && typeof Chart.getChart === 'function') {
                 var existingChart = Chart.getChart(canvas);
-                if (existingChart && existingChart !== cvioLiveChart) {
+                if (existingChart && existingChart !== chartivio_LiveChart) {
                     try {
                         existingChart.destroy();
                     } catch (e) {
@@ -377,19 +377,19 @@ async function chartivio_update_live_preview() {
         let chartType = jQuery('#chartivio_type').val() || 'pie';
         let legendPos = jQuery('#chartivio_legend_pos').val() || 'top';
         let paletteKey = jQuery('#chartivio_palette').val() || 'default';
-        let palette = (typeof cvio_palettes !== 'undefined' && cvio_palettes[paletteKey]) ? cvio_palettes[paletteKey] : ((typeof cvio_palettes !== 'undefined') ? cvio_palettes['default'] : ['#3b82f6']);
+        let palette = (typeof chartivio_palettes !== 'undefined' && chartivio_palettes[paletteKey]) ? chartivio_palettes[paletteKey] : ((typeof chartivio_palettes !== 'undefined') ? chartivio_palettes['default'] : ['#3b82f6']);
         let xaxisLabel = jQuery('#chartivio_xaxis_label').val() || '';
         let yaxisLabel = jQuery('#chartivio_yaxis_label').val() || '';
 
         // Capture current state to handle race conditions
-        var currentSource = jQuery('input[name="cvio_source_selector"]:checked').val() || jQuery('#chartivio_active_source').val() || 'manual';
+        var currentSource = jQuery('input[name="chartivio_source_selector"]:checked').val() || jQuery('#chartivio_active_source').val() || 'manual';
         var currentUrl = jQuery('#chartivio_csv_url').val();
 
         var labels = [], datasets = [];
 
         if (currentSource === 'csv') {
             if (!currentUrl || currentUrl.trim() === '') {
-                jQuery('#cvio-status').show().text('No CSV URL provided').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
+                jQuery('.chartivio-status').show().text('No CSV URL provided').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
                 // Show empty chart state
                 var cWidth = canvas.width || 400;
                 var cHeight = canvas.height || 400;
@@ -401,7 +401,7 @@ async function chartivio_update_live_preview() {
                 return;
             }
             try {
-                jQuery('#cvio-status').show().text('Loading CSV...').css({ 'color': '#3b82f6', 'background': '#eff6ff' });
+                jQuery('.chartivio-status').show().text('Loading CSV...').css({ 'color': '#3b82f6', 'background': '#eff6ff' });
                 const response = await fetch(currentUrl);
                 // Race condition check: Ensure source and URL haven't changed during fetch
                 if (jQuery('#chartivio_active_source').val() !== 'csv' || jQuery('#chartivio_csv_url').val() !== currentUrl) return;
@@ -415,7 +415,7 @@ async function chartivio_update_live_preview() {
                     throw new Error('CSV file is empty');
                 }
 
-                const rows = cvio_parse_csv(text.trim());
+                const rows = chartivio_parse_csv(text.trim());
                 if (!rows || rows.length < 2) {
                     throw new Error('Invalid CSV format - need at least header and one data row');
                 }
@@ -447,12 +447,12 @@ async function chartivio_update_live_preview() {
                     throw new Error('No valid data rows found in CSV');
                 }
 
-                jQuery('#cvio-status').show().text('CSV Loaded (' + (rows.length - 1) + ' rows)').css({ 'color': '#10b981', 'background': '#f0fdf4' });
+                jQuery('.chartivio-status').show().text('CSV Loaded (' + (rows.length - 1) + ' rows)').css({ 'color': '#10b981', 'background': '#f0fdf4' });
 
                 // Populate CSV Preview Table
-                var $previewTable = jQuery('#cvio-csv-preview-table');
-                var $previewContainer = jQuery('#cvio-csv-preview-container');
-                var $previewLabel = jQuery('#cvio-csv-preview-label');
+                var $previewTable = jQuery('.chartivio-csv-preview-table');
+                var $previewContainer = jQuery('.chartivio-csv-preview-container');
+                var $previewLabel = jQuery('.chartivio-csv-preview-label');
 
                 if ($previewTable.length) {
                     // Store full CSV data for "View All" functionality
@@ -478,7 +478,7 @@ async function chartivio_update_live_preview() {
                     $previewLabel.show();
 
                     // Show "View All" button only if there are more than 10 rows
-                    var $viewAllBtn = jQuery('#cvio-csv-view-all-btn');
+                    var $viewAllBtn = jQuery('.chartivio-csv-view-all-btn');
                     if (totalDataRows > 10) {
                         $viewAllBtn.show().text('View All Rows (' + totalDataRows + ')');
                         $viewAllBtn.data('expanded', false);
@@ -489,7 +489,7 @@ async function chartivio_update_live_preview() {
             } catch (e) {
                 if (jQuery('#chartivio_active_source').val() !== 'csv') return;
                 console.error('CSV Fetch Error:', e);
-                jQuery('#cvio-status').show().text('Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fef2f2' });
+                jQuery('.chartivio-status').show().text('Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fef2f2' });
                 // Clear canvas and show error
                 var cWidth = canvas.width || 400;
                 var cHeight = canvas.height || 400;
@@ -502,11 +502,11 @@ async function chartivio_update_live_preview() {
             }
         } else {
             // Manual data entry
-            jQuery('#cvio-status').hide();
+            jQuery('.chartivio-status').hide();
             var headerCount = 0;
-            jQuery('#cvio-manual-table thead th').each(function (i) {
+            jQuery('.chartivio-manual-table thead th').each(function (i) {
                 // Skip the last column (delete button column)
-                if (i === jQuery('#cvio-manual-table thead th').length - 1) return;
+                if (i === jQuery('.chartivio-manual-table thead th').length - 1) return;
                 var val = jQuery(this).find('input').val() || '';
                 if (i === 0) {
                     // First column is labels, don't create dataset for it
@@ -517,7 +517,7 @@ async function chartivio_update_live_preview() {
                 }
             });
 
-            jQuery('#cvio-manual-table tbody tr').each(function () {
+            jQuery('.chartivio-manual-table tbody tr').each(function () {
                 var rowLabel = jQuery(this).find('td:first input').val() || '';
                 if (rowLabel.trim() === '') return; // Skip empty rows
                 labels.push(rowLabel);
@@ -546,7 +546,7 @@ async function chartivio_update_live_preview() {
 
         // Validate we have data to render
         if (labels.length === 0 || datasets.length === 0) {
-            jQuery('#cvio-status').show().text('No data to display').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
+            jQuery('.chartivio-status').show().text('No data to display').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
             // Clear canvas and show message
             var cWidth = canvas.width || 400;
             var cHeight = canvas.height || 400;
@@ -568,7 +568,7 @@ async function chartivio_update_live_preview() {
         });
 
         if (!hasData) {
-            jQuery('#cvio-status').show().text('All values are zero').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
+            jQuery('.chartivio-status').show().text('All values are zero').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
         }
 
         // Apply colors and performance optimizations to datasets
@@ -609,7 +609,7 @@ async function chartivio_update_live_preview() {
         });
 
         // Create the chart
-        cvioLiveChart = new Chart(ctx, {
+        chartivio_LiveChart = new Chart(ctx, {
             type: chartType,
             data: { labels: labels, datasets: datasets },
             options: {
@@ -651,10 +651,10 @@ async function chartivio_update_live_preview() {
         });
     } catch (e) {
         console.error('Chart Render Error:', e);
-        jQuery('#cvio-status').show().text('Preview Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fff1f2' });
+        jQuery('.chartivio-status').show().text('Preview Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fff1f2' });
         // Try to clear canvas on error
         try {
-            var errorCanvas = document.getElementById('cvio-live-chart');
+            var errorCanvas = document.getElementById('chartivio-live-chart');
             if (errorCanvas) {
                 var errorCtx = errorCanvas.getContext('2d');
                 var cWidth = errorCanvas.width || 400;
@@ -670,7 +670,7 @@ async function chartivio_update_live_preview() {
         }
     } finally {
         // Always reset the flag
-        cvio_is_updating_preview = false;
+        chartivio_is_updating_preview = false;
     }
 }
 jQuery(document).ready(function () {
@@ -687,7 +687,7 @@ jQuery(document).ready(function () {
                 } else if (attempts > 50) {
                     clearInterval(checkInterval);
                     console.error('Chart.js failed to load after 5 seconds');
-                    jQuery('#cvio-status').show().text('Chart.js library not loaded').css({ 'color': '#ef4444', 'background': '#fef2f2' });
+                    jQuery('.chartivio-status').show().text('Chart.js library not loaded').css({ 'color': '#ef4444', 'background': '#fef2f2' });
                 }
             }, 100);
         } else {
@@ -698,21 +698,21 @@ jQuery(document).ready(function () {
     // Try immediately, then also on window load as fallback
     initPreview();
     jQuery(window).on('load', function () {
-        if (typeof Chart !== 'undefined' && !cvioLiveChart) {
+        if (typeof Chart !== 'undefined' && !chartivio_LiveChart) {
             chartivio_update_live_preview();
         }
     });
 
     // Restore from local storage if different from saved
-    var key = 'chartivio_autosave_' + cvio_post_id;
+    var key = 'chartivio_autosave_' + chartivio_post_id;
     var raw = localStorage.getItem(key);
     if (raw) {
         try {
             var local_snapshot = JSON.parse(raw);
-            if (!snapshotsEqual(local_snapshot, cvio_saved_snapshot)) {
+            if (!snapshotsEqual(local_snapshot, chartivio_saved_snapshot)) {
                 // restore from local
                 jQuery('#chartivio_active_source').val(local_snapshot.active_source);
-                cvioSetSource(local_snapshot.active_source);
+                chartivio_SetSource(local_snapshot.active_source);
                 jQuery('#chartivio_csv_url').val(local_snapshot.csv_url);
                 jQuery('#chartivio_type').val(local_snapshot.type);
                 jQuery('#chartivio_legend_pos').val(local_snapshot.legend_pos);
@@ -722,11 +722,11 @@ jQuery(document).ready(function () {
                 if (local_snapshot.yaxis_label !== undefined) jQuery('#chartivio_yaxis_label').val(local_snapshot.yaxis_label);
                 if (local_snapshot.active_source === 'manual') {
                     // clear table
-                    jQuery('#cvio-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="chartivio_add_column()">+</th>');
-                    jQuery('#cvio-manual-table tbody').html('');
+                    jQuery('.chartivio-manual-table thead tr').html('<th style="width:40px; cursor:pointer;" onclick="chartivio_add_column()">+</th>');
+                    jQuery('.chartivio-manual-table tbody').html('');
                     // add headers
                     local_snapshot.manual.headers.forEach(function (h) {
-                        jQuery('<th><input type="text" name="chartivio_manual_data[0][]" value="' + h.replace(/"/g, '"') + '" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></th>').insertBefore(jQuery('#cvio-manual-table thead th:last'));
+                        jQuery('<th><input type="text" name="chartivio_manual_data[0][]" value="' + h.replace(/"/g, '"') + '" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></th>').insertBefore(jQuery('.chartivio-manual-table thead th:last'));
                     });
                     // add rows
                     local_snapshot.manual.rows.forEach(function (row, idx) {
@@ -734,8 +734,8 @@ jQuery(document).ready(function () {
                         row.forEach(function (cell) {
                             html += '<td><input type="text" name="chartivio_manual_data[' + (idx + 1) + '][]" value="' + cell.replace(/"/g, '"') + '" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></td>';
                         });
-                        html += '<td class="cvio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
-                        jQuery('#cvio-manual-table tbody').append(html);
+                        html += '<td class="chartivio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
+                        jQuery('.chartivio-manual-table tbody').append(html);
                     });
                     chartivio_add_delete_col_controls();
                 }
@@ -751,9 +751,9 @@ jQuery(document).ready(function () {
 function chartivio_get_snapshot() {
     var snapshot = { manual: { headers: [], rows: [] }, csv_url: jQuery('#chartivio_csv_url').val() || '', active_source: jQuery('#chartivio_active_source').val() || 'manual', type: jQuery('#chartivio_type').val() || '', legend_pos: jQuery('#chartivio_legend_pos').val() || '', palette: jQuery('#chartivio_palette').val() || '', xaxis_label: jQuery('#chartivio_xaxis_label').val() || '', yaxis_label: jQuery('#chartivio_yaxis_label').val() || '' };
     // headers (skip only add button i=last)
-    jQuery('#cvio-manual-table thead th').each(function (i) { if (i === jQuery('#cvio-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
+    jQuery('.chartivio-manual-table thead th').each(function (i) { if (i === jQuery('.chartivio-manual-table thead th').length - 1) return; var v = jQuery(this).find('input').val() || ''; snapshot.manual.headers.push(v); });
     // rows
-    jQuery('#cvio-manual-table tbody tr').each(function () { var row = []; jQuery(this).find('td').each(function (i) { if (i === jQuery(this).closest('tr').find('td').length - 1) return; var v = jQuery(this).find('input').val() || ''; row.push(v); }); snapshot.manual.rows.push(row); });
+    jQuery('.chartivio-manual-table tbody tr').each(function () { var row = []; jQuery(this).find('td').each(function (i) { if (i === jQuery(this).closest('tr').find('td').length - 1) return; var v = jQuery(this).find('input').val() || ''; row.push(v); }); snapshot.manual.rows.push(row); });
     return snapshot;
 }
 
@@ -762,13 +762,13 @@ function snapshotsEqual(a, b) { try { return JSON.stringify(a) === JSON.stringif
 
 
 function chartivio_local_autosave(init) {
-    var key = 'chartivio_autosave_' + cvio_post_id;
+    var key = 'chartivio_autosave_' + chartivio_post_id;
     var curr = chartivio_get_snapshot();
     var raw = JSON.stringify(curr);
     localStorage.setItem(key, raw);
     // show restore button only when there's a local snapshot different from saved
     try {
-        var savedRaw = JSON && cvio_saved_snapshot ? JSON.stringify(cvio_saved_snapshot) : '';
+        var savedRaw = JSON && chartivio_saved_snapshot ? JSON.stringify(chartivio_saved_snapshot) : '';
         var hasDiff = savedRaw !== raw;
         /* don't show a restore button; we keep a local snapshot for safety but do not expose restore UI */
         // no restore UI; just update button disability state below
@@ -779,17 +779,17 @@ function chartivio_local_autosave(init) {
 function updateSaveButtonState() { /* Button state management removed to allow Publish action at all times */ }
 
 function dcCopyShortcode() {
-    var shortcode = document.getElementById('cvio-shortcode').textContent;
+    var shortcode = document.getElementById('chartivio-shortcode').textContent;
     navigator.clipboard.writeText(shortcode).then(function () {
-        document.getElementById('cvio-copy-status').textContent = 'Copied!';
+        document.getElementById('chartivio-copy-status').textContent = 'Copied!';
         setTimeout(function () {
-            document.getElementById('cvio-copy-status').textContent = '';
+            document.getElementById('chartivio-copy-status').textContent = '';
         }, 500);
     }).catch(function (err) {
         console.error('Failed to copy: ', err);
-        document.getElementById('cvio-copy-status').textContent = 'Copy failed';
+        document.getElementById('chartivio-copy-status').textContent = 'Copy failed';
         setTimeout(function () {
-            document.getElementById('cvio-copy-status').textContent = '';
+            document.getElementById('chartivio-copy-status').textContent = '';
         }, 1000);
     });
 }
@@ -847,10 +847,10 @@ function chartivio_quick_save(btn) {
     $btn.text('Saving...').prop('disabled', true);
 
     var headers = [];
-    jQuery('#cvio-manual-table thead th input').each(function () { headers.push(jQuery(this).val()); });
+    jQuery('.chartivio-manual-table thead th input').each(function () { headers.push(jQuery(this).val()); });
 
     var rows = [];
-    jQuery('#cvio-manual-table tbody tr').each(function () {
+    jQuery('.chartivio-manual-table tbody tr').each(function () {
         var row = [];
         jQuery(this).find('td input').each(function () { row.push(jQuery(this).val()); });
         if (row.length > 0) rows.push(row);
@@ -874,7 +874,7 @@ function chartivio_quick_save(btn) {
     jQuery.post(ajaxurl, data, function (res) {
         $btn.text(originalText).prop('disabled', false);
         if (res.success) {
-            jQuery('#cvio-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
+            jQuery('.chartivio-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
 
             // Mark post as NOT dirty to prevent browser "Leave site" warnings
             if (typeof wp !== 'undefined' && wp.autosave && wp.autosave.server) {

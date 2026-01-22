@@ -139,9 +139,9 @@ function chartivio_render_main_box($post)
 
     wp_nonce_field('chartivio_save_meta', 'chartivio_nonce');
     ?>
-    <div class="cvio-admin-wrapper">
-        <div class="cvio-main-header">
-            <div class="cvio-chart-type-container">
+    <div class="chartivio-admin-wrapper">
+        <div class="chartivio-main-header">
+            <div class="chartivio-chart-type-container">
                 <label for="chartivio_type">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -158,7 +158,7 @@ function chartivio_render_main_box($post)
                     <option value="line" <?php selected($chart_type, 'line'); ?>>Line Chart</option>
                 </select>
             </div>
-            <div class="cvio-type-selector-inline">
+            <div class="chartivio-type-selector-inline">
                 <a href="<?php echo esc_url(admin_url('edit.php?post_type=chartivio&page=chartivio-how-to-use')); ?>"
                     target="_blank"
                     style="margin-right:15px; text-decoration:none; font-weight:600; font-size:13px; color:#2271b1; display:flex; align-items:center; gap:4px;">
@@ -167,70 +167,70 @@ function chartivio_render_main_box($post)
                 </a>
                 <button type="button" class="button button-primary" data-pid="<?php echo esc_attr($post->ID); ?>"
                     onclick="chartivio_quick_save(this)"><?php echo ($post->post_status === 'auto-draft') ? 'Save Chart' : 'Update Chart'; ?></button>
-                <span id="cvio-save-status" style="font-size:13px; font-weight:500;"></span>
+                <span id="chartivio-save-status" style="font-size:13px; font-weight:500;"></span>
             </div>
         </div>
 
-        <div class="cvio-split-container">
+        <div class="chartivio-split-container">
             <!-- Live Preview -->
-            <div class="cvio-preview-panel">
-                <div class="cvio-preview-header">
+            <div class="chartivio-preview-panel">
+                <div class="chartivio-preview-header">
                     <h3>Live Preview</h3>
-                    <span id="cvio-status"></span>
+                    <span id="chartivio-status"></span>
                 </div>
-                <div class="cvio-chart-container">
-                    <canvas id="cvio-live-chart"></canvas>
+                <div class="chartivio-chart-container">
+                    <canvas id="chartivio-live-chart"></canvas>
                 </div>
             </div>
 
             <!-- Settings Tabs -->
-            <div class="cvio-settings-panel">
-                <div class="cvio-tabs">
-                    <div class="cvio-tab active" onclick="cvioTab(this, 'cvio-data')">Data Source</div>
-                    <div class="cvio-tab" onclick="cvioTab(this, 'cvio-style')">Appearance</div>
+            <div class="chartivio-settings-panel">
+                <div class="chartivio-tabs">
+                    <div class="chartivio-tab active" onclick="chartivio_Tab(this, 'chartivio-data')">Data Source</div>
+                    <div class="chartivio-tab" onclick="chartivio_Tab(this, 'chartivio-style')">Appearance</div>
                 </div>
 
-                <div id="cvio-data" class="cvio-tab-content active">
-                    <div class="cvio-data-source-selector">
+                <div id="chartivio-data" class="chartivio-tab-content active">
+                    <div class="chartivio-data-source-selector">
                         <label>Data Source</label>
                         <select name="chartivio_active_source" id="chartivio_active_source"
-                            onchange="cvioSetSource(this.value)">
+                            onchange="chartivio_SetSource(this.value)">
                             <option value="manual" <?php selected($active_source, 'manual'); ?>>Manual Data Entry</option>
                             <option value="csv" <?php selected($active_source, 'csv'); ?>>Import from CSV (URL)</option>
                         </select>
                     </div>
 
                     <!-- CSV Panel -->
-                    <div class="cvio-card cvio-source-panel" id="cvio-csv-panel"
+                    <div class="chartivio-card chartivio-source-panel" id="chartivio-csv-panel"
                         style="<?php echo ($active_source === 'csv') ? 'display:flex;' : 'display:none;'; ?>">
-                        <div class="cvio-card-header">
+                        <div class="chartivio-card-header">
                             <span>CSV Configuration</span>
                         </div>
-                        <div class="cvio-card-body"
+                        <div class="chartivio-card-body"
                             style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden;">
                             <div style="flex-shrink: 0; margin-bottom: 12px;">
                                 <div style="display:flex; gap:8px; margin-bottom: 12px;">
                                     <input type="text" name="chartivio_csv_url" id="chartivio_csv_url"
-                                        class="cvio-input-text" style="flex:1;" value="<?php echo esc_url($csv_url); ?>"
+                                        class="chartivio-input-text" style="flex:1;" value="<?php echo esc_url($csv_url); ?>"
                                         oninput="chartivio_update_live_preview(); chartivio_local_autosave();">
-                                    <button type="button" class="button" onclick="cvioBrowseCSV()">Media</button>
+                                    <button type="button" class="button" onclick="chartivio_BrowseCSV()">Media</button>
                                 </div>
                                 <!-- CSV Data Preview Label and Button -->
                                 <div
                                     style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                    <div id="cvio-csv-preview-label"
+                                    <div id="chartivio-csv-preview-label" class="chartivio-csv-preview-label"
                                         style="font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; display: none;">
                                         CSV Data Preview</div>
-                                    <button type="button" id="cvio-csv-view-all-btn" class="button button-small"
-                                        onclick="cvioToggleCSVViewAll()"
+                                    <button type="button" id="chartivio-csv-view-all-btn" class="button button-small chartivio-csv-view-all-btn"
+                                        onclick="chartivio_ToggleCSVViewAll()"
                                         style="display: none; font-size: 11px; padding: 4px 10px; height: auto;">
                                         View All Rows
                                     </button>
                                 </div>
                             </div>
                             <!-- CSV Data Preview Table -->
-                            <div id="cvio-csv-preview-container" class="cvio-table-wrapper" style="display: none; ">
-                                <table class="cvio-table" id="cvio-csv-preview-table">
+                            <div id="chartivio-csv-preview-container" class="chartivio-table-wrapper chartivio-csv-preview-container" style="display: none; ">
+                                <table class="chartivio-table chartivio-csv-preview-table" id="chartivio-csv-preview-table">
                                     <thead></thead>
                                     <tbody></tbody>
                                 </table>
@@ -239,14 +239,14 @@ function chartivio_render_main_box($post)
                     </div>
 
                     <!-- Manual Panel -->
-                    <div class="cvio-card cvio-source-panel" id="cvio-manual-panel"
+                    <div class="chartivio-card chartivio-source-panel" id="chartivio-manual-panel"
                         style="<?php echo ($active_source === 'manual') ? 'display:flex;' : 'display:none;'; ?>">
-                        <div class="cvio-card-header">
+                        <div class="chartivio-card-header">
                             <span>Manual Data Table</span>
                         </div>
-                        <div class="cvio-card-body" id="cvio-manual-body">
-                            <div class="cvio-table-wrapper">
-                                <table class="cvio-table" id="cvio-manual-table">
+                        <div class="chartivio-card-body" id="chartivio-manual-body">
+                            <div class="chartivio-table-wrapper">
+                                <table class="chartivio-table chartivio-manual-table" id="chartivio-manual-table">
                                     <thead>
                                         <tr>
                                             <?php
@@ -264,7 +264,7 @@ function chartivio_render_main_box($post)
                                                 echo '<th><input type="text" name="chartivio_manual_data[0][]" value="' . esc_attr__('Series 1', 'chartivio') . '" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></th>';
                                             }
                                             ?>
-                                            <th style="width:45px !important; min-width:45px !important; max-width:45px !important; cursor:pointer !important; background: #eff6ff !important; text-align: center !important; font-size: 18px !important; font-weight: bold !important; color: var(--cvio-primary) !important;"
+                                            <th style="width:45px !important; min-width:45px !important; max-width:45px !important; cursor:pointer !important; background: #eff6ff !important; text-align: center !important; font-size: 18px !important; font-weight: bold !important; color: var(--chartivio-primary) !important;"
                                                 onclick="chartivio_add_column()" title="Add Column">+</th>
                                         </tr>
                                     </thead>
@@ -278,7 +278,7 @@ function chartivio_render_main_box($post)
                                                 foreach ($row_data as $cell) {
                                                     echo '<td><input type="text" name="chartivio_manual_data[' . esc_attr($r) . '][]" value="' . esc_attr($cell) . '" oninput="chartivio_update_live_preview()"></td>';
                                                 }
-                                                echo '<td class="cvio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
+                                                echo '<td class="chartivio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
                                             }
                                         } else {
                                             $col_count = (!empty($manual_data) && isset($manual_data[0]) && is_array($manual_data[0])) ? count($manual_data[0]) : 2;
@@ -286,13 +286,13 @@ function chartivio_render_main_box($post)
                                             for ($c = 1; $c < $col_count; $c++) {
                                                 echo '<td><input type="text" name="chartivio_manual_data[1][]" value="10" oninput="chartivio_update_live_preview(); chartivio_local_autosave();"></td>';
                                             }
-                                            echo '<td class="cvio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
+                                            echo '<td class="chartivio-delete-row" onclick="jQuery(this).closest(\'tr\').remove(); chartivio_update_live_preview(); chartivio_local_autosave();">×</td></tr>';
                                         }
                                         ?>
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="cvio-table-actions">
+                            <div class="chartivio-table-actions">
                                 <button type="button" class="button button-secondary" onclick="chartivio_add_row()">+ Add
                                     Row</button>
                                 <button type="button" class="button button-secondary" onclick="chartivio_add_column()">+
@@ -302,12 +302,12 @@ function chartivio_render_main_box($post)
                     </div>
                 </div>
 
-                <div id="cvio-style" class="cvio-tab-content">
-                    <div class="cvio-card">
-                        <div class="cvio-card-header"><span>Visual Settings</span></div>
-                        <div class="cvio-card-body">
-                            <div class="cvio-setting-row">
-                                <span class="cvio-setting-label">Legend Position</span>
+                <div id="chartivio-style" class="chartivio-tab-content">
+                    <div class="chartivio-card">
+                        <div class="chartivio-card-header"><span>Visual Settings</span></div>
+                        <div class="chartivio-card-body">
+                            <div class="chartivio-setting-row">
+                                <span class="chartivio-setting-label">Legend Position</span>
                                 <select name="chartivio_legend_pos" id="chartivio_legend_pos"
                                     onchange="chartivio_update_live_preview(); chartivio_local_autosave();">
                                     <option value="top" <?php selected($legend_pos, 'top'); ?>>Top</option>
@@ -317,8 +317,8 @@ function chartivio_render_main_box($post)
                                     <option value="none" <?php selected($legend_pos, 'none'); ?>>None</option>
                                 </select>
                             </div>
-                            <div class="cvio-setting-row">
-                                <span class="cvio-setting-label">Color Palette</span>
+                            <div class="chartivio-setting-row">
+                                <span class="chartivio-setting-label">Color Palette</span>
                                 <select name="chartivio_palette" id="chartivio_palette"
                                     onchange="chartivio_update_live_preview(); chartivio_local_autosave();">
                                     <option value="default" <?php selected($palette_key, 'default'); ?>>Standard</option>
@@ -329,14 +329,14 @@ function chartivio_render_main_box($post)
                                     <option value="forest" <?php selected($palette_key, 'forest'); ?>>Forest</option>
                                 </select>
                             </div>
-                            <div class="cvio-setting-row" id="cvio-xaxis-row">
-                                <span class="cvio-setting-label">X-Axis Title</span>
+                            <div class="chartivio-setting-row" id="chartivio-xaxis-row">
+                                <span class="chartivio-setting-label">X-Axis Title</span>
                                 <input type="text" name="chartivio_xaxis_label" id="chartivio_xaxis_label"
                                     value="<?php echo esc_attr($xaxis_label); ?>" style="width: 50% !important;"
                                     oninput="chartivio_update_live_preview(); chartivio_local_autosave();">
                             </div>
-                            <div class="cvio-setting-row" id="cvio-yaxis-row">
-                                <span class="cvio-setting-label">Y-Axis Title</span>
+                            <div class="chartivio-setting-row" id="chartivio-yaxis-row">
+                                <span class="chartivio-setting-label">Y-Axis Title</span>
                                 <input type="text" name="chartivio_yaxis_label" id="chartivio_yaxis_label"
                                     value="<?php echo esc_attr($yaxis_label); ?>" style="width: 50% !important;"
                                     oninput="chartivio_update_live_preview(); chartivio_local_autosave();">

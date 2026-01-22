@@ -20,7 +20,7 @@
     width: 120px;
 }
 
-.cvio-shortcode-pill {
+.chartivio-shortcode-pill {
     display: flex;
     align-items: center;
     background: #f1f5f9;
@@ -32,12 +32,12 @@
     transition: all 0.2s;
 }
 
-.cvio-shortcode-pill:hover {
+.chartivio-shortcode-pill:hover {
     background: #e2e8f0;
     border-color: #cbd5e1;
 }
 
-.cvio-shortcode-pill code {
+.chartivio-shortcode-pill code {
     background: transparent !important;
     border: none !important;
     padding: 0 !important;
@@ -47,12 +47,12 @@
     margin-right: 8px !important;
 }
 
-.cvio-copy-icon {
+.chartivio-copy-icon {
     color: #64748b;
     font-size: 16px;
 }
 
-.cvio-type-badge {
+.chartivio-type-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
@@ -65,7 +65,7 @@
     border: 1px solid #dbeafe;
 }
 
-.cvio-type-badge .dashicons {
+.chartivio-type-badge .dashicons {
     font-size: 16px;
     width: 16px;
     height: 16px;
@@ -82,7 +82,7 @@
 }
 
 /* Chart Editor Wrapper */
-.cvio-admin-wrapper {
+.chartivio-admin-wrapper {
     margin: -12px;
     background: #fff;
     border-radius: 6px;
@@ -91,7 +91,7 @@
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
 }
 
-.cvio-main-header {
+.chartivio-main-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -101,7 +101,7 @@
 }
 
 /* Chart Type Highlighter */
-.cvio-chart-type-container {
+.chartivio-chart-type-container {
     display: flex;
     align-items: center;
     gap: 12px;
@@ -113,13 +113,13 @@
     transition: all 0.3s ease;
 }
 
-.cvio-chart-type-container:hover {
+.chartivio-chart-type-container:hover {
     border-color: var(--dc-primary);
     background: #fff;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
 }
 
-.cvio-chart-type-container label {
+.chartivio-chart-type-container label {
     display: flex;
     align-items: center;
     gap: 6px;
@@ -130,7 +130,7 @@
     white-space: nowrap;
 }
 
-.cvio-chart-type-container select {
+.chartivio-chart-type-container select {
     border: none !important;
     background: transparent !important;
     font-weight: 600 !important;
@@ -142,19 +142,19 @@
     box-shadow: none !important;
 }
 
-.cvio-delete-col {
+.chartivio-delete-col {
     position: relative;
     z-index: 1;
 }
 
-.cvio-split-container {
+.chartivio-split-container {
     display: flex;
     height: 620px;
     background: #fff;
     overflow: hidden;
 }
 
-.cvio-preview-panel {
+.chartivio-preview-panel {
     flex: 0 0 520px;
     padding: 25px;
     background: var(--dc-bg);
@@ -165,7 +165,7 @@
     justify-content: flex-start;
 }
 
-.cvio-preview-header {
+.chartivio-preview-header {
     width: 100%;
     margin-bottom: 10px;
     display: flex;
@@ -173,7 +173,7 @@
     align-items: center;
 }
 
-.cvio-preview-header h3 {
+.chartivio-preview-header h3 {
     margin: 0;
     font-size: 16px;
     color: var(--dc-text);
@@ -186,7 +186,7 @@
     display: none;
 }
 
-.cvio-chart-container {
+.chartivio-chart-container {
     width: 100%;
     max-width: 480px;
     height: 480px;
@@ -196,7 +196,7 @@
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
-.cvio-settings-panel {
+.chartivio-settings-panel {
     flex: 1;
     padding: 0;
     display: flex;
@@ -205,14 +205,14 @@
     min-height: 0;
 }
 
-.cvio-tabs {
+.chartivio-tabs {
     display: flex;
     align-items: center;
     background: #fff;
     border-bottom: 1px solid var(--dc-border);
 }
 
-.cvio-tab {
+.chartivio-tab {
     padding: 15px 20px;
     cursor: pointer;
     font-weight: 500;
@@ -221,13 +221,13 @@
     transition: 0.2s;
 }
 
-.cvio-tab.active {
+.chartivio-tab.active {
     color: var(--dc-primary);
     border-bottom-color: var(--dc-primary);
     background: #eff6ff;
 }
 
-.cvio-type-selector-inline {
+.chartivio-type-selector-inline {
     margin-left: auto;
     display: flex;
     align-items: center;
@@ -236,7 +236,7 @@
     color: #64748b;
 }
 
-.cvio-type-selector-inline select {
+.chartivio-type-selector-inline select {
     padding: 6px 12px;
     border-radius: 6px;
     border: 1px solid var(--dc-border);
@@ -247,7 +247,7 @@
     cursor: pointer;
 }
 
-.cvio-tab-content {
+.chartivio-tab-content {
     display: none;
     padding: 15px 20px;
     flex: 1;
@@ -260,16 +260,16 @@
     overflow: visible !important;
 }
 
-#dc-manual-body .cvio-table-wrapper {
+#dc-manual-body .chartivio-table-wrapper {
     overflow-x: auto !important;
     overflow-y: auto !important;
 }
 
-.cvio-tab-content.active {
+.chartivio-tab-content.active {
     display: flex;
 }
 
-.cvio-card {
+.chartivio-card {
     border: 1px solid var(--dc-border);
     border-radius: 8px;
     margin-bottom: 15px;
@@ -277,7 +277,7 @@
     background: #fff;
 }
 
-.cvio-card-header {
+.chartivio-card-header {
     background: #f1f5f9;
     padding: 12px 15px;
     border-bottom: 1px solid var(--dc-border);
@@ -286,13 +286,13 @@
     align-items: center;
 }
 
-.cvio-card-header span {
+.chartivio-card-header span {
     font-weight: 600;
     color: #475569;
     font-size: 13px;
 }
 
-.cvio-card-body {
+.chartivio-card-body {
     padding: 15px;
     overflow: visible;
     flex: 1;
@@ -301,7 +301,7 @@
     min-height: 0;
 }
 
-.cvio-source-panel {
+.chartivio-source-panel {
     display: none;
     flex-direction: column;
     flex: 1;
@@ -309,7 +309,7 @@
     animation: dcFadeIn 0.3s ease;
 }
 
-.cvio-table-actions {
+.chartivio-table-actions {
     flex-shrink: 0 !important;
     background: #fff !important;
     z-index: 22 !important;
@@ -326,13 +326,13 @@
     border-radius: 0 0 8px 8px;
 }
 
-.cvio-table-actions button {
+.chartivio-table-actions button {
     display: inline-block !important;
     visibility: visible !important;
     opacity: 1 !important;
 }
 
-.cvio-table-wrapper {
+.chartivio-table-wrapper {
     overflow-x: auto;
     overflow-y: auto;
     width: 100%;
@@ -358,42 +358,42 @@
     flex: 0 0 auto !important;
 }
 
-table.cvio-table {
+table.chartivio-table {
     display: table !important;
     visibility: visible !important;
     width: 100% !important;
 }
 
-table.cvio-table th,
-table.cvio-table td {
+table.chartivio-table th,
+table.chartivio-table td {
     display: table-cell !important;
     visibility: visible !important;
 }
 
-table.cvio-table th:last-child {
+table.chartivio-table th:last-child {
     display: table-cell !important;
     visibility: visible !important;
 }
 
-.cvio-table-wrapper::-webkit-scrollbar {
+.chartivio-table-wrapper::-webkit-scrollbar {
     width: 8px;
     height: 8px;
 }
 
-.cvio-table-wrapper::-webkit-scrollbar-track {
+.chartivio-table-wrapper::-webkit-scrollbar-track {
     background: #f1f5f9;
 }
 
-.cvio-table-wrapper::-webkit-scrollbar-thumb {
+.chartivio-table-wrapper::-webkit-scrollbar-thumb {
     background: #cbd5e1;
     border-radius: 4px;
 }
 
-.cvio-table-wrapper::-webkit-scrollbar-thumb:hover {
+.chartivio-table-wrapper::-webkit-scrollbar-thumb:hover {
     background: var(--dc-primary);
 }
 
-table.cvio-table {
+table.chartivio-table {
     width: max-content !important;
     min-width: 100% !important;
     border-collapse: collapse !important;
@@ -403,7 +403,7 @@ table.cvio-table {
     border: none !important;
 }
 
-table.cvio-table thead th {
+table.chartivio-table thead th {
     position: sticky;
     top: 0;
     z-index: 10;
@@ -411,8 +411,8 @@ table.cvio-table thead th {
     box-shadow: 0 1px 0 #cbd5e1;
 }
 
-table.cvio-table th,
-table.cvio-table td {
+table.chartivio-table th,
+table.chartivio-table td {
     padding: 8px 10px;
     box-sizing: border-box;
     min-width: 160px;
@@ -422,7 +422,7 @@ table.cvio-table td {
     background-clip: padding-box;
 }
 
-table.cvio-table th {
+table.chartivio-table th {
     font-weight: 600;
     color: #475569;
     font-size: 11px;
@@ -432,21 +432,21 @@ table.cvio-table th {
     letter-spacing: 0.05em;
 }
 
-table.cvio-table tr th:first-child,
-table.cvio-table tr td:first-child {
+table.chartivio-table tr th:first-child,
+table.chartivio-table tr td:first-child {
     border-left: none !important;
 }
 
-table.cvio-table tr th:last-child,
-table.cvio-table tr td:last-child {
+table.chartivio-table tr th:last-child,
+table.chartivio-table tr td:last-child {
     border-right: none !important;
 }
 
-table.cvio-table thead tr th {
+table.chartivio-table thead tr th {
     border-top: none !important;
 }
 
-table.cvio-table tbody tr:last-child td {
+table.chartivio-table tbody tr:last-child td {
     border-bottom: none !important;
 }
 
@@ -476,7 +476,7 @@ table.cvio-table tbody tr:last-child td {
     border-right: none;
 }
 
-table.cvio-table input {
+table.chartivio-table input {
     width: 100% !important;
     display: block !important;
     box-sizing: border-box !important;
@@ -491,13 +491,13 @@ table.cvio-table input {
     opacity: 1 !important;
 }
 
-table.cvio-table input:focus {
+table.chartivio-table input:focus {
     outline: none;
     border-color: var(--dc-primary);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
 }
 
-.cvio-delete-row {
+.chartivio-delete-row {
     color: #ef4444 !important;
     cursor: pointer !important;
     padding: 12px !important;
@@ -509,27 +509,27 @@ table.cvio-table input:focus {
     opacity: 1 !important;
 }
 
-.cvio-delete-row:hover {
+.chartivio-delete-row:hover {
     background: #fef2f2;
 }
 
-.cvio-col-control {
+.chartivio-col-control {
     position: relative !important;
     width: 100% !important;
     display: block !important;
 }
 
-.cvio-col-control input {
+.chartivio-col-control input {
     padding-right: 28px !important;
 }
 
-table.cvio-table th .cvio-col-control {
+table.chartivio-table th .chartivio-col-control {
     display: block !important;
     width: 100% !important;
     position: relative !important;
 }
 
-.cvio-delete-col {
+.chartivio-delete-col {
     position: absolute !important;
     right: 6px !important;
     top: 50% !important;
@@ -553,12 +553,12 @@ table.cvio-table th .cvio-col-control {
     justify-content: center;
 }
 
-.cvio-delete-col:hover {
+.chartivio-delete-col:hover {
     background: #fee2e2 !important;
     color: #dc2626 !important;
 }
 
-.cvio-setting-row {
+.chartivio-setting-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -566,11 +566,11 @@ table.cvio-table th .cvio-col-control {
     border-bottom: 1px solid #f1f5f9;
 }
 
-.cvio-setting-row:last-child {
+.chartivio-setting-row:last-child {
     border-bottom: none;
 }
 
-.cvio-setting-label {
+.chartivio-setting-label {
     font-weight: 600;
     color: #475569;
 }
@@ -584,12 +584,12 @@ table.cvio-table th .cvio-col-control {
 }
 
 @media (max-width: 1000px) {
-    .cvio-split-container {
+    .chartivio-split-container {
         flex-direction: column;
         height: auto !important;
     }
 
-    .cvio-preview-panel {
+    .chartivio-preview-panel {
         flex: 0 0 auto;
         width: auto;
         border-right: none;
@@ -597,22 +597,22 @@ table.cvio-table th .cvio-col-control {
         padding: 20px;
     }
 
-    .cvio-chart-container {
+    .chartivio-chart-container {
         max-width: 100%;
         margin: 0 auto;
     }
 
-    .cvio-settings-panel {
+    .chartivio-settings-panel {
         flex: 1 0 auto;
         min-height: 500px;
     }
 
-    .cvio-main-header {
+    .chartivio-main-header {
         flex-wrap: wrap;
         gap: 10px;
     }
 
-    .cvio-type-selector-inline {
+    .chartivio-type-selector-inline {
         margin-left: 0;
         width: 100%;
         justify-content: space-between;
@@ -625,7 +625,7 @@ table.cvio-table th .cvio-col-control {
     display: none !important;
 }
 
-.cvio-source-panel {
+.chartivio-source-panel {
     display: none;
     flex-direction: column;
     animation: dcFadeIn 0.3s ease;
@@ -643,7 +643,7 @@ table.cvio-table th .cvio-col-control {
     }
 }
 
-.cvio-data-source-selector {
+.chartivio-data-source-selector {
     margin-bottom: 20px;
     padding: 15px;
     background: #f8fafc;
@@ -654,14 +654,14 @@ table.cvio-table th .cvio-col-control {
     gap: 15px;
 }
 
-.cvio-data-source-selector label {
+.chartivio-data-source-selector label {
     font-weight: 600;
     color: var(--dc-muted);
     margin: 0;
     white-space: nowrap;
 }
 
-.cvio-data-source-selector select {
+.chartivio-data-source-selector select {
     flex: 1;
     padding: 10px 32px 10px 14px;
     border-radius: 8px;
@@ -677,7 +677,7 @@ table.cvio-table th .cvio-col-control {
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-.cvio-data-source-selector select:focus {
+.chartivio-data-source-selector select:focus {
     outline: none;
     border-color: var(--dc-primary);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -690,46 +690,46 @@ table.cvio-table th .cvio-col-control {
     margin: 20px auto;
 }
 
-.cvio-page-title {
+.chartivio-page-title {
     font-size: 28px;
     font-weight: 700;
     color: #1e293b;
     margin-bottom: 30px;
 }
 
-.cvio-guide-container {
+.chartivio-guide-container {
     background: #fff;
     border-radius: 12px;
     padding: 40px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.cvio-guide-section.cvio-intro {
+.chartivio-guide-section.chartivio-intro {
     text-align: center;
     margin-bottom: 50px;
 }
 
-.cvio-intro h2 {
+.chartivio-intro h2 {
     font-size: 24px;
     color: #0f172a;
     margin-bottom: 10px;
 }
 
-.cvio-intro p {
+.chartivio-intro p {
     font-size: 16px;
     color: #64748b;
     max-width: 600px;
     margin: 0 auto;
 }
 
-.cvio-guide-grid {
+.chartivio-guide-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 30px;
     margin-bottom: 50px;
 }
 
-.cvio-guide-card {
+.chartivio-guide-card {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 8px;
@@ -738,13 +738,13 @@ table.cvio-table th .cvio-col-control {
     transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.cvio-guide-card:hover {
+.chartivio-guide-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     border-color: #cbd5e1;
 }
 
-.cvio-step-icon {
+.chartivio-step-icon {
     width: 40px;
     height: 40px;
     background: #3b82f6;
@@ -758,42 +758,42 @@ table.cvio-table th .cvio-col-control {
     margin-bottom: 15px;
 }
 
-.cvio-guide-card h3 {
+.chartivio-guide-card h3 {
     font-size: 18px;
     font-weight: 600;
     color: #1e293b;
     margin: 0 0 10px 0;
 }
 
-.cvio-guide-card p {
+.chartivio-guide-card p {
     color: #475569;
     font-size: 14px;
     line-height: 1.6;
     margin: 0;
 }
 
-.cvio-guide-card ul {
+.chartivio-guide-card ul {
     margin: 10px 0 0 15px;
     list-style-type: disc;
     color: #475569;
     font-size: 14px;
 }
 
-.cvio-guide-details {
+.chartivio-guide-details {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 30px;
     margin-bottom: 40px;
 }
 
-.cvio-detail-box {
+.chartivio-detail-box {
     background: #eff6ff;
     border: 1px solid #bfdbfe;
     border-radius: 8px;
     padding: 20px;
 }
 
-.cvio-detail-box h3 {
+.chartivio-detail-box h3 {
     display: flex;
     align-items: center;
     gap: 10px;
@@ -802,28 +802,28 @@ table.cvio-table th .cvio-col-control {
     margin: 0 0 10px 0;
 }
 
-.cvio-detail-box p {
+.chartivio-detail-box p {
     color: #1e3a8a;
     font-size: 14px;
     margin: 0;
     line-height: 1.5;
 }
 
-.cvio-action-area {
+.chartivio-action-area {
     text-align: center;
     margin-top: 40px;
     border-top: 1px solid #e2e8f0;
     padding-top: 40px;
 }
 
-.cvio-big-btn {
+.chartivio-big-btn {
     font-size: 16px !important;
     padding: 10px 30px !important;
     height: auto !important;
 }
 
 @media (max-width: 768px) {
-    .cvio-guide-details {
+    .chartivio-guide-details {
         grid-template-columns: 1fr;
     }
 }

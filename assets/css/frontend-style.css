@@ -7,23 +7,23 @@
 }
 
 /* Chartivio Frontend Styles */
-.cvio-shortcode-wrapper {
+.chartivio-shortcode-wrapper {
     margin-bottom: 30px;
 }
 
-.cvio-inner {
+.chartivio-inner {
     margin: 0 auto;
     text-align: left;
 }
 
-.cvio-title {
+.chartivio-title {
     margin: 0 0 15px 0;
     font-size: 1.25rem;
     font-weight: 600;
     color: #1e293b;
 }
 
-.cvio-container {
+.chartivio-container {
     position: relative;
     width: 100%;
     background: #ffffff;
@@ -33,7 +33,7 @@
     box-sizing: border-box;
 }
 
-.cvio-container canvas {
+.chartivio-container canvas {
     display: block;
     width: 100% !important;
     height: auto !important;

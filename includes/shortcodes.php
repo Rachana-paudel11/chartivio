@@ -75,64 +75,29 @@ function chartivio_render_shortcode($atts)
     $inner_style = "width: " . esc_attr($atts['width']) . "; max-width: " . esc_attr($atts['max_width']) . "; margin: 0 auto; text-align: left;";
     $chart_container_style = "position: relative; height: " . esc_attr($atts['height']) . "; width: 100%;";
 
-    $output = '<div class="cvio-shortcode-wrapper" style="margin-bottom: 30px;">';
-    $output .= '<div class="cvio-inner" style="' . $inner_style . '">';
-    $output .= '<h3 class="cvio-title" style="margin: 0 0 15px 0; font-size: 1.25rem; font-weight: 600; color: #1e293b;">' . esc_html($post->post_title) . '</h3>';
-    $output .= '<div class="cvio-container" style="' . $chart_container_style . '">';
+    $output = '<div class="chartivio-shortcode-wrapper" style="margin-bottom: 30px;">';
+    $output .= '<div class="chartivio-inner" style="' . $inner_style . '">';
+    $output .= '<h3 class="chartivio-title" style="margin: 0 0 15px 0; font-size: 1.25rem; font-weight: 600; color: #1e293b;">' . esc_html($post->post_title) . '</h3>';
+    $output .= '<div class="chartivio-container" style="' . $chart_container_style . '">';
     $output .= '<canvas id="' . esc_attr($unique_id) . '" data-config="' . esc_attr(wp_json_encode($config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) . '" style="display: block; max-width: 100%; max-height: 100%;"></canvas>';
     $output .= '</div>';
     $output .= '</div>';
     $output .= '</div>';
 
-    // Inline script for chart initialization (content-specific, must be inline)
-    // This is acceptable per WordPress.org guidelines for dynamic, content-specific scripts
-    $output .= '<script type="text/javascript">
-    (function(){
-        var init = function() {
-            var canvas = document.getElementById("' . esc_js($unique_id) . '");
-            if (!canvas) {
-                console.error("Canvas element not found: ' . esc_js($unique_id) . '");
-                return;
-            }
-            console.log("Canvas found, initializing...");
-            
-            var container = canvas.parentElement;
-            if (container) {
-                var rect = container.getBoundingClientRect();
-                canvas.width = rect.width || 800;
-                canvas.height = rect.height || 400;
-                console.log("Canvas dimensions set:", canvas.width, "x", canvas.height);
-            } else {
-                canvas.width = 800;
-                canvas.height = 400;
-                console.log("No container found, using fallback dimensions");
-            }
-            
-            var config = ' . wp_json_encode($config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ';
-            console.log("Chart config:", config);
-            
-            if(typeof chartivio_init_frontend === "function") { 
-                console.log("Calling chartivio_init_frontend with config", config);
-                chartivio_init_frontend(config); 
-            } else {
-                console.error("chartivio_init_frontend is not defined yet, retrying in 200ms");
-                setTimeout(function() {
-                    if(typeof chartivio_init_frontend === "function") {
-                        console.log("Retrying chartivio_init_frontend");
-                        chartivio_init_frontend(config);
-                    } else {
-                        console.error("chartivio_init_frontend still not available");
-                    }
-                }, 200);
-            }
-        };
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", init);
-        } else {
-            setTimeout(init, 50);
-        }
-    })();
-    </script>';
+    /**
+     * Dynamic Chart Initialization via wp_add_inline_script()
+     * 
+     * Per WordPress.org Plugin Guidelines:
+     * https://developer.wordpress.org/plugins/javascript/
+     * 
+     * Using wp_add_inline_script() to handle inline JavaScript for dynamic,
+     * content-specific data (unique canvas ID and chart configuration per instance).
+     * This is the proper WordPress-compliant approach recommended by the plugin review.
+     */
+    wp_add_inline_script(
+        'chartivio-frontend',
+        'chartivio_init_chart(' . wp_json_encode($config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) . ', ' . wp_json_encode($unique_id) . ');'
+    );
 
     return $output;
 }
