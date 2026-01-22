@@ -4,7 +4,7 @@ Tags: chart, charts, data visualization, pie chart, bar chart
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -50,12 +50,20 @@ Absolutely. The charts use Chart.js which is responsive by default, and the plug
 
 This plugin includes the following third-party library:
 
-* Chart.js v4.4.7 - Licensed under MIT License
+* Chart.js v4.5.1 - Licensed under MIT License
 * Source: https://www.chartjs.org/
 * Bundled locally in: assets/js/chartjs/chart.umd.min.js
 * Used for rendering interactive charts
 
 == Changelog ==
+
+= 1.0.2 =
+* Updated: Chart.js upgraded to v4.5.1 (latest stable release)
+* Fixed: WordPress.org compliance - replaced inline scripts with wp_add_inline_script()
+* Fixed: Prefix consistency - all variables now use 'chartivio_' prefix
+* Enhanced: Axis title fields now hide for pie/doughnut charts (UI improvement)
+* Enhanced: Manual table - sticky action column and improved focus behavior
+* Improved: Chart initialization with auto-init fallback for better compatibility
 
 = 1.0.1 =
 * Security: Fixed XSS vulnerability in shortcode callback (added proper JSON escaping)
