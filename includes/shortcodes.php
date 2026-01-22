@@ -143,8 +143,8 @@ add_shortcode('chartivio', 'chartivio_render_shortcode');
  */
 function chartivio_frontend_assets()
 {
-    // Register Chart.js v4.4.7 from local files
-    wp_register_script('chartjs', CHARTIVIO_URL . 'assets/js/chartjs/chart.umd.min.js', array(), '4.4.7', true);
+    // Register Chart.js v4.5.1 from local files
+    wp_register_script('chartjs', CHARTIVIO_URL . 'assets/js/chartjs/chart.umd.min.js', array(), '4.5.1', true);
 
     // Register plugin frontend logic, dependent on Chart.js
     wp_register_script('chartivio-frontend', CHARTIVIO_URL . 'assets/js/chartivio.js', array('chartjs'), '1.0.1', true);
