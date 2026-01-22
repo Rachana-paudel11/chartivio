@@ -450,7 +450,7 @@ table.chartivio-table tbody tr:last-child td {
     border-bottom: none !important;
 }
 
-#dc-manual-table th:last-child {
+#chartivio-manual-table th:last-child {
     position: sticky !important;
     right: 0 !important;
     top: 0 !important;
@@ -464,7 +464,7 @@ table.chartivio-table tbody tr:last-child td {
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.05);
 }
 
-#dc-manual-table td:last-child {
+#chartivio-manual-table td:last-child {
     position: sticky !important;
     right: 0 !important;
     z-index: 5 !important;

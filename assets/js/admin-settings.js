@@ -121,7 +121,10 @@ function chartivio_add_row() {
 
     // Smart Focus: Auto-focus the first field of the new row after scroll
     setTimeout(function () {
-        $newRow.find('input:first').focus();
+        var $firstInput = $newRow.find('input:first');
+        if ($firstInput.length) {
+            $firstInput.focus().select();
+        }
     }, 50);
 }
 /**
@@ -186,9 +189,13 @@ function chartivio_add_column() {
     var $wrapper = jQuery('.chartivio-table-wrapper');
     $wrapper.animate({ scrollLeft: $wrapper.prop("scrollWidth") }, 500);
 
-    // Smart Focus: Auto-focus and select text in the new column header for easy renaming
+    // Smart Focus: place caret in the first cell of the new column (fallback to header)
     setTimeout(function () {
-        $newTh.find('input').focus().select();
+        var $firstRowCell = jQuery('.chartivio-manual-table tbody tr:first td').eq(colIdx);
+        var $targetInput = $firstRowCell.length ? $firstRowCell.find('input') : $newTh.find('input');
+        if ($targetInput.length) {
+            $targetInput.focus().select();
+        }
     }, 50);
 }
 
