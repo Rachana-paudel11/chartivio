@@ -329,13 +329,13 @@ function chartivio_render_main_box($post)
                                     <option value="forest" <?php selected($palette_key, 'forest'); ?>>Forest</option>
                                 </select>
                             </div>
-                            <div class="chartivio-setting-row" id="chartivio-xaxis-row">
+                            <div class="chartivio-setting-row chartivio-xaxis-row" id="chartivio-xaxis-row">
                                 <span class="chartivio-setting-label">X-Axis Title</span>
                                 <input type="text" name="chartivio_xaxis_label" id="chartivio_xaxis_label"
                                     value="<?php echo esc_attr($xaxis_label); ?>" style="width: 50% !important;"
                                     oninput="chartivio_update_live_preview(); chartivio_local_autosave();">
                             </div>
-                            <div class="chartivio-setting-row" id="chartivio-yaxis-row">
+                            <div class="chartivio-setting-row chartivio-yaxis-row" id="chartivio-yaxis-row">
                                 <span class="chartivio-setting-label">Y-Axis Title</span>
                                 <input type="text" name="chartivio_yaxis_label" id="chartivio_yaxis_label"
                                     value="<?php echo esc_attr($yaxis_label); ?>" style="width: 50% !important;"
