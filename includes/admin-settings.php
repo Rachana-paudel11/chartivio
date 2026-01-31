@@ -201,7 +201,7 @@ function chartivio_render_main_box($post)
                     </div>
 
                     <!-- CSV Panel -->
-                    <div class="cvio-card cvio-source-panel" id="cvio-csv-panel"
+                    <div class="chartivio-card chartivio-source-panel chartivio-csv-panel" id="chartivio-csv-panel"
                         style="<?php echo ($active_source === 'csv') ? 'display:flex;' : 'display:none;'; ?>">
                         <div class="chartivio-card-header">
                             <span>CSV Configuration</span>
@@ -239,7 +239,7 @@ function chartivio_render_main_box($post)
                     </div>
 
                     <!-- Manual Panel -->
-                    <div class="cvio-card cvio-source-panel" id="cvio-manual-panel"
+                    <div class="chartivio-card chartivio-source-panel chartivio-manual-panel" id="chartivio-manual-panel"
                         style="<?php echo ($active_source === 'manual') ? 'display:flex;' : 'display:none;'; ?>">
                         <div class="chartivio-card-header">
                             <span>Manual Data Table</span>
