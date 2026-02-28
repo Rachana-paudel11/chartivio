@@ -142,26 +142,33 @@ function chartivio_init_frontend(config) {
 
         // Apply colors and performance optimizations to datasets
         ds.forEach((set, i) => {
-            let colors = (ds.length > 1) ? palette[i % palette.length] : l.map((_, j) => palette[j % palette.length]);
+            const colorArray = l.map((_, j) => palette[j % palette.length] || '#ccc');
+            const singleColor = palette[i % palette.length] || '#ccc';
 
             // Optimization for large data
             set.normalized = true;
             set.spanGaps = false;
 
             if (realType === 'pie' || realType === 'doughnut') {
-                set.backgroundColor = colors;
+                set.backgroundColor = colorArray;
                 set.borderColor = '#ffffff';
                 set.borderWidth = 2;
             } else if (realType === 'bar') {
-                set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : colors;
-                set.borderColor = (ds.length > 1) ? palette[i % palette.length] : colors;
+                if (ds.length > 1) {
+                    set.backgroundColor = singleColor;
+                    set.borderColor = singleColor;
+                } else {
+                    set.backgroundColor = colorArray;
+                    set.borderColor = colorArray;
+                }
                 set.borderWidth = 1;
             } else if (realType === 'line') {
-                set.backgroundColor = (ds.length > 1) ? palette[i % palette.length] : palette[0];
-                set.borderColor = (ds.length > 1) ? palette[i % palette.length] : palette[0];
+                set.backgroundColor = singleColor;
+                set.borderColor = singleColor;
                 set.borderWidth = 2;
                 set.fill = false;
                 set.pointBackgroundColor = '#fff';
+                set.pointBorderColor = singleColor;
                 // Performance: disable points for large datasets
                 if (l.length > 200) {
                     set.pointRadius = 0;
