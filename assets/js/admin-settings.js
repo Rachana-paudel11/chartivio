@@ -28,7 +28,7 @@ jQuery(document).ready(function () {
 
 // Normalized snapshot of saved post meta for client-side comparisons
 var chartivio_saved_snapshot = chartivio_admin_vars.saved_snapshot;
-var chartivio_palettes = { 'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
+var chartivio_palettes = { 'default': ['#2271b1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
 
 function chartivio_parse_csv(str) {
     var arr = [];
@@ -384,7 +384,7 @@ async function chartivio_update_live_preview() {
         let chartType = jQuery('#chartivio_type').val() || 'pie';
         let legendPos = jQuery('#chartivio_legend_pos').val() || 'top';
         let paletteKey = jQuery('#chartivio_palette').val() || 'default';
-        let palette = (typeof chartivio_palettes !== 'undefined' && chartivio_palettes[paletteKey]) ? chartivio_palettes[paletteKey] : ((typeof chartivio_palettes !== 'undefined') ? chartivio_palettes['default'] : ['#3b82f6']);
+        let palette = (typeof chartivio_palettes !== 'undefined' && chartivio_palettes[paletteKey]) ? chartivio_palettes[paletteKey] : ((typeof chartivio_palettes !== 'undefined') ? chartivio_palettes['default'] : ['#2271b1']);
         let xaxisLabel = jQuery('#chartivio_xaxis_label').val() || '';
         let yaxisLabel = jQuery('#chartivio_yaxis_label').val() || '';
 

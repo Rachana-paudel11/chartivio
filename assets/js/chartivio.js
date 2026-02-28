@@ -5,15 +5,15 @@
  */
 function chartivio_init_chart(config, canvasId) {
     console.log('chartivio_init_chart called with config:', config);
-    
-    var init = function() {
+
+    var init = function () {
         var canvas = document.getElementById(canvasId);
         if (!canvas) {
             console.error('Canvas element not found:', canvasId);
             return;
         }
         console.log('Canvas found, initializing...');
-        
+
         var container = canvas.parentElement;
         if (container) {
             var rect = container.getBoundingClientRect();
@@ -25,17 +25,17 @@ function chartivio_init_chart(config, canvasId) {
             canvas.height = 400;
             console.log('No container found, using fallback dimensions');
         }
-        
+
         config.id = canvasId;
         console.log('Chart config:', config);
-        
-        if(typeof chartivio_init_frontend === 'function') { 
+
+        if (typeof chartivio_init_frontend === 'function') {
             console.log('Calling chartivio_init_frontend with config', config);
-            chartivio_init_frontend(config); 
+            chartivio_init_frontend(config);
         } else {
             console.error('chartivio_init_frontend is not defined yet, retrying in 200ms');
-            setTimeout(function() {
-                if(typeof chartivio_init_frontend === 'function') {
+            setTimeout(function () {
+                if (typeof chartivio_init_frontend === 'function') {
                     console.log('Retrying chartivio_init_frontend');
                     chartivio_init_frontend(config);
                 } else {
@@ -44,7 +44,7 @@ function chartivio_init_chart(config, canvasId) {
             }, 200);
         }
     };
-    
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
@@ -53,7 +53,7 @@ function chartivio_init_chart(config, canvasId) {
 }
 
 var chartivio_palettes = {
-    'default': ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
+    'default': ['#2271b1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'],
     'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'],
     'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'],
     'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'],
@@ -87,24 +87,24 @@ function chartivio_frontend_parse_csv(str) {
  */
 function chartivio_init_frontend(config) {
     console.log('chartivio_init_frontend called with config:', config);
-    
+
     // Ensure Chart.js is available before initializing
     if (typeof Chart === 'undefined') {
         console.error('Chart.js library not loaded yet. Retrying in 100ms...');
-        setTimeout(function() {
+        setTimeout(function () {
             chartivio_init_frontend(config);
         }, 100);
         return;
     }
-    
+
     var canvas = document.getElementById(config.id);
     if (!canvas) {
         console.error('Canvas element not found with ID:', config.id);
         return;
     }
-    
+
     console.log('Canvas element found:', canvas);
-    
+
     // Ensure canvas has proper dimensions (Canvas rendering requires actual width/height attributes)
     if (!canvas.width || canvas.width === 0) {
         var container = canvas.parentElement;
@@ -119,15 +119,15 @@ function chartivio_init_frontend(config) {
             canvas.height = 400;
         }
     }
-    
+
     console.log('Canvas final dimensions:', canvas.width, 'x', canvas.height);
-    
+
     var ctx = canvas.getContext('2d');
     if (!ctx) {
         console.error('Failed to get 2D context from canvas');
         return;
     }
-    
+
     var palette = chartivio_palettes[config.palette] || chartivio_palettes['default'];
 
     var drawChart = (l, ds) => {
@@ -236,7 +236,7 @@ function chartivio_init_frontend(config) {
                     datasets[c].data.push(parseFloat((row[c + 1] || '0').replace(/,/g, '')) || 0);
                 }
             }
-            
+
             if (labels.length > 0 && datasets.length > 0) {
                 drawChart(labels, datasets);
             } else {
@@ -247,35 +247,35 @@ function chartivio_init_frontend(config) {
         console.log('Using manual data:', config.manualData);
         let labels = [], datasets = [];
         let raw = config.manualData;
-        
+
         if (raw && (Array.isArray(raw) && raw.length > 0 || typeof raw === 'object' && Object.keys(raw).length > 0)) {
             let rows = Array.isArray(raw) ? raw : Object.keys(raw).sort((a, b) => {
                 // Sort numerically if keys are numeric
                 return (isNaN(a) ? 0 : parseInt(a)) - (isNaN(b) ? 0 : parseInt(b));
             }).map(k => raw[k]);
-            
+
             console.log('Processed rows:', rows);
-            
+
             if (rows.length > 0) {
                 // Check if first row is header row or data row
                 let firstRow = rows[0];
-                
+
                 if (firstRow && Array.isArray(firstRow) && firstRow.length > 0) {
                     // Columnar format (first row is headers)
                     const headers = firstRow;
                     console.log('Headers:', headers);
-                    
+
                     for (let i = 1; i < headers.length; i++) {
                         const headerLabel = headers[i] || 'Series ' + i;
                         datasets.push({ label: headerLabel.toString(), data: [] });
                     }
-                    
+
                     for (let r = 1; r < rows.length; r++) {
                         const row = rows[r];
                         if (!Array.isArray(row) || row.length === 0) continue;
-                        
+
                         labels.push((row[0] || '').toString().trim());
-                        
+
                         for (let c = 1; c < row.length; c++) {
                             const value = parseFloat(row[c]) || 0;
                             if (datasets[c - 1]) {
@@ -302,9 +302,9 @@ function chartivio_init_frontend(config) {
         } else {
             console.warn('No manual data provided or data is empty');
         }
-        
+
         console.log('Final data - labels:', labels, 'datasets:', datasets);
-        
+
         if (labels.length > 0 && datasets.length > 0 && datasets[0].data.length > 0) {
             drawChart(labels, datasets);
         } else {
@@ -316,10 +316,10 @@ function chartivio_init_frontend(config) {
 
 
 // Auto-init fallback: initialize any canvas with data-config if inline init missing
-(function(){
-    var boot = function(){
+(function () {
+    var boot = function () {
         var nodes = document.querySelectorAll('canvas[data-config]');
-        nodes.forEach(function(node){
+        nodes.forEach(function (node) {
             if (node.dataset.chartivioInitialized) return;
             var raw = node.getAttribute('data-config');
             if (!raw) return;
@@ -330,7 +330,7 @@ function chartivio_init_frontend(config) {
                 if (!id) return;
                 node.dataset.chartivioInitialized = '1';
                 chartivio_init_chart(cfg, id);
-            } catch(e){
+            } catch (e) {
                 console.error('chartivio auto-init parse error', e);
             }
         });

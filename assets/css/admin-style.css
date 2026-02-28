@@ -3,7 +3,7 @@
  */
 
 :root {
-    --dc-primary: #3b82f6;
+    --dc-primary: #2271b1;
     --dc-border: #e2e8f0;
     --dc-bg: #f8fafc;
     --dc-text: #1e293b;
@@ -747,7 +747,7 @@ table.chartivio-table th .chartivio-col-control {
 .chartivio-step-icon {
     width: 40px;
     height: 40px;
-    background: #3b82f6;
+    background: #2271b1;
     color: #fff;
     border-radius: 50%;
     display: flex;
