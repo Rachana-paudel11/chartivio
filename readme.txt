@@ -4,7 +4,7 @@ Tags: chart, charts, data visualization, pie chart, bar chart
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -56,6 +56,10 @@ This plugin includes the following third-party library:
 * Used for rendering interactive charts
 
 == Changelog ==
+
+= 1.0.4 =
+* Fixed: "Publishing failed. The response is not a valid JSON response" error when saving charts
+* Improved: AJAX save handler stability against output from other plugins
 
 = 1.0.3 =
 * Fixed: CSV import related issue
