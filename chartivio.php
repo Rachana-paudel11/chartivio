@@ -69,6 +69,19 @@ function chartivio_register_how_to_use_page()
 }
 
 /**
+ * Force Classic Editor (disable Gutenberg) for chartivio post type.
+ * This is required because the plugin has its own custom meta box UI.
+ * Without this, Gutenberg tries to save via REST API and fails with
+ * "Publishing failed. The response is not a valid JSON response."
+ */
+add_filter('use_block_editor_for_post_type', function ($use_block_editor, $post_type) {
+    if ($post_type === 'chartivio') {
+        return false;
+    }
+    return $use_block_editor;
+}, 10, 2);
+
+/**
  * Force 1-column layout for chartivio admin screen
  */
 add_filter('get_user_option_screen_layout_chartivio', function ($columns) {
@@ -79,7 +92,7 @@ add_filter('get_user_option_screen_layout_chartivio', function ($columns) {
  * Hide Screen Options tab for chartivio admin screen
  */
 add_filter('screen_options_show_screen', function ($show_screen, $screen) {
-    if ($screen->post_type === 'chartivio') {
+    if ($screen && isset($screen->post_type) && $screen->post_type === 'chartivio') {
         return false;
     }
     return $show_screen;
@@ -97,7 +110,7 @@ function chartivio_admin_list_assets($hook)
 
         wp_enqueue_style('chartivio-admin-style', plugins_url('assets/css/admin-style.css', __FILE__), array(), '1.0.1');
         wp_enqueue_script('chartivio-admin-list', plugins_url('assets/js/admin-list.js', __FILE__), array('jquery'), '1.0.1', true);
-        wp_localize_script('chartivio-admin-list', 'chartivio_admin_vars', array(
+        wp_localize_script('chartivio-admin-list', 'chartivio_list_vars', array(
             'how_to_use_url' => esc_url(admin_url('edit.php?post_type=chartivio&page=chartivio-how-to-use'))
         ));
     }

@@ -137,9 +137,9 @@ function chartivio_render_main_box($post)
     $xaxis_label = get_post_meta($post->ID, '_chartivio_xaxis_label', true);
     $yaxis_label = get_post_meta($post->ID, '_chartivio_yaxis_label', true);
 
-    wp_nonce_field('chartivio_save_meta', 'chartivio_nonce');
     ?>
     <div class="chartivio-admin-wrapper">
+        <?php wp_nonce_field('chartivio_save_meta', 'chartivio_nonce'); ?>
         <div class="chartivio-main-header">
             <div class="chartivio-chart-type-container">
                 <label for="chartivio_type">
@@ -211,7 +211,8 @@ function chartivio_render_main_box($post)
                             <div style="flex-shrink: 0; margin-bottom: 12px;">
                                 <div style="display:flex; gap:8px; margin-bottom: 12px;">
                                     <input type="text" name="chartivio_csv_url" id="chartivio_csv_url"
-                                        class="chartivio-input-text" style="flex:1;" value="<?php echo esc_url($csv_url); ?>"
+                                        class="chartivio-input-text" style="flex:1;"
+                                        value="<?php echo esc_url($csv_url); ?>"
                                         oninput="chartivio_update_live_preview(); chartivio_local_autosave();">
                                     <button type="button" class="button" onclick="chartivio_BrowseCSV()">Media</button>
                                 </div>
@@ -221,7 +222,8 @@ function chartivio_render_main_box($post)
                                     <div id="chartivio-csv-preview-label" class="chartivio-csv-preview-label"
                                         style="font-weight: 600; color: #475569; font-size: 12px; text-transform: uppercase; display: none;">
                                         CSV Data Preview</div>
-                                    <button type="button" id="chartivio-csv-view-all-btn" class="button button-small chartivio-csv-view-all-btn"
+                                    <button type="button" id="chartivio-csv-view-all-btn"
+                                        class="button button-small chartivio-csv-view-all-btn"
                                         onclick="chartivio_ToggleCSVViewAll()"
                                         style="display: none; font-size: 11px; padding: 4px 10px; height: auto;">
                                         View All Rows
@@ -229,7 +231,8 @@ function chartivio_render_main_box($post)
                                 </div>
                             </div>
                             <!-- CSV Data Preview Table -->
-                            <div id="chartivio-csv-preview-container" class="chartivio-table-wrapper chartivio-csv-preview-container" style="display: none; ">
+                            <div id="chartivio-csv-preview-container"
+                                class="chartivio-table-wrapper chartivio-csv-preview-container" style="display: none; ">
                                 <table class="chartivio-table chartivio-csv-preview-table" id="chartivio-csv-preview-table">
                                     <thead></thead>
                                     <tbody></tbody>
@@ -344,10 +347,10 @@ function chartivio_render_main_box($post)
                         </div>
                     </div>
                 </div>
-            </div>
-
-
-            <?php
+            </div> <!-- .chartivio-settings-panel -->
+        </div> <!-- .chartivio-split-container -->
+    </div> <!-- .chartivio-admin-wrapper -->
+    <?php
 }
 
 /**
@@ -393,6 +396,13 @@ function chartivio_save_meta_box_data($post_id)
         return;
     if (!current_user_can('edit_post', $post_id))
         return;
+    // Check for revisions
+    if ($parent_id = wp_is_post_revision($post_id)) {
+        $post_id = $parent_id;
+    }
+
+    if (get_post_type($post_id) !== 'chartivio')
+        return;
 
     if (isset($_POST['chartivio_manual_data'])) {
         $manual = chartivio_sanitize_manual_data(map_deep(wp_unslash($_POST['chartivio_manual_data']), 'sanitize_text_field'));
@@ -422,21 +432,37 @@ add_action('save_post', 'chartivio_save_meta_box_data');
  */
 function chartivio_ajax_save_chart()
 {
-    check_ajax_referer('chartivio_save_meta', 'nonce');
+    // Clean any leaked output from other plugins before responding
+    if (ob_get_level() > 0) {
+        ob_clean();
+    }
+
+    // Verify nonce - use wp_verify_nonce instead of check_ajax_referer
+    // so a failure returns proper JSON instead of "-1" which causes "Invalid JSON response"
+    $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
+    if (!wp_verify_nonce($nonce, 'chartivio_save_meta')) {
+        wp_send_json_error(array('message' => 'Security check failed. Please refresh the page and try again.'));
+        return;
+    }
 
     $post_id = isset($_POST['post_id']) ? intval($_POST['post_id']) : 0;
     if (!current_user_can('edit_post', $post_id)) {
-        wp_send_json_error();
+        wp_send_json_error(array('message' => 'Insufficient permissions.'));
+        return;
     }
 
     // Save Manual Data
     $manual_data = array();
     if (isset($_POST['manual_json'])) {
-        $json = json_decode(sanitize_text_field(wp_unslash($_POST['manual_json'])), true);
-        if (!empty($json['headers'])) {
+        $json = json_decode(wp_unslash($_POST['manual_json']), true);
+        if ($json && isset($json['headers']) && is_array($json['headers'])) {
             $manual_data[] = array_map('sanitize_text_field', $json['headers']);
-            foreach ($json['rows'] as $row) {
-                $manual_data[] = array_map('sanitize_text_field', $row);
+            if (isset($json['rows']) && is_array($json['rows'])) {
+                foreach ($json['rows'] as $row) {
+                    if (is_array($row)) {
+                        $manual_data[] = array_map('sanitize_text_field', $row);
+                    }
+                }
             }
         }
     }
@@ -478,5 +504,3 @@ function chartivio_ajax_save_chart()
     wp_send_json_success(array('message' => 'Saved', 'shortcode_html' => $shortcode_html));
 }
 add_action('wp_ajax_chartivio_save_chart', 'chartivio_ajax_save_chart');
-
-
