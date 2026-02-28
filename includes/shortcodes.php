@@ -121,5 +121,3 @@ function chartivio_frontend_assets()
     wp_enqueue_style('chartivio-frontend-style');
 }
 add_action('wp_enqueue_scripts', 'chartivio_frontend_assets');
-
-
