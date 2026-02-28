@@ -883,6 +883,10 @@ function chartivio_quick_save(btn) {
         if (res.success) {
             jQuery('.chartivio-save-status').text('Saved!').css('color', '#10b981').show().delay(2000).fadeOut();
 
+            // Clear autosave so we don't accidentally restore stale data on reload
+            var key = 'chartivio_autosave_' + chartivio_post_id;
+            localStorage.removeItem(key);
+
             // Mark post as NOT dirty to prevent browser "Leave site" warnings
             if (typeof wp !== 'undefined' && wp.autosave && wp.autosave.server) {
                 wp.autosave.server.postChanged = false;

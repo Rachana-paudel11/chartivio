@@ -151,7 +151,7 @@ function chartivio_render_main_box($post)
                     Chart Type
                 </label>
                 <select name="chartivio_type" id="chartivio_type"
-                    onchange="chartivio_update_live_preview(); chartivio_toggle_axis_fields();">
+                    onchange="chartivio_update_live_preview(); chartivio_toggle_axis_fields(); chartivio_local_autosave();">
                     <option value="pie" <?php selected($chart_type, 'pie'); ?>>Pie Chart</option>
                     <option value="doughnut" <?php selected($chart_type, 'doughnut'); ?>>Doughnut</option>
                     <option value="bar" <?php selected($chart_type, 'bar'); ?>>Bar Chart</option>
