@@ -19,6 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define Plugin Constants
+define('CHARTIVIO_VERSION', '1.0.4');
 define('CHARTIVIO_PATH', plugin_dir_path(__FILE__));
 define('CHARTIVIO_URL', plugin_dir_url(__FILE__));
 
@@ -106,10 +107,10 @@ function chartivio_admin_list_assets($hook)
     $screen = get_current_screen();
     if ($screen && ($screen->id === 'edit-chartivio' || $screen->id === 'chartivio_page_chartivio-how-to-use')) {
         // Enqueue Google Fonts
-        wp_enqueue_style('chartivio-google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', array(), '1.0.1');
+        wp_enqueue_style('chartivio-google-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap', array(), CHARTIVIO_VERSION);
 
-        wp_enqueue_style('chartivio-admin-style', plugins_url('assets/css/admin-style.css', __FILE__), array(), '1.0.1');
-        wp_enqueue_script('chartivio-admin-list', plugins_url('assets/js/admin-list.js', __FILE__), array('jquery'), '1.0.1', true);
+        wp_enqueue_style('chartivio-admin-style', plugins_url('assets/css/admin-style.css', __FILE__), array(), CHARTIVIO_VERSION);
+        wp_enqueue_script('chartivio-admin-list', plugins_url('assets/js/admin-list.js', __FILE__), array('jquery'), CHARTIVIO_VERSION, true);
         wp_localize_script('chartivio-admin-list', 'chartivio_list_vars', array(
             'how_to_use_url' => esc_url(admin_url('edit.php?post_type=chartivio&page=chartivio-how-to-use'))
         ));

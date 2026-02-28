@@ -112,10 +112,10 @@ function chartivio_frontend_assets()
     wp_register_script('chartjs', CHARTIVIO_URL . 'assets/js/chartjs/chart.umd.min.js', array(), '4.5.1', true);
 
     // Register plugin frontend logic, dependent on Chart.js
-    wp_register_script('chartivio-frontend', CHARTIVIO_URL . 'assets/js/chartivio.js', array('chartjs'), '1.0.1', true);
+    wp_register_script('chartivio-frontend', CHARTIVIO_URL . 'assets/js/chartivio.js', array('chartjs'), CHARTIVIO_VERSION, true);
 
     // Register Frontend CSS
-    wp_register_style('chartivio-frontend-style', CHARTIVIO_URL . 'assets/css/frontend-style.css', array(), '1.0.0');
+    wp_register_style('chartivio-frontend-style', CHARTIVIO_URL . 'assets/css/frontend-style.css', array(), CHARTIVIO_VERSION);
 
     // Always enqueue CSS so it's available whenever shortcode is used
     wp_enqueue_style('chartivio-frontend-style');

@@ -38,9 +38,9 @@ function chartivio_admin_assets($hook)
             wp_enqueue_media();
             // Enqueue Chart.js v4.5.1 from local files
             wp_enqueue_script('chartjs', CHARTIVIO_URL . 'assets/js/chartjs/chart.umd.min.js', array(), '4.5.1', true);
-            wp_enqueue_style('chartivio-admin-style', CHARTIVIO_URL . 'assets/css/admin-style.css', array(), '1.0.1');
+            wp_enqueue_style('chartivio-admin-style', CHARTIVIO_URL . 'assets/css/admin-style.css', array(), CHARTIVIO_VERSION);
 
-            wp_enqueue_script('chartivio-admin-settings', CHARTIVIO_URL . 'assets/js/admin-settings.js', array('jquery', 'chartjs'), '1.0.1', true);
+            wp_enqueue_script('chartivio-admin-settings', CHARTIVIO_URL . 'assets/js/admin-settings.js', array('jquery', 'chartjs'), CHARTIVIO_VERSION, true);
 
             // Prepare Saved Snapshot Data for Localize Script
             $manual_data = get_post_meta($post->ID, '_chartivio_manual_data', true);
