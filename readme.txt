@@ -8,30 +8,37 @@ Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-Chartivio is a simple wordpress charts builder designed for speed, minimalism, and professional data visualization.
+Create professional charts in seconds. Chartivio is a powerful wordpress chart builder designed for speed, minimalism, and high-performance data visualization.
 
 == Description ==
 
 Transform your data into a visual experience. **Chartivio** is a powerful yet user-friendly **wordpress chart builder** that allows you to create and manage professional, **minimalst charts** using a familiar custom post type interface. 
 
-Most **data visualization** tools are either too complex or too heavy; Chartivio bridges that gap by offering a **lightweight charts** solution that prioritizes performance and aesthetics. Whether you are building a business dashboard or a blog infographic, Chartivio provides the **best charts** with zero coding required. 
+Most **data visualization** tools are either too complex or too heavy; Chartivio bridges that gap by offering a **lightweight charts** solution that prioritizes performance and aesthetics. Featuring a modern, split-screen admin UI, you can see your changes in real-time. Whether you are building a business dashboard or a blog infographic, Chartivio provides the **best charts** with zero coding required.
+
+By utilizing **simple wordpress charts**, you ensure your audience stays engaged with data that moves as they scroll, without sacrificing site speed.
+
+== Chart Types available in Chartivio ==
+
+* **Interactive Bar Charts** – Highlight data trends with professional **data visualization**.
+* **Minimalst Line Graphs** – Keep your site fast with a **lightweight charts** design.
+* **Responsive Pie & Doughnut Charts** – Perfectly **responsive charts** that scale for any mobile device.
+* **Dynamic CSV Integration** – The easiest **csv to chart** workflow available for WordPress.
 
 == Installation ==
 
 1. Upload the `chartivio` folder to the `/wp-content/plugins/` directory.
 2. Activate the plugin through the 'Plugins' menu in WordPress.
-3. Go to the 'Chartivio' menu in your sidebar to start creating charts.
+3. Go to the 'Chartivio' menu in your sidebar to start creating your first chart.
+4. Copy the generated shortcode (e.g., `[chartivio id="XX"]`) and paste it into any post or page.
 
 == Frequently Asked Questions ==
 
 = How do I display a chart on my site? =
-Simply create your chart, copy the unique shortcode, and paste it into any Post or Page.
+Simply create your chart, copy the unique shortcode, and paste it into any Post, Page, or Widget area.
 
 = Can I import data from Excel? =
-Yes! Use our **csv to chart** feature by saving your file as a .csv and uploading the URL.
-
-= Are the charts mobile-friendly? =
-Absolutely. Every chart created is a **responsive charts** solution.
+Yes! Use our **csv to chart** feature. Save your Excel file as a .csv, upload it or link the URL, and Chartivio handles the rest.
 
 == Screenshots ==
 
