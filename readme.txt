@@ -40,6 +40,9 @@ Simply create your chart, copy the unique shortcode, and paste it into any Post,
 = Can I import data from Excel? =
 Yes! Use our **csv to chart** feature. Save your Excel file as a .csv, upload it or link the URL, and Chartivio handles the rest.
 
+= How do I make my charts responsive? =
+All charts created with Chartivio are fully responsive by default. They automatically adjust to fit any screen size, from mobile devices to large desktops, ensuring a perfect viewing experience for your audience.
+
 == Screenshots ==
 
 1. **The Live Preview Engine** – Watch your **wordpress charts** update in real-time as you modify data or styling settings.
