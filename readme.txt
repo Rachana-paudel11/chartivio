@@ -33,6 +33,11 @@ Yes! Use our **csv to chart** feature by saving your file as a .csv and uploadin
 = Are the charts mobile-friendly? =
 Absolutely. Every chart created is a **responsive charts** solution.
 
+== Screenshots ==
+
+1. The Live Preview Engine showing a bar chart updating in real-time.
+2. The split-screen Admin UI for easy data entry.
+
 == Third-Party Libraries ==
 
 This plugin includes the following third-party library:
