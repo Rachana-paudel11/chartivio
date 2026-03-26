@@ -6,14 +6,20 @@
     display: none !important;
 }
 
-/* Chartivio Frontend Styles */
+/* =============================================
+   Chartivio Frontend Styles
+   ============================================= */
 .chartivio-shortcode-wrapper {
     margin-bottom: 30px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .chartivio-inner {
     margin: 0 auto;
     text-align: left;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .chartivio-title {
@@ -21,6 +27,7 @@
     font-size: 1.25rem;
     font-weight: 600;
     color: #1e293b;
+    line-height: 1.4;
 }
 
 .chartivio-container {
@@ -31,6 +38,7 @@
     border-radius: 6px;
     padding: 10px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 .chartivio-container canvas {
@@ -39,4 +47,53 @@
     height: auto !important;
     max-width: 100%;
     margin: 0 auto;
+}
+
+/* =============================================
+   Responsive — Tablet (max-width: 768px)
+   Only reduces height for default-height charts
+   (user-specified custom heights are left alone)
+   ============================================= */
+@media (max-width: 768px) {
+    .chartivio-shortcode-wrapper {
+        margin-bottom: 20px;
+    }
+
+    .chartivio-title {
+        font-size: 1.1rem;
+        margin: 0 0 10px 0;
+    }
+
+    /* Target only default-height (400px) containers */
+    .chartivio-container[data-default-height="1"] {
+        height: 300px !important;
+    }
+
+    .chartivio-container {
+        padding: 8px;
+        border-radius: 4px;
+    }
+}
+
+/* =============================================
+   Responsive — Mobile (max-width: 480px)
+   ============================================= */
+@media (max-width: 480px) {
+    .chartivio-shortcode-wrapper {
+        margin-bottom: 15px;
+    }
+
+    .chartivio-title {
+        font-size: 1rem;
+        margin: 0 0 8px 0;
+    }
+
+    /* Target only default-height (400px) containers */
+    .chartivio-container[data-default-height="1"] {
+        height: 240px !important;
+    }
+
+    .chartivio-container {
+        padding: 6px;
+    }
 }

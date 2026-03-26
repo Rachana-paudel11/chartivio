@@ -75,10 +75,16 @@ function chartivio_render_shortcode($atts)
     $inner_style = "width: " . esc_attr($atts['width']) . "; max-width: " . esc_attr($atts['max_width']) . "; margin: 0 auto; text-align: left;";
     $chart_container_style = "position: relative; height: " . esc_attr($atts['height']) . "; width: 100%;";
 
-    $output = '<div class="chartivio-shortcode-wrapper" style="margin-bottom: 30px;">';
+    // Flag whether the user has set a custom height — used by CSS responsive overrides.
+    // If height is the default '400px', we add data-default-height so media queries can safely
+    // override it with !important for smaller screens. Custom heights are left untouched.
+    $is_default_height = ( $atts['height'] === '400px' );
+    $data_height_attr  = $is_default_height ? ' data-default-height="1"' : '';
+
+    $output = '<div class="chartivio-shortcode-wrapper">';
     $output .= '<div class="chartivio-inner" style="' . $inner_style . '">';
-    $output .= '<h3 class="chartivio-title" style="margin: 0 0 15px 0; font-size: 1.25rem; font-weight: 600; color: #1e293b;">' . esc_html($post->post_title) . '</h3>';
-    $output .= '<div class="chartivio-container" style="' . $chart_container_style . '">';
+    $output .= '<h3 class="chartivio-title">' . esc_html($post->post_title) . '</h3>';
+    $output .= '<div class="chartivio-container" style="' . $chart_container_style . '"' . $data_height_attr . '>';
     $output .= '<canvas id="' . esc_attr($unique_id) . '" data-config="' . esc_attr(wp_json_encode($config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) . '" style="display: block; max-width: 100%; max-height: 100%;"></canvas>';
     $output .= '</div>';
     $output .= '</div>';

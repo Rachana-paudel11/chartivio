@@ -210,6 +210,14 @@
     align-items: center;
     background: #fff;
     border-bottom: 1px solid var(--dc-border);
+    /* Prevents tabs from overflowing on narrow admin panels */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox: hide scrollbar to keep it clean */
+}
+
+.chartivio-tabs::-webkit-scrollbar {
+    display: none; /* Chrome/Safari: hide scrollbar on tab row */
 }
 
 .chartivio-tab {
@@ -828,3 +836,111 @@ table.chartivio-table th .chartivio-col-control {
     }
 }
 
+/* =============================================
+   Admin Responsive — WordPress mobile breakpoint (782px)
+   WordPress admin itself collapses the sidebar at 782px
+   ============================================= */
+@media (max-width: 782px) {
+    /* Reduce chart editor height to fit narrower viewport */
+    .chartivio-chart-container {
+        height: 320px;
+        max-width: 100%;
+    }
+
+    /* Reduce preview panel padding */
+    .chartivio-preview-panel {
+        padding: 15px;
+    }
+
+    /* Compact the header area */
+    .chartivio-main-header {
+        padding: 6px 10px;
+        gap: 8px;
+    }
+
+    /* Tighter tab buttons */
+    .chartivio-tab {
+        padding: 12px 14px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    /* Reduce data source selector padding */
+    .chartivio-data-source-selector {
+        gap: 10px;
+        padding: 10px;
+    }
+
+    /* Shrink admin page title */
+    .chartivio-page-title {
+        font-size: 22px;
+        margin-bottom: 20px;
+    }
+
+    /* Guide container padding */
+    .chartivio-guide-container {
+        padding: 24px;
+    }
+}
+
+/* =============================================
+   Admin Responsive — Small screens (600px)
+   ============================================= */
+@media (max-width: 600px) {
+    /* Stack the data source selector vertically */
+    .chartivio-data-source-selector {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .chartivio-data-source-selector label {
+        white-space: normal;
+    }
+
+    .chartivio-data-source-selector select {
+        width: 100%;
+    }
+
+    /* Prevent shortcode pill from overflowing in list table */
+    .chartivio-shortcode-pill {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .chartivio-shortcode-pill code {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 140px;
+        display: inline-block !important;
+        vertical-align: middle;
+    }
+
+    /* Compact the chart type badge */
+    .chartivio-type-badge {
+        font-size: 11px;
+        padding: 3px 7px;
+    }
+
+    /* Smaller chart preview on tiny screens */
+    .chartivio-chart-container {
+        height: 260px;
+    }
+
+    /* Compact guide page */
+    .chartivio-guide-container {
+        padding: 16px;
+    }
+
+    .chartivio-guide-card {
+        padding: 18px;
+    }
+
+    /* Stacked card-header for settings */
+    .chartivio-card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}
