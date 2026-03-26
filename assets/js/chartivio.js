@@ -14,17 +14,71 @@ function chartivio_init_chart(config, canvasId) {
         }
         console.log('Canvas found, initializing...');
 
-        var container = canvas.parentElement;
+        // ── Inline-wrapper guard ──────────────────────────────────────────────
+        // WordPress can inject inline HTML (e.g. <strong>) around shortcodes when
+        // the editor accidentally formats the shortcode text as bold/italic.
+        // Because <canvas> (inline) sits inside <div> (block) our HTML is valid,
+        // but the browser re-parses  <strong><div>...</div></strong>  as invalid and
+        // moves the inline element so it ends up wrapping the <canvas> directly.
+        // We detect and fix that here — before Chart.js reads any dimensions.
+        (function unwrapInlineParents(el) {
+            var INLINE_TAGS = ['STRONG', 'EM', 'B', 'I', 'U', 'S', 'SPAN', 'A'];
+
+            // Locate the real .chartivio-container ancestor (with closest() fallback)
+            var chartContainer = null;
+            if (typeof el.closest === 'function') {
+                chartContainer = el.closest('.chartivio-container');
+            } else {
+                var p = el.parentElement;
+                while (p) {
+                    if (p.className && p.className.indexOf('chartivio-container') !== -1) {
+                        chartContainer = p; break;
+                    }
+                    p = p.parentElement;
+                }
+            }
+
+            if (!chartContainer) { return; } // safety: nothing to do
+
+            // Walk up from the canvas; if we hit a known inline tag before we
+            // reach .chartivio-container, move the canvas out of it.
+            var parent = el.parentElement;
+            while (parent && parent !== chartContainer) {
+                if (INLINE_TAGS.indexOf(parent.tagName) !== -1) {
+                    var grandParent = parent.parentElement;
+                    // Move canvas to be a direct child of its grandparent
+                    grandParent.insertBefore(el, parent);
+                    // Remove the now-empty inline wrapper
+                    if (parent.innerHTML.trim() === '') {
+                        grandParent.removeChild(parent);
+                    }
+                    console.log('chartivio: unwrapped stray <' + parent.tagName + '> from canvas');
+                    // Reset for next iteration (el.parentElement may have changed)
+                    parent = el.parentElement;
+                } else {
+                    break;
+                }
+            }
+        })(canvas);
+        // ── End inline-wrapper guard ──────────────────────────────────────────
+
+        // Read dimensions from the real .chartivio-container (not canvas.parentElement,
+        // which could be a stray element before the guard ran).
+        var container = (typeof canvas.closest === 'function')
+            ? canvas.closest('.chartivio-container')
+            : canvas.parentElement;
+
         if (container) {
             var rect = container.getBoundingClientRect();
-            canvas.width = rect.width || 800;
+            canvas.width  = rect.width  || 800;
             canvas.height = rect.height || 400;
             console.log('Canvas dimensions set:', canvas.width, 'x', canvas.height);
         } else {
-            canvas.width = 800;
+            canvas.width  = 800;
             canvas.height = 400;
             console.log('No container found, using fallback dimensions');
         }
+
 
         config.id = canvasId;
         console.log('Chart config:', config);
