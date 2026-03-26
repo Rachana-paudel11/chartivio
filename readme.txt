@@ -4,7 +4,7 @@ Tags: chart, charts, data visualization, pie chart, bar chart
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -40,10 +40,15 @@ Simply create your chart, copy the unique shortcode, and paste it into any Post,
 = Can I import data from Excel? =
 Yes! Use our **csv to chart** feature. Save your Excel file as a .csv, upload it or link the URL, and Chartivio handles the rest.
 
+= How do I make my charts responsive? =
+All charts created with Chartivio are fully responsive by default. They automatically adjust to fit any screen size, from mobile devices to large desktops, ensuring a perfect viewing experience for your audience.
+
 == Screenshots ==
 
-1. The Live Preview Engine showing a bar chart updating in real-time.
-2. The split-screen Admin UI for easy data entry.
+1. **The Live Preview Engine** – Watch your **wordpress charts** update in real-time as you modify data or styling settings.
+2. **Split-screen Admin UI** – A modern, dual-pane interface designed for easy data entry and professional **data visualization**.
+3. **CSV to Chart Integration** – Effortlessly turn any CSV URL into a beautiful, **minimalst charts** display.
+4. **Responsive Charts Preview** – See how your work scales perfectly for a mobile-first **simple wordpress charts** experience.
 
 == Third-Party Libraries ==
 
@@ -55,6 +60,11 @@ This plugin includes the following third-party library:
 * Used for rendering interactive charts
 
 == Changelog ==
+
+= 1.0.5 =
+* Fixed: Mobile responsiveness and container height issues
+* Fixed: Stray inline tags injected by WordPress formatting breaking chart dimensions
+* Improved: Tablet and mobile CSS breakpoints for embedded charts
 
 = 1.0.4 =
 * Fixed: "Publishing failed. The response is not a valid JSON response" error when saving charts
