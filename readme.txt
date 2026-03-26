@@ -42,8 +42,10 @@ Yes! Use our **csv to chart** feature. Save your Excel file as a .csv, upload it
 
 == Screenshots ==
 
-1. The Live Preview Engine showing a bar chart updating in real-time.
-2. The split-screen Admin UI for easy data entry.
+1. **The Live Preview Engine** – Watch your **wordpress charts** update in real-time as you modify data or styling settings.
+2. **Split-screen Admin UI** – A modern, dual-pane interface designed for easy data entry and professional **data visualization**.
+3. **CSV to Chart Integration** – Effortlessly turn any CSV URL into a beautiful, **minimalst charts** display.
+4. **Responsive Charts Preview** – See how your work scales perfectly for a mobile-first **simple wordpress charts** experience.
 
 == Third-Party Libraries ==
 
