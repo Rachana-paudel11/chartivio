@@ -4,7 +4,7 @@ Tags: chart, charts, data visualization, pie chart, bar chart
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.0.5
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,17 @@ This plugin includes the following third-party library:
 * Used for rendering interactive charts
 
 == Changelog ==
+
+= 1.1.0 =
+* Added: Auto-delimiter detection for CSV (Comma vs Semicolon).
+* Added: UTF-8 BOM removal for cleaner CSV data parsing.
+* Added: Premium UI Error Overlay with professional vertical alignment and icons.
+* Added: Interactive 'Shake to Fix' functionality for CSV configuration.
+* Added: Premium animations (fade-in/slide-up) and sleeker Doughnut cutout (70%).
+* Added: Modern legend styling with circular indicators and system font stacks.
+* Improved: Performance and race-condition handling during fetch operations.
+* Improved: Frontend responsiveness for all screen sizes (Mobile, Tablet, Desktop).
+* Fixed: Selector prefix consistency across CSS/JS/PHP (chartivio- vs dc-).
 
 = 1.0.5 =
 * Fixed: Mobile responsiveness and container height issues

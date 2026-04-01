@@ -35,10 +35,18 @@
     width: 100%;
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 10px;
+    border-radius: 12px;
+    padding: 20px;
     box-sizing: border-box;
     overflow: hidden;
+    /* Fancy fade-in for premium feel */
+    animation: chartivioFadeIn 0.8s ease-out both;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+@keyframes chartivioFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 .chartivio-container canvas {

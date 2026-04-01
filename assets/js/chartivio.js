@@ -275,13 +275,33 @@ function chartivio_init_frontend(config) {
                     plugins: {
                         legend: {
                             display: config.legendPos !== 'none' && (ds.length > 1 || ['pie', 'doughnut'].includes(realType)),
-                            position: config.legendPos
+                            position: config.legendPos || 'top',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                font: {
+                                    size: 13,
+                                    weight: '500',
+                                    family: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif"
+                                }
+                            }
                         },
                         tooltip: {
                             enabled: true,
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            padding: 12,
+                            cornerRadius: 8,
+                            titleFont: { size: 14, weight: '600' },
+                            bodyFont: { size: 13 },
+                            boxPadding: 4,
                             intersect: false,
                             mode: 'index'
                         }
+                    },
+                    cutout: (realType === 'doughnut') ? '70%' : 0,
+                    layout: {
+                        padding: 10
                     }
                 }
             });

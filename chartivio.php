@@ -5,7 +5,7 @@
  * Author: Rachana Paudel
  * Plugin URI: https://wordpress.org/plugins/chartivio/
  * Author URI: https://profiles.wordpress.org/rachanapaudel26/
- * Version: 1.0.5
+ * Version: 1.1.0
  * Text Domain: chartivio
  * Domain Path: /language
  * Requires at least: 5.0
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define Plugin Constants
-define('CHARTIVIO_VERSION', '1.0.5');
+define('CHARTIVIO_VERSION', '1.1.0');
 define('CHARTIVIO_PATH', plugin_dir_path(__FILE__));
 define('CHARTIVIO_URL', plugin_dir_url(__FILE__));
 
