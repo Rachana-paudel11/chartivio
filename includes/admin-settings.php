@@ -178,8 +178,12 @@ function chartivio_render_main_box($post)
                     <h3>Live Preview</h3>
                     <span id="chartivio-status"></span>
                 </div>
-                <div class="chartivio-chart-container">
+                <div class="chartivio-chart-container" style="position: relative;">
                     <canvas id="chartivio-live-chart"></canvas>
+                    <div id="chartivio-error-overlay" class="chartivio-error-overlay" style="display:none; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 15px !important;" onclick="chartivio_shake_csv_source()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ef4444; margin-bottom: 5px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                        <div class="error-message" style="color: #ef4444; font-weight: 500; text-align: center; line-height: 1.4; max-width: 320px;"></div>
+                    </div>
                 </div>
             </div>
 

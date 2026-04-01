@@ -31,6 +31,24 @@ var chartivio_saved_snapshot = chartivio_admin_vars.saved_snapshot;
 var chartivio_palettes = { 'default': ['#2271b1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'], 'pastel': ['#ffb3ba', '#ffdfba', '#ffffba', '#baffc9', '#bae1ff', '#e6e6fa'], 'ocean': ['#0077be', '#009688', '#4db6ac', '#80cbc4', '#b2dfdb', '#004d40'], 'sunset': ['#ff4500', '#ff8c00', '#ffa500', '#ffd700', '#ff6347', '#ff7f50'], 'neon': ['#ff00ff', '#00ffff', '#00ff00', '#ffff00', '#ff0000', '#7b00ff'], 'forest': ['#228B22', '#32CD32', '#90EE90', '#006400', '#556B2F', '#8FBC8F'] };
 
 function chartivio_parse_csv(str) {
+    if (!str) return [];
+    // Remove UTF-8 BOM if present
+    if (str.charCodeAt(0) === 0xFEFF) {
+        str = str.substring(1);
+    }
+    
+    // Auto-detect delimiter: comma or semicolon?
+    var firstLine = str.split(/\r\n|\n|\r/)[0];
+    var delimiter = ',';
+    if (firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') === -1) {
+        delimiter = ';';
+    } else if (firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') !== -1) {
+        // Both found? Count occurrences in first line
+        var commas = (firstLine.match(/,/g) || []).length;
+        var semis = (firstLine.match(/;/g) || []).length;
+        if (semis > commas) delimiter = ';';
+    }
+
     var arr = [];
     var quote = false;
     for (var row = 0, col = 0, c = 0; c < str.length; c++) {
@@ -39,7 +57,7 @@ function chartivio_parse_csv(str) {
         arr[row][col] = arr[row][col] || '';
         if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
         if (cc == '"') { quote = !quote; continue; }
-        if (cc == ',' && !quote) { ++col; continue; }
+        if (cc == delimiter && !quote) { ++col; continue; }
         if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
         if (cc == '\n' && !quote) { ++row; col = 0; continue; }
         if (cc == '\r' && !quote) { ++row; col = 0; continue; }
@@ -389,32 +407,24 @@ async function chartivio_update_live_preview() {
         let yaxisLabel = jQuery('#chartivio_yaxis_label').val() || '';
 
         // Capture current state to handle race conditions
-        var currentSource = jQuery('input[name="chartivio_source_selector"]:checked').val() || jQuery('#chartivio_active_source').val() || 'manual';
+        var currentSource = jQuery('#chartivio_active_source').val() || 'manual';
         var currentUrl = jQuery('#chartivio_csv_url').val();
 
         var labels = [], datasets = [];
 
         if (currentSource === 'csv') {
             if (!currentUrl || currentUrl.trim() === '') {
-                jQuery('.chartivio-status').show().text('No CSV URL provided').css({ 'color': '#f59e0b', 'background': '#fffbeb' });
-                // Show empty chart state
-                var cWidth = canvas.width || 400;
-                var cHeight = canvas.height || 400;
-                ctx.clearRect(0, 0, cWidth, cHeight);
-                ctx.fillStyle = '#64748b';
-                ctx.font = '14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('No CSV URL provided', cWidth / 2, cHeight / 2);
+                jQuery('#chartivio-error-overlay').css('display', 'flex').find('.error-message').text('No CSV URL provided');
                 return;
             }
             try {
-                jQuery('.chartivio-status').show().text('Loading CSV...').css({ 'color': '#3b82f6', 'background': '#eff6ff' });
+                jQuery('#chartivio-status').show().text('Loading CSV...').css({ 'color': '#3b82f6', 'background': '#eff6ff' });
                 const response = await fetch(currentUrl);
                 // Race condition check: Ensure source and URL haven't changed during fetch
                 if (jQuery('#chartivio_active_source').val() !== 'csv' || jQuery('#chartivio_csv_url').val() !== currentUrl) return;
 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch CSV: ' + response.statusText);
+                    throw new Error('Failed to fetch CSV (' + response.status + '): ' + (response.statusText || 'Unknown Error'));
                 }
 
                 const text = await response.text();
@@ -429,7 +439,7 @@ async function chartivio_update_live_preview() {
 
                 const heads = rows[0];
                 if (!heads || heads.length < 2) {
-                    throw new Error('CSV must have at least 2 columns (label + data)');
+                    throw new Error('CSV must have at least 2 columns (label + data). Found only ' + (heads ? heads.length : 0) + ' column(s). Try using commas (,) or semicolons (;) as delimiters.');
                 }
 
                 // Create datasets from headers (skip first column which is labels)
@@ -454,7 +464,7 @@ async function chartivio_update_live_preview() {
                     throw new Error('No valid data rows found in CSV');
                 }
 
-                jQuery('.chartivio-status').show().text('CSV Loaded (' + (rows.length - 1) + ' rows)').css({ 'color': '#10b981', 'background': '#f0fdf4' });
+                jQuery('#chartivio-status').show().text('CSV Loaded (' + (rows.length - 1) + ' rows)').css({ 'color': '#10b981', 'background': '#f0fdf4' });
 
                 // Populate CSV Preview Table
                 var $previewTable = jQuery('.chartivio-csv-preview-table');
@@ -496,15 +506,12 @@ async function chartivio_update_live_preview() {
             } catch (e) {
                 if (jQuery('#chartivio_active_source').val() !== 'csv') return;
                 console.error('CSV Fetch Error:', e);
-                jQuery('.chartivio-status').show().text('Error: ' + e.message).css({ 'color': '#ef4444', 'background': '#fef2f2' });
-                // Clear canvas and show error
-                var cWidth = canvas.width || 400;
-                var cHeight = canvas.height || 400;
-                ctx.clearRect(0, 0, cWidth, cHeight);
-                ctx.fillStyle = '#ef4444';
-                ctx.font = '14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('Error: ' + e.message, cWidth / 2, cHeight / 2);
+                var errorMsg = e.message;
+                if (errorMsg === 'Failed to fetch') {
+                    errorMsg = 'Network Error: Failed to fetch CSV. Check CORS or URL validity.';
+                }
+                jQuery('#chartivio-status').show().text('Error: ' + errorMsg).css({ 'color': '#ef4444', 'background': '#fef2f2' });
+                jQuery('#chartivio-error-overlay').css('display', 'flex').find('.error-message').text(errorMsg);
                 return;
             }
         } else {
@@ -550,6 +557,7 @@ async function chartivio_update_live_preview() {
 
         // Final race condition check before drawing
         if (jQuery('#chartivio_active_source').val() !== currentSource) return;
+        jQuery('#chartivio-error-overlay').hide();
 
         // Validate we have data to render
         if (labels.length === 0 || datasets.length === 0) {
@@ -904,4 +912,12 @@ function chartivio_quick_save(btn) {
             alert('Save Failed');
         }
     });
+}
+function chartivio_shake_csv_source() {
+    var $panel = jQuery('#chartivio-csv-panel');
+    $panel.addClass('chartivio-shake');
+    setTimeout(function() {
+        $panel.removeClass('chartivio-shake');
+        jQuery('#chartivio_csv_url').focus();
+    }, 500);
 }

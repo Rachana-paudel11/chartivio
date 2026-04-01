@@ -86,6 +86,7 @@ function chartivio_render_shortcode($atts)
     $output .= '<h3 class="chartivio-title">' . esc_html($post->post_title) . '</h3>';
     $output .= '<div class="chartivio-container" style="' . $chart_container_style . '"' . $data_height_attr . '>';
     $output .= '<canvas id="' . esc_attr($unique_id) . '" data-config="' . esc_attr(wp_json_encode($config, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)) . '" style="display: block; max-width: 100%; max-height: 100%;"></canvas>';
+    $output .= '<div id="' . esc_attr($unique_id) . '-error" class="chartivio-error-overlay"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg><div class="error-message"></div></div>';
     $output .= '</div>';
     $output .= '</div>';
     $output .= '</div>';

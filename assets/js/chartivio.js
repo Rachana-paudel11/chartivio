@@ -119,6 +119,24 @@ var chartivio_palettes = {
  * Robust CSV Parser (Supports quotes and newlines)
  */
 function chartivio_frontend_parse_csv(str) {
+    if (!str) return [];
+    // Remove UTF-8 BOM if present
+    if (str.charCodeAt(0) === 0xFEFF) {
+        str = str.substring(1);
+    }
+    
+    // Auto-detect delimiter: comma or semicolon?
+    var firstLine = str.split(/\r\n|\n|\r/)[0];
+    var delimiter = ',';
+    if (firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') === -1) {
+        delimiter = ';';
+    } else if (firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') !== -1) {
+        // Both found? Count occurrences in first line
+        var commas = (firstLine.match(/,/g) || []).length;
+        var semis = (firstLine.match(/;/g) || []).length;
+        if (semis > commas) delimiter = ';';
+    }
+
     var arr = [];
     var quote = false;
     for (var row = 0, col = 0, c = 0; c < str.length; c++) {
@@ -127,7 +145,7 @@ function chartivio_frontend_parse_csv(str) {
         arr[row][col] = arr[row][col] || '';
         if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
         if (cc == '"') { quote = !quote; continue; }
-        if (cc == ',' && !quote) { ++col; continue; }
+        if (cc == delimiter && !quote) { ++col; continue; }
         if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
         if (cc == '\n' && !quote) { ++row; col = 0; continue; }
         if (cc == '\r' && !quote) { ++row; col = 0; continue; }
@@ -275,10 +293,18 @@ function chartivio_init_frontend(config) {
 
     if (config.source === 'csv' && config.csvUrl) {
         console.log('Loading CSV from:', config.csvUrl);
-        fetch(config.csvUrl).then(res => res.text()).then(text => {
+        fetch(config.csvUrl).then(res => {
+            if (!res.ok) {
+                throw new Error('HTTP ' + res.status + ' - ' + (res.statusText || 'Fetch Failed'));
+            }
+            return res.text();
+        }).then(text => {
+            if (!text || text.trim() === '') {
+                throw new Error('CSV is empty');
+            }
             const rows = chartivio_frontend_parse_csv(text.trim());
             if (!rows || rows.length < 2) {
-                console.warn('CSV data is empty or invalid');
+                console.warn('CSV data is empty or invalid (headers only?)');
                 return;
             }
 
@@ -301,9 +327,19 @@ function chartivio_init_frontend(config) {
             if (labels.length > 0 && datasets.length > 0) {
                 drawChart(labels, datasets);
             } else {
-                console.warn('CSV data has no valid content');
+                console.warn('CSV data has no valid numerical content rows');
             }
-        }).catch(err => console.error('chartivio CSV Load Error:', err));
+        }).catch(err => {
+            console.error('chartivio frontend CSV Load Error:', err);
+            // Draw error on canvas if possible
+            const errorOverlay = document.getElementById(canvasId + '-error'); if (errorOverlay) { errorOverlay.style.display = 'flex'; errorOverlay.querySelector('.error-message').textContent = 'Error: ' + err.message; } if (ctx) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ef4444';
+                ctx.font = '14px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('CSV Error: ' + err.message, canvas.width / 2, canvas.height / 2);
+            }
+        });
     } else {
         console.log('Using manual data:', config.manualData);
         let labels = [], datasets = [];
