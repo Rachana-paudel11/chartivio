@@ -505,6 +505,42 @@ function chartivio_ajax_save_chart()
     $shortcode_html .= '<code style="display:block; padding:8px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; font-weight:bold; color:#1e293b;">' . esc_html('[chartivio id="' . absint($post_id) . '"]') . '</code>';
     $shortcode_html .= '</div>';
 
+
     wp_send_json_success(array('message' => 'Saved', 'shortcode_html' => $shortcode_html));
 }
 add_action('wp_ajax_chartivio_save_chart', 'chartivio_ajax_save_chart');
+
+/**
+ * AJAX Handler: Fetch CSV (Proxy)
+ * Resolves CORS issues by fetching the CSV server-side.
+ */
+function chartivio_ajax_fetch_csv() {
+    $url = isset($_GET['url']) ? esc_url_raw(wp_unslash($_GET['url'])) : '';
+    if (empty($url)) {
+        wp_send_json_error(array('message' => 'Empty URL'));
+    }
+
+    $response = wp_remote_get($url, array('timeout' => 10, 'sslverify' => false));
+
+    if (is_wp_error($response)) {
+        wp_send_json_error(array('message' => 'PHP Fetch Error: ' . $response->get_error_message()));
+    }
+
+    $code = wp_remote_retrieve_response_code($response);
+    if ($code !== 200) {
+        wp_send_json_error(array('message' => 'HTTP ' . $code . ' ' . wp_remote_retrieve_response_message($response)));
+    }
+
+    $body = wp_remote_retrieve_body($response);
+    if (empty($body)) {
+        wp_send_json_error(array('message' => 'CSV is empty'));
+    }
+
+    // Determine the content type and send body
+    header('Content-Type: text/plain; charset=utf-8');
+    echo $body;
+    exit;
+}
+add_action('wp_ajax_chartivio_fetch_csv', 'chartivio_ajax_fetch_csv');
+add_action('wp_ajax_nopriv_chartivio_fetch_csv', 'chartivio_ajax_fetch_csv');
+
