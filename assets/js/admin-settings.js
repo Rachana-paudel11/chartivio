@@ -39,32 +39,62 @@ function chartivio_parse_csv(str) {
     
     // Auto-detect delimiter: comma or semicolon?
     var firstLine = str.split(/\r\n|\n|\r/)[0];
+    if (!firstLine) return [];
+    
     var delimiter = ',';
-    if (firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') === -1) {
-        delimiter = ';';
-    } else if (firstLine.indexOf(';') !== -1 && firstLine.indexOf(',') !== -1) {
-        // Both found? Count occurrences in first line
-        var commas = (firstLine.match(/,/g) || []).length;
-        var semis = (firstLine.match(/;/g) || []).length;
-        if (semis > commas) delimiter = ';';
-    }
+    // Count occurrences outside of quotes if possible, but for detection simple count is usually enough
+    var commas = (firstLine.match(/,/g) || []).length;
+    var semis = (firstLine.match(/;/g) || []).length;
+    var tabs = (firstLine.match(/\t/g) || []).length;
+    
+    if (semis > commas && semis > tabs) delimiter = ';';
+    else if (tabs > commas && tabs > semis) delimiter = '\t';
 
     var arr = [];
     var quote = false;
-    for (var row = 0, col = 0, c = 0; c < str.length; c++) {
+    var row = 0, col = 0;
+    arr[row] = [];
+    arr[row][col] = '';
+
+    for (var c = 0; c < str.length; c++) {
         var cc = str[c], nc = str[c + 1];
-        arr[row] = arr[row] || [];
-        arr[row][col] = arr[row][col] || '';
-        if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++c; continue; }
-        if (cc == '"') { quote = !quote; continue; }
-        if (cc == delimiter && !quote) { ++col; continue; }
-        if (cc == '\r' && nc == '\n' && !quote) { ++row; col = 0; ++c; continue; }
-        if (cc == '\n' && !quote) { ++row; col = 0; continue; }
-        if (cc == '\r' && !quote) { ++row; col = 0; continue; }
+        
+        if (cc == '"') {
+            if (quote && nc == '"') { // Escaped quote
+                arr[row][col] += '"';
+                c++;
+            } else {
+                quote = !quote;
+            }
+            continue;
+        }
+        
+        if (!quote) {
+            if (cc == delimiter) {
+                col++;
+                arr[row][col] = '';
+                continue;
+            }
+            if (cc == '\r' && nc == '\n') {
+                row++;
+                col = 0;
+                arr[row] = [''];
+                c++;
+                continue;
+            }
+            if (cc == '\n' || cc == '\r') {
+                row++;
+                col = 0;
+                arr[row] = [''];
+                continue;
+            }
+        }
         arr[row][col] += cc;
     }
-    return arr;
+    // Filter out empty rows
+    return arr.filter(function(r) { return r.some(function(cell) { return cell.trim() !== ''; }); });
 }
+
 
 function chartivio_Tab(el, id) { jQuery('.chartivio-tab').removeClass('active'); jQuery('.chartivio-tab-content').removeClass('active'); jQuery(el).addClass('active'); jQuery('#' + id).addClass('active'); }
 function chartivio_SetSource(src) {
@@ -419,9 +449,14 @@ async function chartivio_update_live_preview() {
             }
             try {
                 jQuery('#chartivio-status').show().text('Loading CSV...').css({ 'color': '#3b82f6', 'background': '#eff6ff' });
-                const response = await fetch(currentUrl);
+                
+                // Use AJAX Proxy to bypass CORS issues
+                const proxyUrl = ajaxurl + '?action=chartivio_fetch_csv&url=' + encodeURIComponent(currentUrl);
+                const response = await fetch(proxyUrl);
+                
                 // Race condition check: Ensure source and URL haven't changed during fetch
                 if (jQuery('#chartivio_active_source').val() !== 'csv' || jQuery('#chartivio_csv_url').val() !== currentUrl) return;
+
 
                 if (!response.ok) {
                     throw new Error('Failed to fetch CSV (' + response.status + '): ' + (response.statusText || 'Unknown Error'));

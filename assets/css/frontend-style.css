@@ -33,6 +33,7 @@
 .chartivio-container {
     position: relative;
     width: 100%;
+    min-height: 200px;
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
@@ -44,15 +45,14 @@
 .chartivio-container canvas {
     display: block;
     width: 100% !important;
-    height: auto !important;
+    height: 100% !important;
     max-width: 100%;
     margin: 0 auto;
 }
 
+
 /* =============================================
    Responsive — Tablet (max-width: 768px)
-   Only reduces height for default-height charts
-   (user-specified custom heights are left alone)
    ============================================= */
 @media (max-width: 768px) {
     .chartivio-shortcode-wrapper {
@@ -64,16 +64,15 @@
         margin: 0 0 10px 0;
     }
 
-    /* Target only default-height (400px) containers */
-    .chartivio-container[data-default-height="1"] {
-        height: 300px !important;
-    }
-
+    /* Scale container height for mobile (Uses CSS Variable set in shortcode) */
     .chartivio-container {
+        height: 300px !important; /* Fallback */
+        height: calc(var(--chart-height, 400px) * 0.75) !important;
         padding: 8px;
         border-radius: 4px;
     }
 }
+
 
 /* =============================================
    Responsive — Mobile (max-width: 480px)
@@ -88,15 +87,13 @@
         margin: 0 0 8px 0;
     }
 
-    /* Target only default-height (400px) containers */
-    .chartivio-container[data-default-height="1"] {
-        height: 240px !important;
-    }
-
     .chartivio-container {
+        height: 240px !important; /* Fallback */
+        height: calc(var(--chart-height, 400px) * 0.6) !important;
         padding: 6px;
     }
 }
+
 .chartivio-error-overlay {
     display: none;
     position: absolute;
