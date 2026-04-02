@@ -4,7 +4,7 @@ Tags: chart, charts, data visualization, pie chart, bar chart
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,13 @@ This plugin includes the following third-party library:
 * Used for rendering interactive charts
 
 == Changelog ==
+
+= 1.1.1 =
+* Fixed: CSV CORS issues by implementing a server-side AJAX proxy (`chartivio_fetch_csv`).
+* Added: CSS Variable support (`--chart-height`) for proportional responsive scaling of custom chart heights.
+* Improved: CSV parser robustness with Tab delimiter support and better quote handling.
+* Fixed: Canvas height initialization for more consistent rendering across themes.
+
 
 = 1.1.0 =
 * Added: Auto-delimiter detection for CSV (Comma vs Semicolon).
