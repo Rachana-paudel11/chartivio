@@ -2,9 +2,9 @@
 /**
  * Plugin Name: Chartivio
  * Description: A plugin to create charts and bars for data visualization.
- * Author: Rachana Paudel
+ * Author: Aarati Parajuli
  * Plugin URI: https://wordpress.org/plugins/chartivio/
- * Author URI: https://profiles.wordpress.org/rachanapaudel26/
+ * Author URI: https://profiles.wordpress.org/aarati24/
  * Version: 1.1.10
  * Text Domain: chartivio
  * Domain Path: /language
