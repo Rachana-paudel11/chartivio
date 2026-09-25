@@ -8,9 +8,24 @@ if (!defined('ABSPATH')) {
  */
 function chartivio_render_how_to_use_page()
 {
+    // Check if user has existing charts
+    $counts = wp_count_posts('chartivio');
+    $has_charts = false;
+    if ($counts) {
+        $total_charts = intval($counts->publish ?? 0) + intval($counts->draft ?? 0) + intval($counts->future ?? 0) + intval($counts->pending ?? 0) + intval($counts->private ?? 0);
+        if ($total_charts > 0) {
+            $has_charts = true;
+        }
+    }
+
+    $button_label = $has_charts ? 'Create New Chart' : 'Create Your First Chart';
+    $new_chart_url = admin_url('post-new.php?post_type=chartivio');
     ?>
     <div class="wrap chartivio-how-to-use">
-        <h1 class="chartivio-page-title">How to Use chartivio</h1>
+        <h1 class="chartivio-page-title">
+            How to Use chartivio
+            <a href="<?php echo esc_url($new_chart_url); ?>" class="page-title-action"><?php echo esc_html($button_label); ?></a>
+        </h1>
 
         <div class="chartivio-guide-container">
             <!-- Introduction -->
@@ -18,6 +33,13 @@ function chartivio_render_how_to_use_page()
                 <h2>Welcome to chartivio</h2>
                 <p>Create beautiful, responsive, and animated charts for your WordPress site in minutes. This guide will
                     walk you through the basics.</p>
+                <div class="chartivio-intro-action" style="margin-top: 25px;">
+                    <a href="<?php echo esc_url($new_chart_url); ?>"
+                        class="button button-primary chartivio-big-btn">
+                        <span class="dashicons dashicons-plus-alt2" style="margin-right: 6px;"></span>
+                        <?php echo esc_html($button_label); ?>
+                    </a>
+                </div>
             </div>
 
             <div class="chartivio-guide-grid">
@@ -25,7 +47,7 @@ function chartivio_render_how_to_use_page()
                 <div class="chartivio-guide-card">
                     <div class="chartivio-step-icon">1</div>
                     <h3>Create a Chart</h3>
-                    <p>Navigate to <strong>chartivio > Add New Chart</strong>. Give your chart a title to get started.
+                    <p>Navigate to <strong>chartivio > Add New Chart</strong> or click the button above. Give your chart a title to get started.
                         You'll immediately see the live preview.</p>
                 </div>
 
@@ -61,7 +83,7 @@ function chartivio_render_how_to_use_page()
             <!-- Detailed Instructions -->
             <div class="chartivio-guide-details">
                 <div class="chartivio-detail-box">
-                    <h3><span class="dashicons dashicons-editor-table"></span> formatting CSV Data</h3>
+                    <h3><span class="dashicons dashicons-editor-table"></span> Formatting CSV Data</h3>
                     <p>If you are importing CSV data, ensure your first row contains the specific labels (like "Year",
                         "Month") and the subsequent rows contain the data. The plugin automatically detects the structure.
                     </p>
@@ -75,8 +97,11 @@ function chartivio_render_how_to_use_page()
             </div>
 
             <div class="chartivio-action-area">
-                <a href="<?php echo esc_url(admin_url('post-new.php?post_type=chartivio')); ?>"
-                    class="button button-primary chartivio-big-btn">Create Your First Chart</a>
+                <a href="<?php echo esc_url($new_chart_url); ?>"
+                    class="button button-primary chartivio-big-btn">
+                    <span class="dashicons dashicons-plus-alt2" style="margin-right: 6px;"></span>
+                    <?php echo esc_html($button_label); ?>
+                </a>
             </div>
         </div>
     </div>

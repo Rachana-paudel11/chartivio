@@ -24,6 +24,38 @@ define('CHARTIVIO_PATH', plugin_dir_path(__FILE__));
 define('CHARTIVIO_URL', plugin_dir_url(__FILE__));
 
 /**
+ * Plugin Activation Hook
+ */
+function chartivio_activate()
+{
+    // Store an option to trigger redirect on next admin page load
+    add_option('chartivio_do_activation_redirect', true);
+}
+register_activation_hook(__FILE__, 'chartivio_activate');
+
+/**
+ * Plugin Activation Redirect to Welcome / How to Use page
+ */
+function chartivio_activation_redirect()
+{
+    if (get_option('chartivio_do_activation_redirect', false)) {
+        delete_option('chartivio_do_activation_redirect');
+
+        // Prevent redirect during bulk activation, AJAX, CRON, or CLI calls
+        if (isset($_GET['activate-multi']) || (defined('DOING_AJAX') && DOING_AJAX) || (defined('DOING_CRON') && DOING_CRON) || (function_exists('php_sapi_name') && php_sapi_name() === 'cli')) {
+            return;
+        }
+
+        // Ensure user has capability
+        if (current_user_can('manage_options')) {
+            wp_safe_redirect(admin_url('edit.php?post_type=chartivio&page=chartivio-how-to-use'));
+            exit;
+        }
+    }
+}
+add_action('admin_init', 'chartivio_activation_redirect');
+
+/**
  * Register Custom Post Type 'chartivio'
  */
 function chartivio_register_cpt()
